@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Login | Oferte e Ganhe</title>
+
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="login-page">
+
+  <main class="login-container">
+    <section class="login-card">
+      <div class="login-header">
+        <h1>Oferte e Ganhe</h1>
+        <p>Controle de talões e estoque por loja</p>
+      </div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="email">E-mail</label>
+          <input
+            type="email"
+            class="form-input"
+            id="email"
+            placeholder="Digite seu e-mail"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="senha">Senha</label>
+          <input
+            type="password"
+            class="form-input"
+            id="senha"
+            placeholder="Digite sua senha"
+            required
+          />
+        </div>
+
+        <div id="loginError" class="alert-error hidden">
+          E-mail ou senha inválidos.
+        </div>
+
+        <button type="submit" class="btn-primary full-width">
+          Entrar
+        </button>
+      </form>
+
+  
+    </section>
+  </main>
+
+  <script src="js/auth.js"></script>
+</body>
+</html>
