@@ -19,11 +19,11 @@
         <span>Gestão de Talões</span>
       </div>
 
-      <nav class="sidebar-menu">
-  <a href="dashboard.html" class="active">Dashboard</a>
+     <nav class="sidebar-menu">
+  <a href="dashboard.html">Dashboard</a>
   <a href="#">Usuários</a>
   <a href="#">Perfis</a>
-  <a href="lojas.html">Lojas</a>
+  <a href="lojas.html" class="active">Lojas</a>
   <a href="estoque.html">Estoque</a>
   <a href="#">Envios</a>
   <a href="#">Recebimentos</a>
@@ -44,8 +44,8 @@
         </button>
 
         <div class="topbar-title">
-          <h1>Dashboard Administrativo</h1>
-          <p>Visão geral do controle de talões por loja</p>
+          <h1>Gestão de Lojas</h1>
+          <p>Cadastro e acompanhamento das lojas participantes</p>
         </div>
 
         <div class="user-info">
@@ -63,8 +63,8 @@
         </div>
 
         <div class="dashboard-card">
-          <span>Talões em estoque</span>
-          <strong id="totalEstoque">0</strong>
+          <span>Lojas ativas</span>
+          <strong id="lojasAtivas">0</strong>
         </div>
 
         <div class="dashboard-card warning">
@@ -73,15 +73,15 @@
         </div>
 
         <div class="dashboard-card">
-          <span>Envios no mês</span>
-          <strong id="enviosMes">0</strong>
+          <span>Estoque em atenção</span>
+          <strong id="lojasAtencao">0</strong>
         </div>
       </section>
 
-      <section class="content-grid">
+      <section class="content-grid single-column">
         <div class="content-card table-card">
           <div class="content-card-header">
-            <h2>Lojas com atenção no estoque</h2>
+            <h2>Lojas cadastradas</h2>
             <span>Monitoramento de reposição</span>
           </div>
 
@@ -90,28 +90,21 @@
               <thead>
                 <tr>
                   <th>Cód. Loja</th>
-                  <th>Loja</th>
-                  <th>Atual</th>
-                  <th>Mínimo</th>
-                  <th>Recomendado</th>
+                  <th>Nome da Loja</th>
+                  <th>Estoque Atual</th>
+                  <th>Estoque Mínimo</th>
+                  <th>Estoque Recomendado</th>
                   <th>Status</th>
+                  <th>Ação</th>
                 </tr>
               </thead>
-              <tbody id="tabelaLojasCriticas">
+              <tbody id="tabelaLojas">
               </tbody>
             </table>
           </div>
         </div>
 
-        <div class="content-card">
-          <div class="content-card-header">
-            <h2>Insights Inteligentes</h2>
-            <span>Simulação IA</span>
-          </div>
-
-          <div id="listaInsights" class="insights-list">
-          </div>
-        </div>
+    
       </section>
 
     </main>
@@ -175,6 +168,6 @@
   </aside>
 
   <script src="js/mock-data.js"></script>
-  <script src="js/dashboard.js"></script>
+  <script src="js/lojas.js"></script>
 </body>
 </html>

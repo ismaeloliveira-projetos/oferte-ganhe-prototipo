@@ -103,10 +103,19 @@ function logout() {
   window.location.href = "login.html";
 }
 
-carregarUsuarioLogado();
-carregarCardsDashboard();
-carregarTabelaLojasCriticas();
-carregarInsights();
+
+
+function abrirMenuMobile() {
+  document.getElementById("sidebar").classList.add("open");
+  document.getElementById("menuOverlay").classList.add("open");
+}
+
+function fecharMenuMobile() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("menuOverlay").classList.remove("open");
+}
+
+
 
 function abrirAssistente() {
   document.getElementById("assistantSidebar").classList.add("open");
@@ -222,4 +231,8 @@ function enviarPerguntaAssistente() {
   input.value = "";
 }
 
-   
+
+carregarUsuarioLogado();
+carregarCardsDashboard();
+carregarTabelaLojasCriticas();
+carregarInsights();
