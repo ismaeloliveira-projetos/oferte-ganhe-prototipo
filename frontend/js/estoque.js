@@ -94,6 +94,18 @@ function carregarTabelaEstoque() {
   });
 }
 
+function abrirMenuMobile() {
+  document.getElementById("sidebar").classList.add("open");
+  document.getElementById("menuOverlay").classList.add("open");
+}
+
+function fecharMenuMobile() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("menuOverlay").classList.remove("open");
+}
+
+
+
 carregarUsuarioLogado();
 carregarCardsEstoque();
 carregarTabelaEstoque();

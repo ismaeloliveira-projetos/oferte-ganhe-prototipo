@@ -41,21 +41,24 @@ const enviosMockados = [
     id: 1,
     codigoLoja: "001",
     quantidade: 100,
-    data: "2026-06-02",
+    dataHora: "2026-06-02 09:30",
+    responsavel: "Administrador",
     status: "Enviado"
   },
   {
     id: 2,
     codigoLoja: "003",
     quantidade: 80,
-    data: "2026-06-01",
+    dataHora: "2026-06-01 14:20",
+    responsavel: "Administrador",
     status: "Recebido"
   },
   {
     id: 3,
     codigoLoja: "005",
     quantidade: 60,
-    data: "2026-06-01",
+    dataHora: "2026-06-01 16:45",
+    responsavel: "Administrador",
     status: "Pendente"
   }
 ];

@@ -12,8 +12,11 @@
 
   <div class="app-layout">
 
-    <!-- Menu lateral -->
+  
     <aside class="sidebar" id="sidebar">
+         <button class="sidebar-close" onclick="fecharMenuMobile()" aria-label="Abrir menu">
+          X
+        </button>
       <div class="sidebar-brand">
         <h2>Oferte e Ganhe</h2>
         <span>Gestão de Talões</span>
@@ -25,23 +28,28 @@
   <a href="#">Perfis</a>
   <a href="lojas.html">Lojas</a>
   <a href="estoque.html" class="active">Estoque</a>
-  <a href="#">Envios</a>
+  <a href="envios.html">Envios</a>
   <a href="#">Recebimentos</a>
   <a href="#">Relatórios</a>
   <a href="#">Insights IA</a>
 </nav>
     </aside>
 
-    <!-- Fundo escuro do menu mobile -->
-    <div id="menuOverlay" class="menu-overlay" onclick="fecharMenuMobile()"></div>
+   
+    <div id="menuOverlay" class="menu-overlay" onclick="fecharMenuMobile()">
+      
+    </div>
 
-    <!-- Conteúdo principal -->
+    
     <main class="main-content">
 
       <header class="topbar">
         <button class="menu-toggle" onclick="abrirMenuMobile()" aria-label="Abrir menu">
           ☰
         </button>
+
+
+        
 
         <div class="topbar-title">
           <h1>Gestão de Estoque</h1>
@@ -109,15 +117,15 @@
     </main>
   </div>
 
-  <!-- Botão flutuante do assistente -->
+
   <button class="assistant-toggle" onclick="abrirAssistente()">
     Assistente IA
   </button>
 
-  <!-- Fundo escuro do assistente -->
+ 
   <div id="assistantOverlay" class="assistant-overlay" onclick="fecharAssistente()"></div>
 
-  <!-- Sidebar do assistente -->
+
   <aside id="assistantSidebar" class="assistant-sidebar">
     <div class="assistant-header">
       <div>
