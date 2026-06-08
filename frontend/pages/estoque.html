@@ -4,17 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Dashboard | Oferte e Ganhe</title>
+  <title>Estoque | Oferte e Ganhe</title>
 
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="../css/style.css" />
 </head>
 <body>
 
   <div class="app-layout">
 
-    <!-- Menu lateral -->
+  
     <aside class="sidebar" id="sidebar">
-      <button class="sidebar-close" onclick="fecharMenuMobile()" aria-label="Abrir menu">
+         <button class="sidebar-close" onclick="fecharMenuMobile()" aria-label="Abrir menu">
           X
         </button>
       <div class="sidebar-brand">
@@ -26,8 +26,8 @@
   <a href="dashboard.html">Dashboard</a>
   <a href="#">Usuários</a>
   <a href="#">Perfis</a>
-  <a href="lojas.html" class="active">Lojas</a>
-  <a href="estoque.html">Estoque</a>
+  <a href="lojas.html">Lojas</a>
+  <a href="estoque.html" class="active">Estoque</a>
   <a href="envios.html">Envios</a>
   <a href="#">Recebimentos</a>
   <a href="#">Relatórios</a>
@@ -35,10 +35,12 @@
 </nav>
     </aside>
 
-    <!-- Fundo escuro do menu mobile -->
-    <div id="menuOverlay" class="menu-overlay" onclick="fecharMenuMobile()"></div>
+   
+    <div id="menuOverlay" class="menu-overlay" onclick="fecharMenuMobile()">
+      
+    </div>
 
-    <!-- Conteúdo principal -->
+    
     <main class="main-content">
 
       <header class="topbar">
@@ -46,9 +48,12 @@
           ☰
         </button>
 
+
+        
+
         <div class="topbar-title">
-          <h1>Gestão de Lojas</h1>
-          <p>Cadastro e acompanhamento das lojas participantes</p>
+          <h1>Gestão de Estoque</h1>
+          <p>Controle de estoque mínimo, recomendado e necessidade de reposição</p>
         </div>
 
         <div class="user-info">
@@ -61,49 +66,48 @@
 
       <section class="dashboard-grid">
         <div class="dashboard-card">
-          <span>Total de lojas</span>
-          <strong id="totalLojas">0</strong>
+          <span>Total em estoque</span>
+          <strong id="totalEstoque">0</strong>
         </div>
 
         <div class="dashboard-card">
-          <span>Lojas ativas</span>
-          <strong id="lojasAtivas">0</strong>
-        </div>
-
-        <div class="dashboard-card warning">
-          <span>Estoque crítico</span>
+          <span>Lojas críticas</span>
           <strong id="lojasCriticas">0</strong>
         </div>
 
-        <div class="dashboard-card">
-          <span>Estoque em atenção</span>
+        <div class="dashboard-card warning">
+          <span>Lojas em Atenção</span>
           <strong id="lojasAtencao">0</strong>
+        </div>
+
+        <div class="dashboard-card">
+          <span>Reposição sugerida</span>
+          <strong id="reposicaoSugerida">0</strong>
         </div>
       </section>
 
       <section class="content-grid single-column">
         <div class="content-card table-card">
           <div class="content-card-header">
-            <h2>Lojas cadastradas</h2>
-            <span>Monitoramento de reposição</span>
+            <h2>Controle de estoque por loja</h2>
+            <span>Quantidade atual, mínima, recomendada e sugestão de reposição</span>
           </div>
 
           <div class="table-wrapper">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>Cód. Loja</th>
-                  <th>Nome da Loja</th>
-                  <th>Estoque Atual</th>
-                  <th>Estoque Mínimo</th>
-                  <th>Estoque Recomendado</th>
+                  <th>Código</th>
+                  <th>Loja</th>
+                  <th>Atual</th>
+                  <th>Mínimo</th>
+                  <th>Recomendado</th>
+                  <th>Reposição Sugerida</th>
                   <th>Status</th>
-                  <th>Ação</th>
                 </tr>
               </thead>
-              <tbody id="tabelaLojas">
-              </tbody>
-            </table>
+           <tbody id="tabelaEstoque"></tbody>
+             </table>
           </div>
         </div>
 
@@ -113,15 +117,15 @@
     </main>
   </div>
 
-  <!-- Botão flutuante do assistente -->
+
   <button class="assistant-toggle" onclick="abrirAssistente()">
     Assistente IA
   </button>
 
-  <!-- Fundo escuro do assistente -->
+ 
   <div id="assistantOverlay" class="assistant-overlay" onclick="fecharAssistente()"></div>
 
-  <!-- Sidebar do assistente -->
+
   <aside id="assistantSidebar" class="assistant-sidebar">
     <div class="assistant-header">
       <div>
@@ -170,7 +174,7 @@
     </div>
   </aside>
 
-  <script src="js/mock-data.js"></script>
-  <script src="js/lojas.js"></script>
+  <script src="../js/mock-data.js"></script>
+  <script src="../js/estoque.js"></script>
 </body>
 </html>

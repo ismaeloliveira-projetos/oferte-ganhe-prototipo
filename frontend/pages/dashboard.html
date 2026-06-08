@@ -4,31 +4,31 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Envios | Oferte e Ganhe</title>
+  <title>Dashboard | Oferte e Ganhe</title>
 
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="../css/style.css" />
 </head>
 <body>
 
   <div class="app-layout">
 
-  
+   
     <aside class="sidebar" id="sidebar">
-         <button class="sidebar-close" onclick="fecharMenuMobile()" aria-label="Abrir menu">
+      <button class="sidebar-close" onclick="fecharMenuMobile()" aria-label="Abrir menu">
           X
         </button>
       <div class="sidebar-brand">
-        <h2>Historico de envios</h2>
-        <span>Registros simulados de envios de talões para lojas</span>
+        <h2>Oferte e Ganhe</h2>
+        <span>Gestão de Talões</span>
       </div>
 
-     <nav class="sidebar-menu">
-  <a href="dashboard.html">Dashboard</a>
+      <nav class="sidebar-menu">
+  <a href="dashboard.html" class="active">Dashboard</a>
   <a href="#">Usuários</a>
   <a href="#">Perfis</a>
   <a href="lojas.html">Lojas</a>
   <a href="estoque.html">Estoque</a>
-  <a href="envios.html" class="active">Envios</a>
+  <a href="envios.html">Envios</a>
   <a href="#">Recebimentos</a>
   <a href="#">Relatórios</a>
   <a href="#">Insights IA</a>
@@ -36,11 +36,9 @@
     </aside>
 
    
-    <div id="menuOverlay" class="menu-overlay" onclick="fecharMenuMobile()">
-      
-    </div>
+    <div id="menuOverlay" class="menu-overlay" onclick="fecharMenuMobile()"></div>
 
-    
+   
     <main class="main-content">
 
       <header class="topbar">
@@ -48,12 +46,9 @@
           ☰
         </button>
 
-
-        
-
         <div class="topbar-title">
-          <h1>Gestão de Envios</h1>
-          <p>Controle de envios de talões para as lojas</p>
+          <h1>Dashboard Administrativo</h1>
+          <p>Visão geral do controle de talões por loja</p>
         </div>
 
         <div class="user-info">
@@ -66,57 +61,66 @@
 
       <section class="dashboard-grid">
         <div class="dashboard-card">
-          <span>Total de envios</span>
-          <strong id="totalEnvios">400</strong>
+          <span>Total de lojas</span>
+          <strong id="totalLojas">0</strong>
         </div>
 
         <div class="dashboard-card">
-          <span>Talões enviados</span>
-          <strong id="totalTaloesEnviados">20</strong>
+          <span>Talões em estoque</span>
+          <strong id="totalEstoque">0</strong>
         </div>
 
         <div class="dashboard-card warning">
-          <span>Envios pendentes</span>
-          <strong id="enviosPendentes">4</strong>
+          <span>Estoque crítico</span>
+          <strong id="lojasCriticas">0</strong>
         </div>
 
         <div class="dashboard-card">
-          <span>Lojas atendidas</span>
-          <strong id="lojasAtendidas">7</strong>
+          <span>Envios no mês</span>
+          <strong id="enviosMes">0</strong>
         </div>
       </section>
 
-      <section class="content-grid single-column">
+      <section class="content-grid">
         <div class="content-card table-card">
           <div class="content-card-header">
-            <h2>Controle de estoque por loja</h2>
-            <span>Quantidade atual, mínima, recomendada e sugestão de reposição</span>
+            <h2>Lojas com atenção no estoque</h2>
+            <span>Monitoramento de reposição</span>
           </div>
 
           <div class="table-wrapper">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>Data</th>
+                  <th>Cód. Loja</th>
                   <th>Loja</th>
-                  <th>Quantidade</th>
-                  <th>Responsável</th>
+                  <th>Atual</th>
+                  <th>Mínimo</th>
+                  <th>Recomendado</th>
                   <th>Status</th>
-                  <th>Ação</th>
                 </tr>
               </thead>
-           <tbody id="tabelaEnvios"></tbody>
-             </table>
+              <tbody id="tabelaLojasCriticas">
+              </tbody>
+            </table>
           </div>
         </div>
 
-    
+        <div class="content-card">
+          <div class="content-card-header">
+            <h2>Insights Inteligentes</h2>
+            <span>Simulação IA</span>
+          </div>
+
+          <div id="listaInsights" class="insights-list">
+          </div>
+        </div>
       </section>
 
     </main>
   </div>
 
-
+ 
   <button class="assistant-toggle" onclick="abrirAssistente()">
     Assistente IA
   </button>
@@ -173,7 +177,7 @@
     </div>
   </aside>
 
-  <script src="js/mock-data.js"></script>
-  <script src="js/envios.js"></script>
+  <script src="../js/mock-data.js"></script>
+  <script src="../js/dashboard.js"></script>
 </body>
 </html>
