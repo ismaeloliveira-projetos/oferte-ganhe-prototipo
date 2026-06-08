@@ -63,6 +63,36 @@ const enviosMockados = [
   }
 ];
 
+const recebimentosMockados = [
+  {
+    id: 1,
+    idEnvio: 2,
+    codigoLoja: "003",
+    quantidadeRecebida: 80,
+    dataHora: "2026-06-01 17:10",
+    responsavel: "Administrador",
+    status: "Recebido"
+  },
+  {
+    id: 2,
+    idEnvio: 3,
+    codigoLoja: "005",
+    quantidadeRecebida: 50,
+    dataHora: "2026-06-02 10:40",
+    responsavel: "Administrador",
+    status: "Divergente"
+  },
+  {
+    id: 3,
+    idEnvio: 1,
+    codigoLoja: "001",
+    quantidadeRecebida: 0,
+    dataHora: "-",
+    responsavel: "-",
+    status: "Pendente"
+  }
+];
+
 const insightsMockados = [
   "A loja 003 pode atingir o estoque mínimo nos próximos dias.",
   "A loja 005 está abaixo do estoque mínimo e deve receber prioridade de envio.",

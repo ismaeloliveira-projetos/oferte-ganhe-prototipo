@@ -64,6 +64,16 @@ function carregarTabelaEnvios() {
     });
 }
 
+function abrirMenuMobile() {
+    document.getElementById("sidebar").classList.add("open");
+
+}
+
+function fecharMenuMobile() {
+    document.getElementById("sidebar").classList.remove("open");
+    document.getElementById("menuOverlay").classList.remove("open");
+}
+
 
 
 
@@ -73,4 +83,5 @@ function carregarTabelaEnvios() {
 carregarUsuarioLogado();
 carregarCardsEnvios();
 carregarTabelaEnvios();
+aplicarResponsividadeTabelas();
 

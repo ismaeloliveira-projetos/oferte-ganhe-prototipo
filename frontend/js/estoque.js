@@ -109,3 +109,4 @@ function fecharMenuMobile() {
 carregarUsuarioLogado();
 carregarCardsEstoque();
 carregarTabelaEstoque();
+aplicarResponsividadeTabelas();

@@ -236,3 +236,4 @@ carregarUsuarioLogado();
 carregarCardsDashboard();
 carregarTabelaLojasCriticas();
 carregarInsights();
+aplicarResponsividadeTabelas();

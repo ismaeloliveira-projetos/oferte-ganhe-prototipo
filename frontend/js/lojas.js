@@ -67,7 +67,7 @@ function carregarTabelaLojas() {
                     <span class="badge ${classesStatus}">${status}</span>
                 </td>
                 <td>
-                    <button class="btn btn-action" btn-sm">Visualizar</button>
+                    <button class="btn-table-action" btn-sm">Ver Detalhes</button>
                 </td>
             </tr>
         `;
@@ -89,3 +89,4 @@ function fecharMenuMobile() {
 carregarUsuarioLogado();
 carregarCardsLojas();
 carregarTabelaLojas();
+aplicarResponsividadeTabelas();
