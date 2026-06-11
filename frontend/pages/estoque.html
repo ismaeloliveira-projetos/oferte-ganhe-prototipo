@@ -13,27 +13,78 @@
   <div class="app-layout">
 
   
-    <aside class="sidebar" id="sidebar">
-         <button class="sidebar-close" onclick="fecharMenuMobile()" aria-label="Abrir menu">
-          X
-        </button>
-      <div class="sidebar-brand">
-        <h2>Oferte e Ganhe</h2>
-        <span>Gestão de Talões</span>
-      </div>
+<aside class="sidebar" id="sidebar">
+  <button class="sidebar-close" onclick="fecharMenuMobile()" aria-label="Fechar menu">
+    X
+  </button>
 
-     <nav class="sidebar-menu">
-  <a href="dashboard.html">Dashboard</a>
-  <a href="#">Usuários</a>
-  <a href="#">Perfis</a>
-  <a href="lojas.html">Lojas</a>
-  <a href="estoque.html" class="active">Estoque</a>
-  <a href="envios.html">Envios</a>
-  <a href="#">Recebimentos</a>
-  <a href="#">Relatórios</a>
-  <a href="#">Insights IA</a>
-</nav>
-    </aside>
+  <div class="sidebar-brand">
+    <h2>Oferte e Ganhe</h2>
+    <span>Gestão de Talões</span>
+  </div>
+
+  <nav class="sidebar-menu">
+
+    <span class="sidebar-section-title">VISÃO GERAL</span>
+
+    <a href="dashboard.html" class="sidebar-link">
+      <span class="sidebar-icon">▣</span>
+      <span>Dashboard</span>
+    </a>
+
+    <span class="sidebar-section-title">TALÕES</span>
+
+    <a href="envios.html" class="sidebar-link">
+      <span class="sidebar-icon">➤</span>
+      <span>Envios</span>
+    </a>
+
+    <a href="estoque.html" class="sidebar-link active">
+      <span class="sidebar-icon">▦</span>
+      <span>Estoque</span>
+    </a>
+
+    <a href="recebimentos.html" class="sidebar-link">
+      <span class="sidebar-icon">⇄</span>
+      <span>Recebimentos</span>
+    </a>
+
+    <a href="#" class="sidebar-link">
+      <span class="sidebar-icon">✎</span>
+      <span>Manutenção</span>
+    </a>
+
+    <span class="sidebar-section-title">CADASTROS</span>
+
+    <a href="lojas.html" class="sidebar-link">
+      <span class="sidebar-icon">⌂</span>
+      <span>Lojas</span>
+    </a>
+
+    <a href="usuarios.html" class="sidebar-link">
+      <span class="sidebar-icon">☻</span>
+      <span>Usuários</span>
+    </a>
+
+    <a href="#" class="sidebar-link">
+      <span class="sidebar-icon">⚿</span>
+      <span>Perfis de Acesso</span>
+    </a>
+
+    <span class="sidebar-section-title">ANÁLISE</span>
+
+    <a href="#" class="sidebar-link">
+      <span class="sidebar-icon">▤</span>
+      <span>Relatórios</span>
+    </a>
+
+    <a href="#" class="sidebar-link">
+      <span class="sidebar-icon">✦</span>
+      <span>Insights IA</span>
+    </a>
+
+  </nav>
+</aside>
 
    
     <div id="menuOverlay" class="menu-overlay" onclick="fecharMenuMobile()">
