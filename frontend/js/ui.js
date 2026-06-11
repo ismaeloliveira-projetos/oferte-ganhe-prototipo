@@ -36,3 +36,29 @@ function logout() {
     localStorage.removeItem("usuarioLogado");
     window.location.href = "login.html";
 }
+
+function abrirMenuMobile() {
+    const sidebar = document.getElementById("sidebar");
+    const menuOverlay = document.getElementById("menuOverlay");
+
+    if (sidebar) {
+        sidebar.classList.add("open");
+    }
+
+    if (menuOverlay) {
+        menuOverlay.classList.add("open");
+    }
+}
+
+function fecharMenuMobile() {
+    const sidebar = document.getElementById("sidebar");
+    const menuOverlay = document.getElementById("menuOverlay");
+
+    if (sidebar) {
+        sidebar.classList.remove("open");
+    }
+
+    if (menuOverlay) {
+        menuOverlay.classList.remove("open");
+    }
+}

@@ -1,5 +1,5 @@
 let codigoLojaEditando = null;
-
+let codigoLojaExcluindo = null;
 
 function carregarUsuarioLogado() {
     const usuarioSalvo = localStorage.getItem('usuarioLogado');
@@ -349,7 +349,7 @@ function editarLoja(codigo) {
     document.getElementById("formLojaOverlay").classList.remove("hidden");
 }
 
-function excluirLoja(codigo) {
+ function excluirLoja(codigo) {
     const lojas = buscarLojasSalvas();
 
     const lojaEncontrada = lojas.find(function(loja) {
@@ -361,22 +361,40 @@ function excluirLoja(codigo) {
         return;
     }
 
-    const confirmarExclusao = confirm(
-        "Deseja realmente excluir a loja " + lojaEncontrada.nome + "?"
-    );
+    codigoLojaExcluindo = codigo;
 
-    if (!confirmarExclusao) {
+    document.getElementById("nomeLojaExclusao").textContent = lojaEncontrada.nome;
+    document.getElementById("codigoLojaExclusao").textContent = "Código: " + lojaEncontrada.codigo;
+
+    document.getElementById("excluirLojaContainer").classList.remove("hidden");
+    document.getElementById("excluirLojaOverlay").classList.remove("hidden");
+}
+
+function fecharConfirmacaoExclusaoLoja() {
+    codigoLojaExcluindo = null;
+
+    document.getElementById("excluirLojaContainer").classList.add("hidden");
+    document.getElementById("excluirLojaOverlay").classList.add("hidden");
+}
+
+function confirmarExclusaoLoja() {
+    if (codigoLojaExcluindo === null) {
+        mostrarAlerta("Nenhuma loja selecionada para exclusão.");
         return;
     }
 
+    const lojas = buscarLojasSalvas();
+
     const lojasAtualizadas = lojas.filter(function(loja) {
-        return loja.codigo !== codigo;
+        return loja.codigo !== codigoLojaExcluindo;
     });
 
     salvarLojas(lojasAtualizadas);
 
     carregarCardsLojas();
     carregarTabelaLojas();
+
+    fecharConfirmacaoExclusaoLoja();
 
     mostrarAlerta("Loja excluída com sucesso.");
 }
