@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Envios | Oferte e Ganhe</title>
+  <title>Recebimentos | Oferte e Ganhe</title>
 
   <link rel="stylesheet" href="../css/style.css" />
 </head>
@@ -94,77 +94,140 @@
     
     <main class="main-content">
 
-      <header class="topbar">
-        <button class="menu-toggle" onclick="abrirMenuMobile()" aria-label="Abrir menu">
-          ☰
-        </button>
+  <header class="topbar">
+    <button class="menu-toggle" onclick="abrirMenuMobile()" aria-label="Abrir menu">
+      ☰
+    </button>
 
+    <div class="topbar-title">
+      <h1>Gestão de Recebimentos</h1>
+      <p>Confirmação de recebimento dos talões enviados às lojas</p>
+    </div>
+
+    <div class="user-info">
+      <button class="btn-primary" onclick="abrirFormularioRecebimento()">
+        + Novo Recebimento
+      </button>
+
+      <span id="nomeUsuario">Administrador</span>
+
+      <button class="btn-logout" onclick="logout()">
+        Sair
+      </button>
+    </div>
+  </header>
+
+  <div id="alertaSistema" class="alert-system hidden"></div>
+
+  <div
+    id="formRecebimentoOverlay"
+    class="bottom-sheet-overlay hidden"
+    onclick="fecharFormularioRecebimento()">
+  </div>
+
+  <section id="formRecebimentoContainer" class="bottom-sheet form-bottom-sheet hidden">
+    <div class="content-card-header">
+      <h2>Novo Recebimento</h2>
+      <span>Confirme o recebimento de um envio pendente</span>
+    </div>
+
+    <form id="formRecebimento">
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label for="envioRecebimento">Envio Pendente</label>
+          <select id="envioRecebimento" class="form-input" required>
+          </select>
+        </div>
 
         
 
-        <div class="topbar-title">
-          <h1>Gestão de Envios</h1>
-          <p>Controle de envios de talões para as lojas</p>
+        <div class="form-group">
+          <label for="quantidadeRecebida">Quantidade Recebida</label>
+          <input
+            type="number"
+            id="quantidadeRecebida"
+            class="form-input"
+            placeholder="Digite a quantidade recebida"
+            min="1"
+            required
+          />
         </div>
 
-        <div class="user-info">
-          <span id="nomeUsuario">Administrador</span>
-          <button class="btn-logout" onclick="logout()">
-            Sair
-          </button>
-        </div>
-      </header>
-
-      <section class="dashboard-grid">
-        <div class="dashboard-card">
-          <span>Total de envios</span>
-          <strong id="totalEnvios">400</strong>
+        <div class="form-group">
+          <label for="observacaoRecebimento">Observação</label>
+          <input
+            type="text"
+            id="observacaoRecebimento"
+            class="form-input"
+            placeholder="Ex: Recebido sem divergência"
+          />
         </div>
 
-        <div class="dashboard-card">
-          <span>Talões enviados</span>
-          <strong id="totalTaloesEnviados">20</strong>
-        </div>
+      </div>
 
-        <div class="dashboard-card warning">
-          <span>Envios pendentes</span>
-          <strong id="enviosPendentes">4</strong>
-        </div>
+      <div class="form-actions">
+        <button type="submit" id="btnSalvarRecebimento" class="btn-primary">
+          Salvar Recebimento
+        </button>
 
-        <div class="dashboard-card">
-          <span>Lojas atendidas</span>
-          <strong id="lojasAtendidas">7</strong>
-        </div>
-      </section>
+        <button type="button" class="btn-secondary" onclick="fecharFormularioRecebimento()">
+          Cancelar
+        </button>
+      </div>
+    </form>
+  </section>
 
-      <section class="content-grid single-column">
-        <div class="content-card table-card">
-          <div class="content-card-header">
-            <h2>Controle de estoque por loja</h2>
-            <span>Quantidade atual, mínima, recomendada e sugestão de reposição</span>
-          </div>
+  <section class="dashboard-grid">
+    <div class="dashboard-card">
+      <span>Total de recebimentos</span>
+      <strong id="totalRecebimentos">0</strong>
+    </div>
 
-          <div class="table-wrapper">
-            <table class="data-table responsive-table">
-              <thead>
-                <tr>
-                  <th>Data</th>
-                  <th>Loja</th>
-                  <th>Quantidade</th>
-                  <th>Responsável</th>
-                  <th>Status</th>
-                  <th>Ação</th>
-                </tr>
-              </thead>
-           <tbody id="tabelaEnvios"></tbody>
-             </table>
-          </div>
-        </div>
+    <div class="dashboard-card">
+      <span>Talões recebidos</span>
+      <strong id="totalTaloesRecebidos">0</strong>
+    </div>
 
-    
-      </section>
+    <div class="dashboard-card warning">
+      <span>Envios pendentes</span>
+      <strong id="enviosPendentesRecebimento">0</strong>
+    </div>
 
-    </main>
+    <div class="dashboard-card">
+      <span>Lojas atualizadas</span>
+      <strong id="lojasAtualizadasRecebimento">0</strong>
+    </div>
+  </section>
+
+  <section class="content-grid single-column">
+    <div class="content-card table-card">
+      <div class="content-card-header">
+        <h2>Histórico de recebimentos</h2>
+        <span>Registros de recebimento confirmados pelas lojas</span>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="data-table responsive-table">
+          <thead>
+            <tr>
+              <th>Data/Hora</th>
+              <th>Loja</th>
+              <th>Quantidade</th>
+              <th>Responsável</th>
+              <th>Status</th>
+              <th>Observação</th>
+            </tr>
+          </thead>
+
+          <tbody id="tabelaRecebimentos">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</main>
   </div>
 
 
@@ -226,6 +289,6 @@
 
   <script src="../js/mock-data.js"></script>
     <script src="../js/ui.js"></script>
-  <script src="../js/envios.js"></script>
+  <script src="../js/recebimentos.js"></script>
 </body>
 </html>

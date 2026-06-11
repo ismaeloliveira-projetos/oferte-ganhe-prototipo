@@ -1,85 +1,297 @@
-function carregarUsuarioLogado() {
-    const ususarioSalvo = localStorage.getItem('usuarioLogado');
-    if (!ususarioSalvo) {
-        window.location.href = 'login.html';
-        return;
+function buscarRecebimentosSalvos() {
+    const banco = carregarBanco();
+
+    if (!banco.recebimentos) {
+        banco.recebimentos = [];
+        salvarBanco(banco);
     }
-    const usuario = JSON.parse(ususarioSalvo);
-    document.getElementById('nomeUsuario').textContent = usuario.nome;
+
+    return banco.recebimentos;
 }
 
-function buscarLojasPorCodigo(codigo) {
-    return lojasMockadas.find(function(loja) {
-        return loja.codigo === codigo;
+function buscarEnviosSalvos() {
+    const banco = carregarBanco();
+
+    if (!banco.envios) {
+        banco.envios = [];
+        salvarBanco(banco);
+    }
+
+    return banco.envios;
+}
+
+function buscarLojasSalvas() {
+    const banco = carregarBanco();
+
+    if (!banco.lojas) {
+        banco.lojas = [];
+        salvarBanco(banco);
+    }
+
+    return banco.lojas;
+}
+
+function salvarRecebimentos(recebimentos) {
+    const banco = carregarBanco();
+
+    banco.recebimentos = recebimentos;
+
+    salvarBanco(banco);
+}
+
+function salvarEnvios(envios) {
+    const banco = carregarBanco();
+
+    banco.envios = envios;
+
+    salvarBanco(banco);
+}
+
+function salvarLojas(lojas) {
+    const banco = carregarBanco();
+
+    banco.lojas = lojas;
+
+    salvarBanco(banco);
+}
+
+function mostrarAlerta(mensagem) {
+    const alerta = document.getElementById("alertaSistema");
+
+    alerta.textContent = mensagem;
+    alerta.classList.remove("hidden");
+
+    setTimeout(function() {
+        alerta.classList.add("hidden");
+    }, 3000);
+}
+
+function obterUsuarioLogado() {
+    const usuarioSalvo = localStorage.getItem("usuarioLogado");
+
+    if (!usuarioSalvo) {
+        return {
+            nome: "Administrador"
+        };
+    }
+
+    const usuario = JSON.parse(usuarioSalvo);
+
+    return {
+        nome: usuario.nome || usuario.nomeCompleto || usuario.email || "Administrador"
+    };
+}
+
+function obterCodigoLojaDoEnvio(envio) {
+    return envio.codigoLoja || envio.lojaCodigo || envio.codigo || "";
+}
+
+function buscarLojaPorCodigo(codigoLoja) {
+    const lojas = buscarLojasSalvas();
+
+    return lojas.find(function(loja) {
+        return loja.codigo === codigoLoja;
     });
 }
 
-function buscarEnvioPorId(idEnvio) {
-    return enviosMockados.find(function(envio) {
-        return envio.id === idEnvio;
-    });
-}
-
-function obterClasseStatusRecebimento(status) {
-    if (status === "Pendente") {
-        return "badge-atencao";
-    } 
-    if (status === "Divergente") {
-        return "badge-critico";
+function formatarDataHora(dataHora) {
+    if (!dataHora) {
+        return "-";
     }
-    return "badge-normal";
+
+    const data = new Date(dataHora);
+
+    if (isNaN(data.getTime())) {
+        return dataHora;
+    }
+
+    return data.toLocaleString("pt-BR");
 }
 
 function carregarCardsRecebimentos() {
-    const totalRecebimentos = recebimentosMockados.length;
-    const totalTaloesRecebidos = recebimentosMockados.reduce(function(total, recebimento) {
-        return total + recebimento.quantidadeRecebida;
+    const recebimentos = buscarRecebimentosSalvos();
+    const envios = buscarEnviosSalvos();
+
+    const totalRecebimentos = recebimentos.length;
+
+    const totalTaloesRecebidos = recebimentos.reduce(function(total, recebimento) {
+        return total + Number(recebimento.quantidadeRecebida);
     }, 0);
-    const recebimentosPendentes = recebimentosMockados.filter(function(recebimento) {
-        return recebimento.status === "Pendente";
-    }).length;
-    const recebimentosDivergentes = recebimentosMockados.filter(function(recebimento) {
-        return recebimento.status === "Divergente";
+
+    const enviosPendentes = envios.filter(function(envio) {
+        return envio.status === "Pendente";
     }).length;
 
-    document.getElementById(
-        "totalRecebimentos").textContent = totalRecebimentos;
+    const lojasAtualizadas = new Set(recebimentos.map(function(recebimento) {
+        return recebimento.codigoLoja;
+    })).size;
+
+    document.getElementById("totalRecebimentos").textContent = totalRecebimentos;
     document.getElementById("totalTaloesRecebidos").textContent = totalTaloesRecebidos;
-    document.getElementById("recebimentosPendentes").textContent = recebimentosPendentes;
-    document.getElementById("recebimentosDivergentes").textContent = recebimentosDivergentes;
+    document.getElementById("enviosPendentesRecebimento").textContent = enviosPendentes;
+    document.getElementById("lojasAtualizadasRecebimento").textContent = lojasAtualizadas;
 }
 
 function carregarTabelaRecebimentos() {
-    const tabela = document.getElementById('tabelaRecebimentos');
-    tabela.innerHTML = '';
-    recebimentosMockados.forEach(function(recebimento) {
-        const loja = buscarLojasPorCodigo(recebimento.codigoLoja);
-        const envio = buscarEnvioPorId(recebimento.idEnvio);
-        const classeStatus = obterClasseStatusRecebimento(recebimento.status);
-        tabela.innerHTML += `<tr>
-            <td>${recebimento.dataHora}</td>
-            <td>${loja ? loja.nome : recebimento.codigoLoja}</td>
-            <td>${envio ? envio.quantidade : 'N/A'}</td>
-            <td>${recebimento.quantidadeRecebida}</td>
-            <td>${recebimento.responsavel}</td>
-            <td><span class="badge-status ${classeStatus}">${recebimento.status}</span></td>
-            <td><button class="btn-table-action btn-primary">Ver Detalhes</button></td>
-        </tr>`;
+    const tabela = document.getElementById("tabelaRecebimentos");
+    tabela.innerHTML = "";
+
+    const recebimentos = buscarRecebimentosSalvos();
+
+    recebimentos.forEach(function(recebimento) {
+        const loja = buscarLojaPorCodigo(recebimento.codigoLoja);
+
+        tabela.innerHTML += `
+            <tr>
+                <td>${formatarDataHora(recebimento.dataHora)}</td>
+                <td>${loja ? loja.nome : "Loja desconhecida"}</td>
+                <td>${recebimento.quantidadeRecebida}</td>
+                <td>${recebimento.responsavel}</td>
+                <td>
+                    <span class="badge-status badge-normal">
+                        Confirmado
+                    </span>
+                </td>
+                <td>${recebimento.observacao || "-"}</td>
+            </tr>
+        `;
     });
 
+    aplicarResponsividadeTabelas();
 }
 
-function abrirMenuMobile() {
-    document.getElementById("sidebar").classList.add("open");
-        document.getElementById("menuOverlay").classList.add("open");
+function carregarEnviosPendentesNoFormulario() {
+    const selectEnvio = document.getElementById("envioRecebimento");
+    const envios = buscarEnviosSalvos();
+
+    selectEnvio.innerHTML = "";
+
+    let encontrouPendente = false;
+
+    envios.forEach(function(envio, index) {
+        if (envio.status === "Pendente") {
+            encontrouPendente = true;
+
+            const codigoLoja = obterCodigoLojaDoEnvio(envio);
+            const loja = buscarLojaPorCodigo(codigoLoja);
+            const nomeLoja = loja ? loja.nome : "Loja desconhecida";
+
+            selectEnvio.innerHTML += `
+                <option value="${index}">
+                    ${nomeLoja} - ${envio.quantidade} talões - ${envio.remessa || "Sem remessa"}
+                </option>
+            `;
+        }
+    });
+
+    if (!encontrouPendente) {
+        selectEnvio.innerHTML = `
+            <option value="">
+                Nenhum envio pendente
+            </option>
+        `;
+    }
 }
 
-function fecharMenuMobile() {   
-    document.getElementById("sidebar").classList.remove("open");
-    document.getElementById("menuOverlay").classList.remove("open");
+function abrirFormularioRecebimento() {
+    document.getElementById("formRecebimento").reset();
+
+    carregarEnviosPendentesNoFormulario();
+
+    document.getElementById("formRecebimentoContainer").classList.remove("hidden");
+    document.getElementById("formRecebimentoOverlay").classList.remove("hidden");
 }
+
+function fecharFormularioRecebimento() {
+    document.getElementById("formRecebimentoContainer").classList.add("hidden");
+    document.getElementById("formRecebimentoOverlay").classList.add("hidden");
+}
+
+document.getElementById("formRecebimento").addEventListener("submit", function(event) {
+    event.preventDefault();
+
+    const indiceEnvio = document.getElementById("envioRecebimento").value;
+    const quantidadeRecebida = Number(document.getElementById("quantidadeRecebida").value);
+    const observacao = document.getElementById("observacaoRecebimento").value;
+    const usuario = obterUsuarioLogado();
+
+    if (indiceEnvio === "") {
+        mostrarAlerta("Selecione um envio pendente.");
+        return;
+    }
+
+    if (quantidadeRecebida <= 0) {
+        mostrarAlerta("Informe uma quantidade válida.");
+        return;
+    }
+
+    const envios = buscarEnviosSalvos();
+    const envioSelecionado = envios[Number(indiceEnvio)];
+
+    if (!envioSelecionado) {
+        mostrarAlerta("Envio não encontrado.");
+        return;
+    }
+
+    if (envioSelecionado.status !== "Pendente") {
+        mostrarAlerta("Este envio já foi recebido.");
+        return;
+    }
+
+    if (quantidadeRecebida > Number(envioSelecionado.quantidade)) {
+        mostrarAlerta("A quantidade recebida não pode ser maior que a enviada.");
+        return;
+    }
+
+    const codigoLoja = obterCodigoLojaDoEnvio(envioSelecionado);
+
+    if (!codigoLoja) {
+        mostrarAlerta("Não foi possível identificar a loja do envio.");
+        return;
+    }
+
+    const recebimentos = buscarRecebimentosSalvos();
+
+    const novoRecebimento = {
+        id: Date.now(),
+        dataHora: new Date().toISOString(),
+        envioId: envioSelecionado.id || null,
+        codigoLoja: codigoLoja,
+        quantidadeRecebida: quantidadeRecebida,
+        responsavel: usuario.nome,
+        observacao: observacao
+    };
+
+    recebimentos.push(novoRecebimento);
+
+    envioSelecionado.status = "Recebido";
+
+    const lojas = buscarLojasSalvas();
+
+    const lojasAtualizadas = lojas.map(function(loja) {
+        if (loja.codigo === codigoLoja) {
+            return {
+                ...loja,
+                estoqueAtual: Number(loja.estoqueAtual) + quantidadeRecebida
+            };
+        }
+
+        return loja;
+    });
+
+    salvarRecebimentos(recebimentos);
+    salvarEnvios(envios);
+    salvarLojas(lojasAtualizadas);
+
+    carregarCardsRecebimentos();
+    carregarTabelaRecebimentos();
+
+    fecharFormularioRecebimento();
+
+    mostrarAlerta("Recebimento registrado e estoque atualizado com sucesso.");
+});
+
 
 carregarUsuarioLogado();
 carregarCardsRecebimentos();
 carregarTabelaRecebimentos();
-aplicarResponsividadeTabelas();
