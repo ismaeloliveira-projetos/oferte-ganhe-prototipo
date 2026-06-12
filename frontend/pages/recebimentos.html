@@ -49,7 +49,7 @@
       <span>Recebimentos</span>
     </a>
 
-    <a href="#" class="sidebar-link">
+    <a href="manutencao.html" class="sidebar-link">
       <span class="sidebar-icon">✎</span>
       <span>Manutenção</span>
     </a>
@@ -73,7 +73,7 @@
 
     <span class="sidebar-section-title">ANÁLISE</span>
 
-    <a href="#" class="sidebar-link">
+    <a href="relatorios.html" class="sidebar-link">
       <span class="sidebar-icon">▤</span>
       <span>Relatórios</span>
     </a>
@@ -103,6 +103,11 @@
       <h1>Gestão de Recebimentos</h1>
       <p>Confirmação de recebimento dos talões enviados às lojas</p>
     </div>
+
+    <button type="button" class="notification-button" onclick="abrirFormularioRecebimento()">
+  🔔
+  <span id="contadorEnviosPendentes" class="notification-badge hidden">0</span>
+</button>
 
     <div class="user-info">
       <button class="btn-primary" onclick="abrirFormularioRecebimento()">

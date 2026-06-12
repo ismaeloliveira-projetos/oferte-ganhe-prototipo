@@ -130,6 +130,8 @@ function carregarCardsRecebimentos() {
     document.getElementById("totalTaloesRecebidos").textContent = totalTaloesRecebidos;
     document.getElementById("enviosPendentesRecebimento").textContent = enviosPendentes;
     document.getElementById("lojasAtualizadasRecebimento").textContent = lojasAtualizadas;
+
+    atualizarSininhoRecebimentos();
 }
 
 function carregarTabelaRecebimentos() {
@@ -291,7 +293,33 @@ document.getElementById("formRecebimento").addEventListener("submit", function(e
     mostrarAlerta("Recebimento registrado e estoque atualizado com sucesso.");
 });
 
+function atualizarSininhoRecebimentos() {
+    const envios = buscarEnviosSalvos();
+
+    const enviosPendentes = envios.filter(function(envio) {
+        return envio.status === "Pendente";
+    }).length;
+
+    const contador = document.getElementById("contadorEnviosPendentes");
+    const botaoSininho = document.querySelector(".notification-button");
+
+    if (!contador || !botaoSininho) {
+        return;
+    }
+
+    if (enviosPendentes > 0) {
+        contador.textContent = enviosPendentes;
+        contador.classList.remove("hidden");
+        botaoSininho.classList.add("has-notification");
+    } else {
+        contador.textContent = "0";
+        contador.classList.add("hidden");
+        botaoSininho.classList.remove("has-notification");
+    }
+}
+
 
 carregarUsuarioLogado();
 carregarCardsRecebimentos();
 carregarTabelaRecebimentos();
+atualizarSininhoRecebimentos();

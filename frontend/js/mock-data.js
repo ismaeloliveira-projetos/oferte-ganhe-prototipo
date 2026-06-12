@@ -100,111 +100,111 @@ const insightsMockados = [
   "A loja 001 apresenta necessidade de reposição de 75 talões."
 ];
 
-const DB_KEY = "oferte_ganhe_db_v1";
+  const DB_KEY = "oferte_ganhe_db_v1";
 
-function criarBancoInicial() {
-  return {
-    lojas: lojasMockadas.map(function(loja, index) {
-      return {
-        id: index + 1,
-        codigo: loja.codigo,
-        nome: loja.nome,
-        estoqueAtual: loja.estoqueAtual,
-        estoqueMinimo: loja.estoqueMinimo,
-        estoqueRecomendado: loja.estoqueRecomendado,
-        conversao: 0.3,
-        status: "Ativa"
-      };
-    }),
+  function criarBancoInicial() {
+    return {
+      lojas: lojasMockadas.map(function(loja, index) {
+        return {
+          id: index + 1,
+          codigo: loja.codigo,
+          nome: loja.nome,
+          estoqueAtual: loja.estoqueAtual,
+          estoqueMinimo: loja.estoqueMinimo,
+          estoqueRecomendado: loja.estoqueRecomendado,
+          conversao: 0.3,
+          status: "Ativa"
+        };
+      }),
 
-    envios: enviosMockados,
+      envios: enviosMockados,
 
-    recebimentos: recebimentosMockados,
+      recebimentos: recebimentosMockados,
 
-    usuarios: [
-      {
-        id: 1,
-        nome: "Administrador",
-        matricula: "00001",
-        email: "admin@oferteganhe.com",
-        senha: "admin123",
-        perfilId: 1
+      usuarios: [
+        {
+          id: 1,
+          nome: "Administrador",
+          matricula: "00001",
+          email: "admin@oferteganhe.com",
+          senha: "admin123",
+          perfilId: 1
+        }
+      ],
+
+      perfis: [
+        {
+          id: 1,
+          nome: "Administrador",
+          permissoes: [
+            "dashboard",
+            "lojas",
+            "usuarios",
+            "perfis",
+            "envios",
+            "estoque",
+            "recebimentos",
+            "manutencao",
+            "relatorios"
+          ]
+        },
+        {
+          id: 2,
+          nome: "Gestor",
+          permissoes: [
+            "dashboard",
+            "lojas",
+            "envios",
+            "estoque",
+            "recebimentos",
+            "relatorios"
+          ]
+        },
+        {
+          id: 3,
+          nome: "Operador",
+          permissoes: [
+            "dashboard",
+            "envios",
+            "recebimentos"
+          ]
+        }
+      ],
+
+      insights: insightsMockados,
+
+      sequencias: {
+        loja: lojasMockadas.length + 1,
+        envio: enviosMockados.length + 1,
+        recebimento: recebimentosMockados.length + 1,
+        usuario: 2,
+        perfil: 4
       }
-    ],
-
-    perfis: [
-      {
-        id: 1,
-        nome: "Administrador",
-        permissoes: [
-          "dashboard",
-          "lojas",
-          "usuarios",
-          "perfis",
-          "envios",
-          "estoque",
-          "recebimentos",
-          "manutencao",
-          "relatorios"
-        ]
-      },
-      {
-        id: 2,
-        nome: "Gestor",
-        permissoes: [
-          "dashboard",
-          "lojas",
-          "envios",
-          "estoque",
-          "recebimentos",
-          "relatorios"
-        ]
-      },
-      {
-        id: 3,
-        nome: "Operador",
-        permissoes: [
-          "dashboard",
-          "envios",
-          "recebimentos"
-        ]
-      }
-    ],
-
-    insights: insightsMockados,
-
-    sequencias: {
-      loja: lojasMockadas.length + 1,
-      envio: enviosMockados.length + 1,
-      recebimento: recebimentosMockados.length + 1,
-      usuario: 2,
-      perfil: 4
-    }
-  };
-}
-
-function carregarBanco() {
-  const bancoSalvo = localStorage.getItem(DB_KEY);
-
-  if (bancoSalvo) {
-    return JSON.parse(bancoSalvo);
+    };
   }
 
-  const bancoInicial = criarBancoInicial();
-  salvarBanco(bancoInicial);
+  function carregarBanco() {
+    const bancoSalvo = localStorage.getItem(DB_KEY);
 
-  return bancoInicial;
-}
+    if (bancoSalvo) {
+      return JSON.parse(bancoSalvo);
+    }
 
-function salvarBanco(banco) {
-  localStorage.setItem(DB_KEY, JSON.stringify(banco));
-}
+    const bancoInicial = criarBancoInicial();
+    salvarBanco(bancoInicial);
 
-function resetarBanco() {
-  localStorage.removeItem(DB_KEY);
-  const bancoInicial = criarBancoInicial();
-  salvarBanco(bancoInicial);
+    return bancoInicial;
+  }
 
-  return bancoInicial;
-}
+  function salvarBanco(banco) {
+    localStorage.setItem(DB_KEY, JSON.stringify(banco));
+  }
+
+  function resetarBanco() {
+    localStorage.removeItem(DB_KEY);
+    const bancoInicial = criarBancoInicial();
+    salvarBanco(bancoInicial);
+
+    return bancoInicial;
+  }
 

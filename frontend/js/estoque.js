@@ -1,112 +1,141 @@
-function carregarUsuarioLogado() {
-  const usuarioSalvo = localStorage.getItem("usuarioLogado");
+function buscarLojasSalvas() {
+    const banco = carregarBanco();
 
-  if (!usuarioSalvo) {
-    window.location.href = "login.html";
-    return;
-  }
+    if (!banco.lojas) {
+        banco.lojas = [];
+        salvarBanco(banco);
+    }
 
-  const usuario = JSON.parse(usuarioSalvo);
+    return banco.lojas;
+}
 
-  document.getElementById("nomeUsuario").textContent = usuario.nome;
+function obterEstoqueAtual(loja) {
+    return Number(
+        loja.estoqueAtual ??
+        loja.quantidadeAtual ??
+        loja.recomendado ??
+        loja.estoqueRecomendado ??
+        0
+    );
+}
+
+function obterEstoqueMinimo(loja) {
+    return Number(
+        loja.estoqueMinimo ??
+        loja.minimo ??
+        0
+    );
+}
+
+function obterEstoqueRecomendado(loja) {
+    return Number(
+        loja.estoqueRecomendado ??
+        loja.recomendado ??
+        0
+    );
 }
 
 function obterStatusEstoque(loja) {
-  if (loja.estoqueAtual <= loja.estoqueMinimo) {
-    return "Crítico";
-  }
+    const estoqueAtual = obterEstoqueAtual(loja);
+    const estoqueMinimo = obterEstoqueMinimo(loja);
+    const estoqueRecomendado = obterEstoqueRecomendado(loja);
 
-  if (loja.estoqueAtual < loja.estoqueRecomendado) {
-    return "Atenção";
-  }
+    if (estoqueAtual <= estoqueMinimo) {
+        return "Crítico";
+    }
 
-  return "Normal";
+    if (estoqueAtual < estoqueRecomendado) {
+        return "Atenção";
+    }
+
+    return "Normal";
 }
 
-function obterClasseStatus(status) {
-  if (status === "Crítico") {
-    return "badge-critico";
-  }
+function obterClasseStatusEstoque(status) {
+    if (status === "Crítico") {
+        return "badge-critico";
+    }
 
-  if (status === "Atenção") {
-    return "badge-atencao";
-  }
+    if (status === "Atenção") {
+        return "badge-atencao";
+    }
 
-  return "badge-normal";
+    return "badge-normal";
 }
 
-function calcularReposicaoSugerida(loja) {
-  if (loja.estoqueAtual >= loja.estoqueRecomendado) {
-    return 0;
-  }
+function atualizarTexto(ids, valor) {
+    ids.forEach(function(id) {
+        const elemento = document.getElementById(id);
 
-  return loja.estoqueRecomendado - loja.estoqueAtual;
+        if (elemento) {
+            elemento.textContent = valor;
+        }
+    });
 }
 
 function carregarCardsEstoque() {
-  const totalEstoque = lojasMockadas.reduce(function (total, loja) {
-    return total + loja.estoqueAtual;
-  }, 0);
+    const lojas = buscarLojasSalvas();
 
-  const lojasCriticas = lojasMockadas.filter(function (loja) {
-    return obterStatusEstoque(loja) === "Crítico";
-  }).length;
+    const totalEstoque = lojas.reduce(function(total, loja) {
+        return total + obterEstoqueAtual(loja);
+    }, 0);
 
-  const lojasAtencao = lojasMockadas.filter(function (loja) {
-    return obterStatusEstoque(loja) === "Atenção";
-  }).length;
+    const lojasCriticas = lojas.filter(function(loja) {
+        return obterStatusEstoque(loja) === "Crítico";
+    }).length;
 
-  const reposicaoSugerida = lojasMockadas.reduce(function (total, loja) {
-    return total + calcularReposicaoSugerida(loja);
-  }, 0);
+    const lojasAtencao = lojas.filter(function(loja) {
+        return obterStatusEstoque(loja) === "Atenção";
+    }).length;
 
-  document.getElementById("totalEstoque").textContent = totalEstoque;
-  document.getElementById("lojasCriticas").textContent = lojasCriticas;
-  document.getElementById("lojasAtencao").textContent = lojasAtencao;
-  document.getElementById("reposicaoSugerida").textContent = reposicaoSugerida;
+    const lojasNormais = lojas.filter(function(loja) {
+        return obterStatusEstoque(loja) === "Normal";
+    }).length;
+
+    atualizarTexto(["totalEstoque", "totalTaloesEstoque", "estoqueTotal"], totalEstoque);
+    atualizarTexto(["lojasCriticas", "totalLojasCriticas", "estoqueCritico"], lojasCriticas);
+    atualizarTexto(["lojasAtencao", "totalLojasAtencao", "estoqueAtencao"], lojasAtencao);
+    atualizarTexto(["lojasNormais", "totalLojasNormais"], lojasNormais);
 }
 
 function carregarTabelaEstoque() {
-  const tabela = document.getElementById("tabelaEstoque");
+    const tabela = document.getElementById("tabelaEstoque");
 
-  tabela.innerHTML = "";
+    if (!tabela) {
+        console.error("Elemento tabelaEstoque não encontrado no HTML.");
+        return;
+    }
 
-  lojasMockadas.forEach(function (loja) {
-    const status = obterStatusEstoque(loja);
-    const classeStatus = obterClasseStatus(status);
-    const reposicaoSugerida = calcularReposicaoSugerida(loja);
+    const lojas = buscarLojasSalvas();
 
-    tabela.innerHTML += `
-      <tr>
-        <td>${loja.codigo}</td>
-        <td>${loja.nome}</td>
-        <td>${loja.estoqueAtual}</td>
-        <td>${loja.estoqueMinimo}</td>
-        <td>${loja.estoqueRecomendado}</td>
-        <td>${reposicaoSugerida}</td>
-        <td>
-          <span class="badge-status ${classeStatus}">
-            ${status}
-          </span>
-        </td>
-      </tr>
-    `;
-  });
+    tabela.innerHTML = "";
+
+    lojas.forEach(function(loja) {
+        const estoqueAtual = obterEstoqueAtual(loja);
+        const estoqueMinimo = obterEstoqueMinimo(loja);
+        const estoqueRecomendado = obterEstoqueRecomendado(loja);
+        const status = obterStatusEstoque(loja);
+        const classeStatus = obterClasseStatusEstoque(status);
+
+        tabela.innerHTML += `
+            <tr>
+                <td>${loja.codigo || loja.cod_loja || "-"}</td>
+                <td>${loja.nome || loja.nome_loja || "Loja sem nome"}</td>
+                <td>${estoqueAtual}</td>
+                <td>${estoqueMinimo}</td>
+                <td>${estoqueRecomendado}</td>
+                <td>
+                    <span class="badge-status ${classeStatus}">
+                        ${status}
+                    </span>
+                </td>
+            </tr>
+        `;
+    });
+
+    aplicarResponsividadeTabelas();
 }
-
-function abrirMenuMobile() {
-  document.getElementById("sidebar").classList.add("open");
-  document.getElementById("menuOverlay").classList.add("open");
-}
-
-function fecharMenuMobile() {
-  document.getElementById("sidebar").classList.remove("open");
-  document.getElementById("menuOverlay").classList.remove("open");
-}
-
-
 
 carregarUsuarioLogado();
 carregarCardsEstoque();
 carregarTabelaEstoque();
-aplicarResponsividadeTabelas();

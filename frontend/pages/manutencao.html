@@ -12,7 +12,8 @@
 
   <div class="app-layout">
 
-  <aside class="sidebar" id="sidebar">
+   
+<aside class="sidebar" id="sidebar">
   <button class="sidebar-close" onclick="fecharMenuMobile()" aria-label="Fechar menu">
     X
   </button>
@@ -48,7 +49,7 @@
       <span>Recebimentos</span>
     </a>
 
-    <a href="manutencao.html" class="sidebar-link">
+    <a href="manutencao.html" class="sidebar-link active">
       <span class="sidebar-icon">✎</span>
       <span>Manutenção</span>
     </a>
@@ -60,7 +61,7 @@
       <span>Lojas</span>
     </a>
 
-    <a href="usuarios.html" class="sidebar-link active">
+    <a href="usuarios.html" class="sidebar-link">
       <span class="sidebar-icon">☻</span>
       <span>Usuários</span>
     </a>
@@ -85,11 +86,11 @@
   </nav>
 </aside>
 
-    <!-- Fundo escuro do menu mobile -->
+   
     <div id="menuOverlay" class="menu-overlay" onclick="fecharMenuMobile()"></div>
 
-    <!-- Conteúdo principal -->
-    <main class="main-content">
+   
+   <main class="main-content">
 
   <header class="topbar">
     <button class="menu-toggle" onclick="abrirMenuMobile()" aria-label="Abrir menu">
@@ -97,13 +98,13 @@
     </button>
 
     <div class="topbar-title">
-      <h1>Gestão de Usuários</h1>
-      <p>Cadastro, edição e controle dos usuários do sistema</p>
+      <h1>Manutenção de Talões</h1>
+      <p>Registro de ajustes, perdas, avarias e correções no estoque</p>
     </div>
 
     <div class="user-info">
-      <button class="btn-primary" onclick="abrirFormularioUsuario()">
-        + Novo Usuário
+      <button class="btn-primary" onclick="abrirFormularioManutencao()">
+        + Nova Manutenção
       </button>
 
       <span id="nomeUsuario">Administrador</span>
@@ -115,150 +116,140 @@
   </header>
 
   <div id="alertaSistema" class="alert-system hidden"></div>
-  
-  <div
-  id="excluirUsuarioOverlay"
-  class="bottom-sheet-overlay hidden"
-  onclick="fecharConfirmacaoExclusaoUsuario()">
-</div>
-
-<section id="excluirUsuarioContainer" class="bottom-sheet form-bottom-sheet confirm-delete-sheet hidden">
-  <div class="content-card-header">
-    <h2>Excluir Usuário</h2>
-    <span>Confirme antes de remover este usuário do sistema</span>
-  </div>
-
-  <div class="delete-warning">
-    <strong>Atenção</strong>
-
-    <p>Você está prestes a excluir o usuário:</p>
-
-    <div class="delete-target">
-      <strong id="nomeUsuarioExclusao">Usuário</strong>
-      <span id="emailUsuarioExclusao">email@exemplo.com</span>
-    </div>
-
-    <p>Essa ação removerá o usuário da lista do protótipo.</p>
-  </div>
-
-  <div class="form-actions">
-    <button type="button" class="btn-danger" onclick="confirmarExclusaoUsuario()">
-      Sim, excluir
-    </button>
-
-    <button type="button" class="btn-secondary" onclick="fecharConfirmacaoExclusaoUsuario()">
-      Cancelar
-    </button>
-  </div>
-</section>
 
   <div
-  id="formUsuarioOverlay"
-  class="bottom-sheet-overlay hidden"
-  onclick="fecharFormularioUsuario()">
-</div>
-
-<section id="formUsuarioContainer" class="bottom-sheet form-bottom-sheet hidden">
-  <div class="content-card-header">
-    <h2>Novo Usuário</h2>
-    <span>Preencha os dados para cadastrar um novo usuário</span>
+    id="formManutencaoOverlay"
+    class="bottom-sheet-overlay hidden"
+    onclick="fecharFormularioManutencao()">
   </div>
 
-  <form id="formUsuario">
-    <div class="form-grid">
-      <div class="form-group">
-        <label for="nomeUsuarioInput">Nome</label>
-        <input
-          type="text"
-          id="nomeUsuarioInput"
-          class="form-input"
-          placeholder="Digite o nome do usuário"
-          required
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="matriculaUsuario">Matrícula</label>
-        <input
-          type="text"
-          id="matriculaUsuario"
-          class="form-input"
-          placeholder="Digite a matrícula"
-          required
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="emailUsuario">E-mail</label>
-        <input
-          type="email"
-          id="emailUsuario"
-          class="form-input"
-          placeholder="Digite o e-mail"
-          required
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="senhaUsuario">Senha</label>
-        <input
-          type="password"
-          id="senhaUsuario"
-          class="form-input"
-          placeholder="Digite a senha"
-          required
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="perfilUsuario">Perfil de Acesso</label>
-        <select id="perfilUsuario" class="form-input" required>
-        </select>
-      </div>
+  <section id="formManutencaoContainer" class="bottom-sheet form-bottom-sheet hidden">
+    <div class="content-card-header">
+      <h2>Nova Manutenção</h2>
+      <span>Registre uma alteração manual no estoque de uma loja</span>
     </div>
 
-    <div class="form-actions">
-      <button type="submit" id="btnSalvarUsuario" class="btn-primary">
-        Salvar Usuário
-      </button>
+    <form id="formManutencao">
+      <div class="form-grid">
 
-      <button type="button" class="btn-secondary" onclick="fecharFormularioUsuario()">
-        Cancelar
-      </button>
+        <div class="form-group">
+          <label for="lojaManutencao">Loja</label>
+          <select id="lojaManutencao" class="form-input" required>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="tipoManutencao">Tipo de Manutenção</label>
+          <select id="tipoManutencao" class="form-input" required>
+            <option value="">Selecione</option>
+            <option value="Entrada">Entrada manual</option>
+            <option value="Saída">Saída manual</option>
+            <option value="Perda">Perda de talões</option>
+            <option value="Avaria">Talões avariados</option>
+            <option value="Correção">Correção de estoque</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="quantidadeManutencao">Quantidade</label>
+          <input
+            type="number"
+            id="quantidadeManutencao"
+            class="form-input"
+            placeholder="Digite a quantidade"
+            min="1"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="motivoManutencao">Motivo</label>
+          <input
+            type="text"
+            id="motivoManutencao"
+            class="form-input"
+            placeholder="Ex: ajuste operacional, avaria, divergência"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="responsavelManutencao">Responsável</label>
+          <input
+            type="text"
+            id="responsavelManutencao"
+            class="form-input"
+            readonly
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="observacaoManutencao">Observação</label>
+          <input
+            type="text"
+            id="observacaoManutencao"
+            class="form-input"
+            placeholder="Observação opcional"
+          />
+        </div>
+
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" id="btnSalvarManutencao" class="btn-primary">
+          Salvar Manutenção
+        </button>
+
+        <button type="button" class="btn-secondary" onclick="fecharFormularioManutencao()">
+          Cancelar
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section class="dashboard-grid">
+    <div class="dashboard-card">
+      <span>Total de manutenções</span>
+      <strong id="totalManutencoes">0</strong>
     </div>
-  </form>
-</section>
+
+    <div class="dashboard-card">
+      <span>Entradas manuais</span>
+      <strong id="entradasManuais">0</strong>
+    </div>
+
+    <div class="dashboard-card warning">
+      <span>Saídas / perdas</span>
+      <strong id="saidasManuais">0</strong>
+    </div>
+
+    <div class="dashboard-card">
+      <span>Lojas ajustadas</span>
+      <strong id="lojasAjustadas">0</strong>
+    </div>
+  </section>
 
   <section class="content-grid single-column">
     <div class="content-card table-card">
       <div class="content-card-header">
-        <h2>Usuários cadastrados</h2>
-        <span>Gerenciamento de acesso ao sistema</span>
-      </div>
-
-      <div class="toolbar">
-        <input
-          type="text"
-          id="buscaUsuario"
-          class="form-input"
-          placeholder="Buscar por nome, matrícula ou e-mail"
-          oninput="filtrarUsuarios()"
-        />
+        <h2>Histórico de manutenções</h2>
+        <span>Registros de ajustes realizados no estoque das lojas</span>
       </div>
 
       <div class="table-wrapper">
         <table class="data-table responsive-table">
           <thead>
             <tr>
-              <th>Nome</th>
-              <th>Matrícula</th>
-              <th>E-mail</th>
-              <th>Perfil</th>
-              <th>Ação</th>
+              <th>Data/Hora</th>
+              <th>Loja</th>
+              <th>Tipo</th>
+              <th>Quantidade</th>
+              <th>Responsável</th>
+              <th>Motivo</th>
             </tr>
           </thead>
 
-          <tbody id="tabelaUsuarios">
+          <tbody id="tabelaManutencoes">
           </tbody>
         </table>
       </div>
@@ -266,17 +257,18 @@
   </section>
 
 </main>
+
   </div>
 
-  <!-- Botão flutuante do assistente -->
+ 
   <button class="assistant-toggle" onclick="abrirAssistente()">
     Assistente IA
   </button>
 
-  <!-- Fundo escuro do assistente -->
+ 
   <div id="assistantOverlay" class="assistant-overlay" onclick="fecharAssistente()"></div>
 
-  <!-- Sidebar do assistente -->
+
   <aside id="assistantSidebar" class="assistant-sidebar">
     <div class="assistant-header">
       <div>
@@ -327,6 +319,6 @@
 
   <script src="../js/mock-data.js"></script>
   <script src="../js/ui.js"></script>
-  <script src="../js/usuarios.js"></script>
+  <script src="../js/manutencao.js"></script>
 </body>
 </html>

@@ -120,7 +120,7 @@ function abrirFormularioLoja() {
     codigoLojaEditando = null;
 
     document.getElementById("estoqueMinimo").value = 200;
-    document.getElementById("estoqueRecomendado").value = 150;
+    document.getElementById("estoqueRecomendado").value = 300;
 
     document.getElementById("estoqueMinimo").readOnly = true;
     document.getElementById("estoqueRecomendado").readOnly = true;
