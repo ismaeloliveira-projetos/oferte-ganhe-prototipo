@@ -1,209 +1,285 @@
+function buscarLojasSalvas() {
+    const banco = carregarBanco();
+
+    if (!banco.lojas) {
+        banco.lojas = [];
+        salvarBanco(banco);
+    }
+
+    return banco.lojas;
+}
+
+function buscarEnviosSalvos() {
+    const banco = carregarBanco();
+
+    if (!banco.envios) {
+        banco.envios = [];
+        salvarBanco(banco);
+    }
+
+    return banco.envios;
+}
+
+function buscarRecebimentosSalvos() {
+    const banco = carregarBanco();
+
+    if (!banco.recebimentos) {
+        banco.recebimentos = [];
+        salvarBanco(banco);
+    }
+
+    return banco.recebimentos;
+}
+
+function buscarManutencoesSalvas() {
+    const banco = carregarBanco();
+
+    if (!banco.manutencoes) {
+        banco.manutencoes = [];
+        salvarBanco(banco);
+    }
+
+    return banco.manutencoes;
+}
+
+function obterEstoqueAtual(loja) {
+    return Number(
+        loja.estoqueAtual ??
+        loja.quantidadeAtual ??
+        loja.recomendado ??
+        loja.estoqueRecomendado ??
+        0
+    );
+}
+
+function obterEstoqueMinimo(loja) {
+    return Number(
+        loja.estoqueMinimo ??
+        loja.minimo ??
+        0
+    );
+}
+
+function obterEstoqueRecomendado(loja) {
+    return Number(
+        loja.estoqueRecomendado ??
+        loja.recomendado ??
+        0
+    );
+}
+
 function obterStatusEstoque(loja) {
-  if (loja.estoqueAtual <= loja.estoqueMinimo) {
-    return "Crítico";
-  }
+    const estoqueAtual = obterEstoqueAtual(loja);
+    const estoqueMinimo = obterEstoqueMinimo(loja);
+    const estoqueRecomendado = obterEstoqueRecomendado(loja);
 
-  if (loja.estoqueAtual < loja.estoqueRecomendado) {
-    return "Atenção";
-  }
+    if (estoqueAtual <= estoqueMinimo) {
+        return "Crítico";
+    }
 
-  return "Normal";
+    if (estoqueAtual < estoqueRecomendado) {
+        return "Atenção";
+    }
+
+    return "Normal";
 }
 
 function obterClasseStatus(status) {
-  if (status === "Crítico") {
-    return "badge-critico";
-  }
+    if (status === "Crítico") {
+        return "badge-critico";
+    }
 
-  if (status === "Atenção") {
-    return "badge-atencao";
-  }
+    if (status === "Atenção") {
+        return "badge-atencao";
+    }
 
-  return "badge-normal";
+    return "badge-normal";
 }
 
+function envioEhDoMesAtual(envio) {
+    const dataEnvio = new Date(envio.dataHora);
+
+    if (isNaN(dataEnvio.getTime())) {
+        return false;
+    }
+
+    const hoje = new Date();
+
+    return (
+        dataEnvio.getMonth() === hoje.getMonth() &&
+        dataEnvio.getFullYear() === hoje.getFullYear()
+    );
+}
+
+function obterQuantidadeEnvio(envio) {
+    return Number(
+        envio.quantidade ??
+        envio.quantidadeEnviada ??
+        envio.quantidade_enviada ??
+        0
+    );
+}
 
 function carregarCardsDashboard() {
-  const totalLojas = lojasMockadas.length;
+    const lojas = buscarLojasSalvas();
+    const envios = buscarEnviosSalvos();
 
-  const totalEstoque = lojasMockadas.reduce(function (total, loja) {
-    return total + loja.estoqueAtual;
-  }, 0);
+    const totalLojas = lojas.length;
 
-  const lojasCriticas = lojasMockadas.filter(function (loja) {
-    return obterStatusEstoque(loja) === "Crítico";
-  }).length;
+    const totalEstoque = lojas.reduce(function(total, loja) {
+        return total + obterEstoqueAtual(loja);
+    }, 0);
 
-  const enviosMes = enviosMockados.length;
+    const lojasCriticas = lojas.filter(function(loja) {
+        return obterStatusEstoque(loja) === "Crítico";
+    }).length;
 
-  document.getElementById("totalLojas").textContent = totalLojas;
-  document.getElementById("totalEstoque").textContent = totalEstoque;
-  document.getElementById("lojasCriticas").textContent = lojasCriticas;
-  document.getElementById("enviosMes").textContent = enviosMes;
+    const enviosMes = envios.filter(function(envio) {
+        return envioEhDoMesAtual(envio);
+    }).length;
+
+    document.getElementById("totalLojas").textContent = totalLojas;
+    document.getElementById("totalEstoque").textContent = totalEstoque;
+    document.getElementById("lojasCriticas").textContent = lojasCriticas;
+    document.getElementById("enviosMes").textContent = enviosMes;
 }
 
 function carregarTabelaLojasCriticas() {
-  const tabela = document.getElementById("tabelaLojasCriticas");
+    const tabela = document.getElementById("tabelaLojasCriticas");
 
-  const lojasComAtencao = lojasMockadas.filter(function (loja) {
-    const status = obterStatusEstoque(loja);
-    return status === "Crítico" || status === "Atenção";
-  });
+    if (!tabela) {
+        return;
+    }
 
-  tabela.innerHTML = "";
+    const lojas = buscarLojasSalvas();
 
-  lojasComAtencao.forEach(function (loja) {
-    const status = obterStatusEstoque(loja);
-    const classeStatus = obterClasseStatus(status);
+    const lojasComAtencao = lojas.filter(function(loja) {
+        const status = obterStatusEstoque(loja);
 
-    tabela.innerHTML += `
-      <tr>
-        <td>${loja.codigo}</td>
-        <td>${loja.nome}</td>
-        <td>${loja.estoqueAtual}</td>
-        <td>${loja.estoqueMinimo}</td>
-        <td>${loja.estoqueRecomendado}</td>
-        <td>
-          <span class="badge-status ${classeStatus}">
-            ${status}
-          </span>
-        </td>
-      </tr>
-    `;
-  });
+        return status === "Crítico" || status === "Atenção";
+    });
+
+    tabela.innerHTML = "";
+
+    if (lojasComAtencao.length === 0) {
+        tabela.innerHTML = `
+            <tr>
+                <td colspan="6">Nenhuma loja em situação crítica ou de atenção.</td>
+            </tr>
+        `;
+        return;
+    }
+
+    lojasComAtencao.forEach(function(loja) {
+        const status = obterStatusEstoque(loja);
+        const classeStatus = obterClasseStatus(status);
+
+        tabela.innerHTML += `
+            <tr>
+                <td>${loja.codigo || "-"}</td>
+                <td>${loja.nome || "Loja sem nome"}</td>
+                <td>${obterEstoqueAtual(loja)}</td>
+                <td>${obterEstoqueMinimo(loja)}</td>
+                <td>${obterEstoqueRecomendado(loja)}</td>
+                <td>
+                    <span class="badge-status ${classeStatus}">
+                        ${status}
+                    </span>
+                </td>
+            </tr>
+        `;
+    });
+
+    aplicarResponsividadeTabelas();
 }
 
 function carregarInsights() {
-  const lista = document.getElementById("listaInsights");
+    const lista = document.getElementById("listaInsights");
 
-  lista.innerHTML = "";
-
-  insightsMockados.forEach(function (insight) {
-    lista.innerHTML += `
-      <div class="insight-item">
-        <strong>Insight:</strong> ${insight}
-      </div>
-    `;
-  });
-}
-
-function abrirAssistente() {
-  document.getElementById("assistantSidebar").classList.add("open");
-  document.getElementById("assistantOverlay").classList.add("open");
-}
-
-function fecharAssistente() {
-  document.getElementById("assistantSidebar").classList.remove("open");
-  document.getElementById("assistantOverlay").classList.remove("open");
-}
-
-function usarSugestao(pergunta) {
-  document.getElementById("chatInput").value = pergunta;
-  enviarPerguntaAssistente();
-}
-
-function verificarEnterAssistente(event) {
-  if (event.key === "Enter") {
-    enviarPerguntaAssistente();
-  }
-}
-
-function responderPerguntaAssistente(pergunta) {
-  const perguntaNormalizada = pergunta.toLowerCase();
-
-  if (
-    perguntaNormalizada.includes("abaixo do estoque") ||
-    perguntaNormalizada.includes("estoque mínimo") ||
-    perguntaNormalizada.includes("estoque minimo") ||
-    perguntaNormalizada.includes("crítica") ||
-    perguntaNormalizada.includes("critica")
-  ) {
-    const lojasCriticas = lojasMockadas.filter(function (loja) {
-      return loja.estoqueAtual <= loja.estoqueMinimo;
-    });
-
-    if (lojasCriticas.length === 0) {
-      return "No momento, nenhuma loja está abaixo do estoque mínimo.";
+    if (!lista) {
+        return;
     }
 
-    const nomesLojas = lojasCriticas
-      .map(function (loja) {
-        return `${loja.codigo} - ${loja.nome}`;
-      })
-      .join(", ");
+    const lojas = buscarLojasSalvas();
+    const envios = buscarEnviosSalvos();
+    const recebimentos = buscarRecebimentosSalvos();
+    const manutencoes = buscarManutencoesSalvas();
 
-    return `As lojas abaixo do estoque mínimo são: ${nomesLojas}.`;
-  }
+    const lojasCriticas = lojas.filter(function(loja) {
+        return obterStatusEstoque(loja) === "Crítico";
+    });
 
-  if (
-    perguntaNormalizada.includes("total de talões enviados") ||
-    perguntaNormalizada.includes("taloes enviados") ||
-    perguntaNormalizada.includes("talões enviados") ||
-    perguntaNormalizada.includes("envios")
-  ) {
-    const totalEnviado = enviosMockados.reduce(function (total, envio) {
-      return total + envio.quantidade;
+    const lojasAtencao = lojas.filter(function(loja) {
+        return obterStatusEstoque(loja) === "Atenção";
+    });
+
+    const enviosPendentes = envios.filter(function(envio) {
+        return envio.status === "Pendente";
+    });
+
+    const totalEnviado = envios.reduce(function(total, envio) {
+        return total + obterQuantidadeEnvio(envio);
     }, 0);
 
-    return `O total de talões enviados nos dados simulados é de ${totalEnviado} talões.`;
-  }
+    lista.innerHTML = "";
 
-  if (
-    perguntaNormalizada.includes("total de lojas") ||
-    perguntaNormalizada.includes("quantas lojas")
-  ) {
-    return `O sistema possui ${lojasMockadas.length} lojas cadastradas nos dados mockados.`;
-  }
+    if (lojasCriticas.length > 0) {
+        lista.innerHTML += `
+            <div class="insight-item">
+                <strong>Estoque crítico:</strong>
+                Existem ${lojasCriticas.length} loja(s) abaixo do estoque mínimo.
+            </div>
+        `;
+    }
 
-  if (
-    perguntaNormalizada.includes("estoque total") ||
-    perguntaNormalizada.includes("talões em estoque") ||
-    perguntaNormalizada.includes("taloes em estoque")
-  ) {
-    const totalEstoque = lojasMockadas.reduce(function (total, loja) {
-      return total + loja.estoqueAtual;
-    }, 0);
+    if (lojasAtencao.length > 0) {
+        lista.innerHTML += `
+            <div class="insight-item">
+                <strong>Atenção:</strong>
+                Existem ${lojasAtencao.length} loja(s) abaixo do estoque recomendado.
+            </div>
+        `;
+    }
 
-    return `O estoque total atual é de ${totalEstoque} talões.`;
-  }
+    if (enviosPendentes.length > 0) {
+        lista.innerHTML += `
+            <div class="insight-item">
+                <strong>Envios pendentes:</strong>
+                Existem ${enviosPendentes.length} remessa(s) aguardando recebimento.
+            </div>
+        `;
+    }
 
-  return "Ainda não tenho uma resposta para essa pergunta no protótipo. Na versão final, o assistente será integrado ao backend para consultar dados reais.";
+    lista.innerHTML += `
+        <div class="insight-item">
+            <strong>Movimentação:</strong>
+            O sistema possui ${envios.length} envio(s), ${recebimentos.length} recebimento(s) e ${manutencoes.length} manutenção(ões).
+        </div>
+    `;
+
+    lista.innerHTML += `
+        <div class="insight-item">
+            <strong>Total enviado:</strong>
+            Foram registrados ${totalEnviado} talões enviados no sistema.
+        </div>
+    `;
+
+    if (
+        lojasCriticas.length === 0 &&
+        lojasAtencao.length === 0 &&
+        enviosPendentes.length === 0
+    ) {
+        lista.innerHTML += `
+            <div class="insight-item">
+                <strong>Situação estável:</strong>
+                Nenhuma pendência crítica identificada no momento.
+            </div>
+        `;
+    }
 }
 
-function adicionarMensagemChat(texto, tipo) {
-  const chatMessages = document.getElementById("chatMessages");
-
-  chatMessages.innerHTML += `
-    <div class="chat-message ${tipo}">
-      ${texto}
-    </div>
-  `;
-
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-function enviarPerguntaAssistente() {
-  const input = document.getElementById("chatInput");
-  const pergunta = input.value.trim();
-
-  if (pergunta === "") {
-    return;
-  }
-
-  adicionarMensagemChat(pergunta, "user");
-
-  const resposta = responderPerguntaAssistente(pergunta);
-
-  setTimeout(function () {
-    adicionarMensagemChat(resposta, "assistant");
-  }, 500);
-
-  input.value = "";
-}
-
-
-carregarUsuarioLogado();
-carregarCardsDashboard();
-carregarTabelaLojasCriticas();
-carregarInsights();
-aplicarResponsividadeTabelas();
+document.addEventListener("DOMContentLoaded", function() {
+    carregarCardsDashboard();
+    carregarTabelaLojasCriticas();
+    carregarInsights();
+});

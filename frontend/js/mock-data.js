@@ -183,60 +183,7 @@ const insightsMockados = [
     };
   }
 
-  usuarios: [
-    {
-        id: 1,
-        nome: "Administrador",
-        matricula: "0001",
-        email: "admin@oferte.com",
-        senha: "123",
-        perfil: "Administrador",
-        permissoes: [
-            "dashboard",
-            "lojas",
-            "usuarios",
-            "perfis",
-            "estoque",
-            "envios",
-            "recebimentos",
-            "manutencao",
-            "relatorios",
-            "insights"
-        ]
-    },
-    {
-        id: 2,
-        nome: "Gestor",
-        matricula: "0002",
-        email: "gestor@oferte.com",
-        senha: "123",
-        perfil: "Gestor",
-        permissoes: [
-            "dashboard",
-            "lojas",
-            "estoque",
-            "envios",
-            "recebimentos",
-            "manutencao",
-            "relatorios",
-            "insights"
-        ]
-    },
-    {
-        id: 3,
-        nome: "Operador",
-        matricula: "0003",
-        email: "operador@oferte.com",
-        senha: "123",
-        perfil: "Operador",
-        permissoes: [
-            "dashboard",
-            "estoque",
-            "envios",
-            "recebimentos"
-        ]
-    }
-]
+  
 
   function carregarBanco() {
     const bancoSalvo = localStorage.getItem(DB_KEY);

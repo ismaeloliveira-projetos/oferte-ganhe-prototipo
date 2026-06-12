@@ -1536,3 +1536,13 @@ video {
     max-width: 100%;
   }
 }
+
+.user-role-badge {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(0, 128, 64, 0.12);
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
