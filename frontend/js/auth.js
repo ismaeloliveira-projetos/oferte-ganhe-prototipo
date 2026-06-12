@@ -19,24 +19,51 @@ const usuariosMockados = [
     senha: "123456",
     matricula: "707070",
     nome: "Administrador",
-    perfil:"Administrador"
+    perfil: "Administrador",
+    permissoes: [
+      "dashboard",
+      "lojas",
+      "usuarios",
+      "perfis",
+      "estoque",
+      "envios",
+      "recebimentos",
+      "manutencao",
+      "relatorios",
+      "insights"
+    ]
   },
   {
-     email: "operador@empresa.com",
+    email: "gestor@empresa.com",
     senha: "123456",
-    matricula:"101010",
+    matricula: "202020",
+    nome: "Gestor",
+    perfil: "Gestor",
+    permissoes: [
+      "dashboard",
+      "lojas",
+      "estoque",
+      "envios",
+      "recebimentos",
+      "manutencao",
+      "relatorios",
+      "insights"
+    ]
+  },
+  {
+    email: "operador@empresa.com",
+    senha: "123456",
+    matricula: "101010",
     nome: "Operador",
-    perfil:"Operador"
-  },
-  {
-   email: "vendedor@empresa.com",
-    senha: "123456",
-    matricula:"202020",
-    nome: "Vendedor",
-    perfil:"Vendedor"
-  },
+    perfil: "Operador",
+    permissoes: [
+      "dashboard",
+      "estoque",
+      "envios",
+      "recebimentos"
+    ]
+  }
 ];
-
 
 
 
@@ -63,18 +90,28 @@ loginForm.addEventListener("submit", function (event) {
 );
 
 if (usuario) {
-    btnEntrar.classList.remove("loading");
-      btnEntrar.classList.add("success");
-      btnText.textContent = "✓ Logado!";
-      btnText.classList.remove("hidden");
-      btnLoading.classList.add("hidden");
-      
-      localStorage.setItem("usuarioLogado", JSON.stringify(usuariosMockados));
-      
-      setTimeout(() => {
-        window.location.href = "dashboard.html";
-      }, 800);
-    } else {
+  btnEntrar.classList.remove("loading");
+  btnEntrar.classList.add("success");
+  btnText.textContent = "✓ Logado!";
+  btnText.classList.remove("hidden");
+  btnLoading.classList.add("hidden");
+
+  const usuarioLogado = {
+    email: usuario.email,
+    matricula: usuario.matricula,
+    nome: usuario.nome,
+    perfil: usuario.perfil,
+    permissoes: usuario.permissoes
+  };
+
+  localStorage.setItem("usuarioLogado", JSON.stringify(usuarioLogado));
+
+  setTimeout(() => {
+    window.location.href = "dashboard.html";
+  }, 800);
+}
+
+else {
       
       btnEntrar.disabled = false;
       btnEntrar.classList.remove("loading");

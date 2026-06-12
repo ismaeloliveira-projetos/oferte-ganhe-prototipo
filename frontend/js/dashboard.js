@@ -22,17 +22,6 @@ function obterClasseStatus(status) {
   return "badge-normal";
 }
 
-function carregarUsuarioLogado() {
-  const usuarioSalvo = localStorage.getItem("usuarioLogado");
-
-  if (!usuarioSalvo) {
-    window.location.href = "login.html";
-    return;
-  }
-
-  const usuario = JSON.parse(usuarioSalvo);
-  document.getElementById("nomeUsuario").textContent = usuario.nome;
-}
 
 function carregarCardsDashboard() {
   const totalLojas = lojasMockadas.length;
@@ -97,25 +86,6 @@ function carregarInsights() {
     `;
   });
 }
-
-function logout() {
-  localStorage.removeItem("usuarioLogado");
-  window.location.href = "login.html";
-}
-
-
-
-function abrirMenuMobile() {
-  document.getElementById("sidebar").classList.add("open");
-  document.getElementById("menuOverlay").classList.add("open");
-}
-
-function fecharMenuMobile() {
-  document.getElementById("sidebar").classList.remove("open");
-  document.getElementById("menuOverlay").classList.remove("open");
-}
-
-
 
 function abrirAssistente() {
   document.getElementById("assistantSidebar").classList.add("open");
