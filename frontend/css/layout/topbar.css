@@ -1,0 +1,50 @@
+.topbar {
+  background: white;
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-left: 6px solid var(--qq-yellow);
+  flex-wrap: wrap;
+}
+
+.menu-toggle {
+  display: none;
+  background-color: var(--qq-green);
+  color: white;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.topbar-title {
+  min-width: 0;
+}
+
+.topbar-title h1 {
+  font-size: 26px;
+  margin-bottom: 6px;
+  overflow-wrap: anywhere;
+}
+
+.topbar-title p {
+  color: var(--qq-gray);
+  font-size: 14px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.menu-overlay.open {
+  display: block;
+}

@@ -186,13 +186,16 @@ const insightsMockados = [
   
 
   function carregarBanco() {
+    // tenta pegar dados salvos no localStorage
     const bancoSalvo = localStorage.getItem(DB_KEY);
 
     if (bancoSalvo) {
+      // se já existe retorna o que está salvo
       return JSON.parse(bancoSalvo);
     }
-
+   // se for a primeira vez cria estrutura inicial com dados mockados 
     const bancoInicial = criarBancoInicial();
+    // e salva para a proxima vez
     salvarBanco(bancoInicial);
 
     return bancoInicial;

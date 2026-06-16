@@ -85,6 +85,7 @@ loginForm.addEventListener("submit", function (event) {
 
   // Simular requisição
   setTimeout(() => {
+    // procura o usuario no banco 
     const usuario = usuariosMockados.find(
   (u) => u.email === email && u.senha === senha
 );
