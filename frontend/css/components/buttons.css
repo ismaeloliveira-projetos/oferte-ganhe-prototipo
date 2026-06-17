@@ -1,0 +1,76 @@
+/* Primary Button */
+.btn-primary {
+  background-color: var(--qq-green);
+  color: white;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: var(--qq-green-dark);
+}
+
+/* Primary Button States */
+.btn-primary.loading {
+  background-color: var(--qq-gray);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.btn-primary.loading:hover {
+  background-color: var(--qq-gray);
+}
+
+.btn-primary.success {
+  background-color: #10b981;
+}
+
+.btn-primary.success:hover {
+  background-color: #059669;
+}
+
+/* Secondary Button */
+.btn-secondary {
+  background-color: var(--qq-white);
+  color: var(--qq-dark);
+  border: 1px solid var(--qq-border);
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-secondary:hover {
+  background-color: var(--qq-light);
+}
+
+/* Logout Button */
+.btn-logout {
+  background-color: transparent;
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+/* Table Action Button */
+.btn-table-action {
+  background-color: var(--qq-green);
+  color: var(--qq-white);
+  border: none;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-table-action:hover {
+  background-color: var(--qq-green-dark);
+}
