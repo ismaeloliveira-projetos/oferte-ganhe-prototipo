@@ -1,58 +1,64 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Login | Oferte e Ganhe</title>
+    <title>Login | Oferte e Ganhe</title>
 
-  <link rel="stylesheet" href="../css/style.css" />
-</head>
-<body class="login-page">
-
-  <main class="login-container">
-    <section class="login-card">
-      <div class="login-header">
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body class="login-page">
+    <main class="login-container">
+      <!-- Coluna da esquerda: identidade visual -->
+      <div class="login-brand">
+        <img src="../assets/logo.png" alt="Logo Oferte e Ganhe" />
         <h1>Oferte e Ganhe</h1>
-        <p>Controle de talões e estoque por loja</p>
+        <p>Sistema de controle e gestão de talões</p>
       </div>
 
-      <form id="loginForm">
-        <div class="form-group">
-          <label for="email">E-mail</label>
-          <input
-            type="email"
-            class="form-input"
-            id="email"
-            placeholder="Digite seu e-mail"
-            required
-          />
-        </div>
+      <!-- Coluna da direita: formulário -->
+      <div class="login-form-wrapper">
+        <section class="login-card">
+          <h2>Acessar sistema</h2>
 
-        <div class="form-group">
-          <label for="senha">Senha</label>
-          <input
-            type="password"
-            class="form-input"
-            id="senha"
-            placeholder="Digite sua senha"
-            required
-          />
-        </div>
+          <form id="loginForm">
+            <div class="form-group">
+              <label for="email">E-mail</label>
+              <input
+                type="email"
+                class="form-input"
+                id="email"
+                placeholder="Digite seu e-mail"
+                required
+              />
+            </div>
 
-        <div id="loginError" class="alert-error hidden">
-          Erro ao fazer login. Verifique seu e-mail e senha.
-        </div>
+            <div class="form-group">
+              <label for="senha">Senha</label>
+              <input
+                type="password"
+                class="form-input"
+                id="senha"
+                placeholder="Digite sua senha"
+                required
+              />
+            </div>
 
-        <button type="submit" class="btn-primary full-width" id="btnEntrar">
-          <span id="btnText">Entrar</span>
-          <span id="btnLoading" class="hidden">⏳ Carregando...</span>
-        </button>
-      </form>
+            <div id="loginError" class="alert-error hidden">
+              Erro ao fazer login. Verifique seu e-mail e senha.
+            </div>
 
-    </section>
-  </main>
+            <button type="submit" class="btn-primary full-width" id="btnEntrar">
+              <span id="btnText">Entrar</span>
+              <span id="btnLoading" class="hidden">⏳ Carregando...</span>
+            </button>
+          </form>
+        </section>
+      </div>
+    </main>
 
-  <script src="../js/auth.js"></script>
-</body>
+    <script src="../js/mock-data.js"></script>
+    <script src="../js/auth.js"></script>
+  </body>
 </html>

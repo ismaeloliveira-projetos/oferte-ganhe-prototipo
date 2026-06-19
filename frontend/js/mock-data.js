@@ -4,36 +4,36 @@ const lojasMockadas = [
     nome: "Loja Centro",
     estoqueAtual: 25,
     estoqueMinimo: 30,
-    estoqueRecomendado: 100
+    estoqueRecomendado: 100,
   },
   {
     codigo: "002",
     nome: "Loja Zona Norte",
     estoqueAtual: 80,
     estoqueMinimo: 40,
-    estoqueRecomendado: 100
+    estoqueRecomendado: 100,
   },
   {
     codigo: "003",
     nome: "Loja Shopping",
     estoqueAtual: 12,
     estoqueMinimo: 25,
-    estoqueRecomendado: 90
+    estoqueRecomendado: 90,
   },
   {
     codigo: "004",
     nome: "Loja Gravataí",
     estoqueAtual: 110,
     estoqueMinimo: 40,
-    estoqueRecomendado: 100
+    estoqueRecomendado: 100,
   },
   {
     codigo: "005",
     nome: "Loja Canoas",
     estoqueAtual: 45,
     estoqueMinimo: 50,
-    estoqueRecomendado: 120
-  }
+    estoqueRecomendado: 120,
+  },
 ];
 
 const enviosMockados = [
@@ -43,7 +43,7 @@ const enviosMockados = [
     quantidade: 100,
     dataHora: "2026-06-02 09:30",
     responsavel: "Administrador",
-    status: "Enviado"
+    status: "Enviado",
   },
   {
     id: 2,
@@ -51,7 +51,7 @@ const enviosMockados = [
     quantidade: 80,
     dataHora: "2026-06-01 14:20",
     responsavel: "Administrador",
-    status: "Recebido"
+    status: "Recebido",
   },
   {
     id: 3,
@@ -59,8 +59,8 @@ const enviosMockados = [
     quantidade: 60,
     dataHora: "2026-06-01 16:45",
     responsavel: "Administrador",
-    status: "Pendente"
-  }
+    status: "Pendente",
+  },
 ];
 
 const recebimentosMockados = [
@@ -71,7 +71,7 @@ const recebimentosMockados = [
     quantidadeRecebida: 80,
     dataHora: "2026-06-01 17:10",
     responsavel: "Administrador",
-    status: "Recebido"
+    status: "Recebido",
   },
   {
     id: 2,
@@ -80,7 +80,7 @@ const recebimentosMockados = [
     quantidadeRecebida: 50,
     dataHora: "2026-06-02 10:40",
     responsavel: "Administrador",
-    status: "Divergente"
+    status: "Divergente",
   },
   {
     id: 3,
@@ -89,127 +89,205 @@ const recebimentosMockados = [
     quantidadeRecebida: 0,
     dataHora: "-",
     responsavel: "-",
-    status: "Pendente"
-  }
+    status: "Pendente",
+  },
 ];
 
 const insightsMockados = [
   "A loja 003 pode atingir o estoque mínimo nos próximos dias.",
   "A loja 005 está abaixo do estoque mínimo e deve receber prioridade de envio.",
   "A loja 004 está com estoque acima do recomendado.",
-  "A loja 001 apresenta necessidade de reposição de 75 talões."
+  "A loja 001 apresenta necessidade de reposição de 75 talões.",
 ];
 
-  const DB_KEY = "oferte_ganhe_db_v1";
+const DB_KEY = "oferte_ganhe_db_v1";
 
-  function criarBancoInicial() {
-    return {
-      lojas: lojasMockadas.map(function(loja, index) {
-        return {
-          id: index + 1,
-          codigo: loja.codigo,
-          nome: loja.nome,
-          estoqueAtual: loja.estoqueAtual,
-          estoqueMinimo: loja.estoqueMinimo,
-          estoqueRecomendado: loja.estoqueRecomendado,
-          conversao: 0.3,
-          status: "Ativa"
-        };
-      }),
+function criarBancoInicial() {
+  return {
+    lojas: lojasMockadas.map(function (loja, index) {
+      return {
+        id: index + 1,
+        codigo: loja.codigo,
+        nome: loja.nome,
+        estoqueAtual: loja.estoqueAtual,
+        estoqueMinimo: loja.estoqueMinimo,
+        estoqueRecomendado: loja.estoqueRecomendado,
+        conversao: 0.3,
+        status: "Ativa",
+      };
+    }),
 
-      envios: enviosMockados,
+    envios: enviosMockados,
+    recebimentos: recebimentosMockados,
 
-      recebimentos: recebimentosMockados,
+    usuarios: [
+      {
+        id: 1,
+        nome: "Administrador",
+        matricula: "707070",
+        email: "admin@empresa.com",
+        senha: "123456",
+        perfilId: 1,
+        lojaId: null,
+      },
+      {
+        id: 2,
+        nome: "Administrador loja centro",
+        matricula: "505050",
+        email: "admin@loja.com",
+        senha: "123456",
+        perfilId: 2,
+        lojaId: "001",
+      },
+      {
+        id: 3,
+        nome: "Gestor",
+        matricula: "202020",
+        email: "gestor@empresa.com",
+        senha: "123456",
+        perfilId: 3,
+        lojaId: "001",
+      },
+      {
+        id: 4,
+        nome: "Operador",
+        matricula: "101010",
+        email: "operador@empresa.com",
+        senha: "123456",
+        perfilId: 4,
+        lojaId: "001",
+      },
+    ],
 
-      usuarios: [
-        {
-          id: 1,
-          nome: "Administrador",
-          matricula: "00001",
-          email: "admin@oferteganhe.com",
-          senha: "admin123",
-          perfilId: 1
-        }
-      ],
+    perfis: [
+      {
+        id: 1,
+        nome: "Administrador",
+        nivel: 4,
+        permissoes: [
+          "dashboard",
+          "lojas",
+          "usuarios",
+          "perfis",
+          "estoque",
+          "envios",
+          "recebimentos",
+          "manutencao",
+          "relatorios",
+          "insights",
+        ],
+      },
+      {
+        id: 2,
+        nome: "Administrador loja",
+        nivel: 3,
+        permissoes: [
+          "dashboard",
+          "lojas",
+          "usuarios",
+          "perfis",
+          "estoque",
+          "envios",
+          "recebimentos",
+          "manutencao",
+          "relatorios",
+          "insights",
+        ],
+      },
+      {
+        id: 3,
+        nome: "Gestor",
+        nivel: 2,
+        permissoes: [
+          "dashboard",
+          "lojas",
+          "estoque",
+          "envios",
+          "recebimentos",
+          "manutencao",
+          "relatorios",
+          "insights",
+        ],
+      },
+      {
+        id: 4,
+        nome: "Operador",
+        nivel: 1,
+        permissoes: ["dashboard", "estoque", "envios", "recebimentos"],
+      },
+    ],
 
-      perfis: [
-        {
-          id: 1,
-          nome: "Administrador",
-          permissoes: [
-            "dashboard",
-            "lojas",
-            "usuarios",
-            "perfis",
-            "envios",
-            "estoque",
-            "recebimentos",
-            "manutencao",
-            "relatorios"
-          ]
-        },
-        {
-          id: 2,
-          nome: "Gestor",
-          permissoes: [
-            "dashboard",
-            "lojas",
-            "envios",
-            "estoque",
-            "recebimentos",
-            "relatorios"
-          ]
-        },
-        {
-          id: 3,
-          nome: "Operador",
-          permissoes: [
-            "dashboard",
-            "envios",
-            "recebimentos"
-          ]
-        }
-      ],
+    insights: insightsMockados,
 
-      insights: insightsMockados,
+    sequencias: {
+      loja: lojasMockadas.length + 1,
+      envio: enviosMockados.length + 1,
+      recebimento: recebimentosMockados.length + 1,
+      usuario: 5,
+      perfil: 5,
+    },
+  };
+}
 
-      sequencias: {
-        loja: lojasMockadas.length + 1,
-        envio: enviosMockados.length + 1,
-        recebimento: recebimentosMockados.length + 1,
-        usuario: 2,
-        perfil: 4
-      }
-    };
+function carregarBanco() {
+  const bancoSalvo = localStorage.getItem(DB_KEY);
+
+  if (bancoSalvo) {
+    return JSON.parse(bancoSalvo);
   }
 
-  
+  const bancoInicial = criarBancoInicial();
+  salvarBanco(bancoInicial);
 
-  function carregarBanco() {
-    // tenta pegar dados salvos no localStorage
-    const bancoSalvo = localStorage.getItem(DB_KEY);
+  return bancoInicial;
+}
 
-    if (bancoSalvo) {
-      // se já existe retorna o que está salvo
-      return JSON.parse(bancoSalvo);
-    }
-   // se for a primeira vez cria estrutura inicial com dados mockados 
-    const bancoInicial = criarBancoInicial();
-    // e salva para a proxima vez
-    salvarBanco(bancoInicial);
+function salvarBanco(banco) {
+  localStorage.setItem(DB_KEY, JSON.stringify(banco));
+}
 
-    return bancoInicial;
+function resetarBanco() {
+  localStorage.removeItem(DB_KEY);
+  const bancoInicial = criarBancoInicial();
+  salvarBanco(bancoInicial);
+
+  return bancoInicial;
+}
+
+function usuarioTemPermissao(usuario, permissaoNecessaria) {
+  return usuario.permissoes.includes(permissaoNecessaria);
+}
+
+function filtrarPorLoja(dados, usuarioLogado, campo = "codigoLoja") {
+  if (!usuarioLogado || !usuarioLogado.lojaId) {
+    return dados;
+  }
+  return dados.filter((item) => item[campo] === usuarioLogado.lojaId);
+}
+
+function obterNivelHierarquico(perfilNomeOuId) {
+  const banco = carregarBanco();
+  const perfilEncontrado = banco.perfis.find(
+    (perfil) => perfil.id === perfilNomeOuId || perfil.nome === perfilNomeOuId,
+  );
+  return perfilEncontrado ? perfilEncontrado.nivel : -1;
+}
+
+function podeGerenciar(usuarioLogado, usuarioAlvo) {
+  const nivelLogado = obterNivelHierarquico(
+    usuarioLogado.perfilId ?? usuarioLogado.perfil,
+  );
+  const nivelAlvo = obterNivelHierarquico(
+    usuarioAlvo.perfilId ?? usuarioAlvo.perfil,
+  );
+
+  if (nivelLogado <= nivelAlvo) {
+    return false;
   }
 
-  function salvarBanco(banco) {
-    localStorage.setItem(DB_KEY, JSON.stringify(banco));
+  if (!usuarioLogado.lojaId) {
+    return true;
   }
 
-  function resetarBanco() {
-    localStorage.removeItem(DB_KEY);
-    const bancoInicial = criarBancoInicial();
-    salvarBanco(bancoInicial);
-
-    return bancoInicial;
-  }
-
+  return usuarioLogado.lojaId === usuarioAlvo.lojaId;
+}

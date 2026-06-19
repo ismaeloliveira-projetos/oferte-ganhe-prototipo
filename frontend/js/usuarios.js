@@ -2,208 +2,211 @@ let usuarioEditandoId = null;
 let usuarioExcluindoId = null;
 
 function buscarUsuariosSalvos() {
-    const banco = carregarBanco();
-    return banco.usuarios;
+  const banco = carregarBanco();
+  return banco.usuarios;
 }
 
 function buscarPerfisSalvos() {
-    const banco = carregarBanco();
-    return banco.perfis;
+  const banco = carregarBanco();
+  return banco.perfis;
+}
+
+function buscarLojasSalvas() {
+  const banco = carregarBanco();
+  return banco.lojas || [];
 }
 
 function salvarUsuarios(usuarios) {
-    const banco = carregarBanco();
-
-    banco.usuarios = usuarios;
-
-    salvarBanco(banco);
+  const banco = carregarBanco();
+  banco.usuarios = usuarios;
+  salvarBanco(banco);
 }
 
 function mostrarAlerta(mensagem) {
-    const alerta = document.getElementById("alertaSistema");
-
-    alerta.textContent = mensagem;
-    alerta.classList.remove("hidden");
-
-    setTimeout(function() {
-        alerta.classList.add("hidden");
-    }, 3000);
+  const alerta = document.getElementById("alertaSistema");
+  alerta.textContent = mensagem;
+  alerta.classList.remove("hidden");
+  setTimeout(() => alerta.classList.add("hidden"), 3000);
 }
 
 function obterNomePerfil(perfilId) {
-    const perfis = buscarPerfisSalvos();
+  const perfis = buscarPerfisSalvos();
+  const perfilEncontrado = perfis.find((perfil) => perfil.id === perfilId);
+  return perfilEncontrado ? perfilEncontrado.nome : "Sem perfil";
+}
 
-    const perfilEncontrado = perfis.find(function(perfil) {
-        return perfil.id === perfilId;
-    });
-
-    if (!perfilEncontrado) {
-        return "Sem perfil";
-    }
-
-    return perfilEncontrado.nome;
+function obterNomeLoja(codigoLoja) {
+  if (!codigoLoja) return "Geral (Todas)";
+  const lojas = buscarLojasSalvas();
+  const lojaEncontrada = lojas.find((loja) => loja.codigo === codigoLoja);
+  return lojaEncontrada ? lojaEncontrada.nome : "Loja desconhecida";
 }
 
 function carregarPerfisNoFormulario() {
-    const selectPerfil = document.getElementById("perfilUsuario");
-    const perfis = buscarPerfisSalvos();
+  const selectPerfil = document.getElementById("perfilUsuario");
+  const perfis = buscarPerfisSalvos();
+  selectPerfil.innerHTML = "";
+  perfis.forEach((perfil) => {
+    selectPerfil.innerHTML += `<option value="${perfil.id}">${perfil.nome}</option>`;
+  });
+}
 
-    selectPerfil.innerHTML = "";
-
-    perfis.forEach(function(perfil) {
-        selectPerfil.innerHTML += `
-            <option value="${perfil.id}">
-                ${perfil.nome}
-            </option>
-        `;
-    });
+function carregarLojasNoFormulario() {
+  const selectLoja = document.getElementById("lojaUsuario");
+  const lojas = buscarLojasSalvas();
+  selectLoja.innerHTML = `<option value="">Administrador Geral (Todas as lojas)</option>`;
+  lojas.forEach((loja) => {
+    selectLoja.innerHTML += `<option value="${loja.codigo}">${loja.codigo} - ${loja.nome}</option>`;
+  });
 }
 
 function carregarTabelaUsuarios(listaUsuarios) {
-    const tabela = document.getElementById("tabelaUsuarios");
-    tabela.innerHTML = "";
+  const tabela = document.getElementById("tabelaUsuarios");
+  tabela.innerHTML = "";
+  const usuarioLogado = buscarUsuarioLogado();
+  const usuarios = listaUsuarios || buscarUsuariosSalvos();
 
-    const usuarios = listaUsuarios || buscarUsuariosSalvos();
+  usuarios.forEach(function (usuario) {
+    const nomePerfil = obterNomePerfil(usuario.perfilId);
+    const nomeLoja = obterNomeLoja(usuario.lojaId);
+    const podeEditar = podeGerenciar(usuarioLogado, usuario);
 
-    usuarios.forEach(function(usuario) {
-        const nomePerfil = obterNomePerfil(usuario.perfilId);
+    const botaoEditar = podeEditar
+      ? `<button class="btn-table-action btn-sm" onclick="editarUsuario(${usuario.id})">Editar</button>`
+      : "";
+    const botaoExcluir = podeEditar
+      ? `<button class="btn-table-action btn-sm" onclick="excluirUsuario(${usuario.id})">Excluir</button>`
+      : "";
 
-        tabela.innerHTML += `
+    tabela.innerHTML += `
             <tr>
                 <td>${usuario.nome}</td>
                 <td>${usuario.matricula}</td>
                 <td>${usuario.email}</td>
-                <td>
-                    <span class="badge badge-normal">${nomePerfil}</span>
-                </td>
-                <td>
-                    <button class="btn-table-action btn-sm" onclick="editarUsuario(${usuario.id})">
-                        Editar
-                    </button>
-
-                    <button class="btn-table-action btn-sm" onclick="excluirUsuario(${usuario.id})">
-                        Excluir
-                    </button>
-                </td>
+                <td><span class="badge badge-normal">${nomePerfil}</span></td>
+                <td>${nomeLoja}</td>
+                <td>${botaoEditar} ${botaoExcluir}</td>
             </tr>
         `;
-    });
+  });
 
-    aplicarResponsividadeTabelas();
+  aplicarResponsividadeTabelas();
 }
 
 function abrirFormularioUsuario() {
-    usuarioEditandoId = null;
-
-    document.getElementById("formUsuario").reset();
-
-    carregarPerfisNoFormulario();
-
-    document.getElementById("btnSalvarUsuario").textContent = "Salvar Usuário";
-
-    document.getElementById("formUsuarioContainer").classList.remove("hidden");
-    document.getElementById("formUsuarioOverlay").classList.remove("hidden");
+  usuarioEditandoId = null;
+  document.getElementById("formUsuario").reset();
+  carregarPerfisNoFormulario();
+  carregarLojasNoFormulario();
+  document.getElementById("btnSalvarUsuario").textContent = "Salvar Usuário";
+  document.getElementById("formUsuarioContainer").classList.remove("hidden");
+  document.getElementById("formUsuarioOverlay").classList.remove("hidden");
 }
 
 function fecharFormularioUsuario() {
-    document.getElementById("formUsuarioContainer").classList.add("hidden");
-    document.getElementById("formUsuarioOverlay").classList.add("hidden");
+  document.getElementById("formUsuarioContainer").classList.add("hidden");
+  document.getElementById("formUsuarioOverlay").classList.add("hidden");
 }
 
 function editarUsuario(id) {
-    const usuarios = buscarUsuariosSalvos();
+  const usuarioLogado = buscarUsuarioLogado();
+  const usuarios = buscarUsuariosSalvos();
+  const usuarioEncontrado = usuarios.find((usuario) => usuario.id === id);
 
-    const usuarioEncontrado = usuarios.find(function(usuario) {
-        return usuario.id === id;
-    });
+  if (!usuarioEncontrado) {
+    mostrarAlerta("Usuário não encontrado.");
+    return;
+  }
 
-    if (!usuarioEncontrado) {
-        mostrarAlerta("Usuário não encontrado.");
-        return;
-    }
+  if (!podeGerenciar(usuarioLogado, usuarioEncontrado)) {
+    mostrarAlerta("Você não tem permissão para editar este usuário.");
+    return;
+  }
 
-    usuarioEditandoId = id;
+  usuarioEditandoId = id;
+  carregarPerfisNoFormulario();
+  carregarLojasNoFormulario();
 
-    carregarPerfisNoFormulario();
+  document.getElementById("nomeUsuarioInput").value = usuarioEncontrado.nome;
+  document.getElementById("matriculaUsuario").value =
+    usuarioEncontrado.matricula;
+  document.getElementById("emailUsuario").value = usuarioEncontrado.email;
+  document.getElementById("senhaUsuario").value = usuarioEncontrado.senha;
+  document.getElementById("perfilUsuario").value = usuarioEncontrado.perfilId;
+  document.getElementById("lojaUsuario").value = usuarioEncontrado.lojaId || "";
 
-    document.getElementById("nomeUsuarioInput").value = usuarioEncontrado.nome;
-    document.getElementById("matriculaUsuario").value = usuarioEncontrado.matricula;
-    document.getElementById("emailUsuario").value = usuarioEncontrado.email;
-    document.getElementById("senhaUsuario").value = usuarioEncontrado.senha;
-    document.getElementById("perfilUsuario").value = usuarioEncontrado.perfilId;
-
-    document.getElementById("btnSalvarUsuario").textContent = "Atualizar Usuário";
-
-    document.getElementById("formUsuarioContainer").classList.remove("hidden");
-    document.getElementById("formUsuarioOverlay").classList.remove("hidden");
+  document.getElementById("btnSalvarUsuario").textContent = "Atualizar Usuário";
+  document.getElementById("formUsuarioContainer").classList.remove("hidden");
+  document.getElementById("formUsuarioOverlay").classList.remove("hidden");
 }
 
 function excluirUsuario(id) {
-    const usuarios = buscarUsuariosSalvos();
+  const usuarioLogado = buscarUsuarioLogado();
+  const usuarios = buscarUsuariosSalvos();
+  const usuarioEncontrado = usuarios.find((usuario) => usuario.id === id);
 
-    const usuarioEncontrado = usuarios.find(function(usuario) {
-        return usuario.id === id;
-    });
+  if (!usuarioEncontrado) {
+    mostrarAlerta("Usuário não encontrado.");
+    return;
+  }
 
-    if (!usuarioEncontrado) {
-        mostrarAlerta("Usuário não encontrado.");
-        return;
-    }
+  if (!podeGerenciar(usuarioLogado, usuarioEncontrado)) {
+    mostrarAlerta("Você não tem permissão para excluir este usuário.");
+    return;
+  }
 
-    usuarioExcluindoId = id;
+  usuarioExcluindoId = id;
+  document.getElementById("nomeUsuarioExclusao").textContent =
+    usuarioEncontrado.nome;
+  document.getElementById("emailUsuarioExclusao").textContent =
+    usuarioEncontrado.email;
 
-    document.getElementById("nomeUsuarioExclusao").textContent = usuarioEncontrado.nome;
-    document.getElementById("emailUsuarioExclusao").textContent = usuarioEncontrado.email;
-
-    document.getElementById("excluirUsuarioContainer").classList.remove("hidden");
-    document.getElementById("excluirUsuarioOverlay").classList.remove("hidden");
+  document.getElementById("excluirUsuarioContainer").classList.remove("hidden");
+  document.getElementById("excluirUsuarioOverlay").classList.remove("hidden");
 }
 
 function fecharConfirmacaoExclusaoUsuario() {
-    usuarioExcluindoId = null;
-
-    document.getElementById("excluirUsuarioContainer").classList.add("hidden");
-    document.getElementById("excluirUsuarioOverlay").classList.add("hidden");
+  usuarioExcluindoId = null;
+  document.getElementById("excluirUsuarioContainer").classList.add("hidden");
+  document.getElementById("excluirUsuarioOverlay").classList.add("hidden");
 }
 
 function confirmarExclusaoUsuario() {
-    if (usuarioExcluindoId === null) {
-        mostrarAlerta("Nenhum usuário selecionado para exclusão.");
-        return;
-    }
+  if (usuarioExcluindoId === null) {
+    mostrarAlerta("Nenhum usuário selecionado para exclusão.");
+    return;
+  }
 
-    const usuarios = buscarUsuariosSalvos();
+  const usuarios = buscarUsuariosSalvos();
+  const usuariosAtualizados = usuarios.filter(
+    (usuario) => usuario.id !== usuarioExcluindoId,
+  );
 
-    const usuariosAtualizados = usuarios.filter(function(usuario) {
-        return usuario.id !== usuarioExcluindoId;
-    });
-
-    salvarUsuarios(usuariosAtualizados);
-
-    carregarTabelaUsuarios();
-
-    fecharConfirmacaoExclusaoUsuario();
-
-    mostrarAlerta("Usuário excluído com sucesso.");
+  salvarUsuarios(usuariosAtualizados);
+  carregarTabelaUsuarios();
+  fecharConfirmacaoExclusaoUsuario();
+  mostrarAlerta("Usuário excluído com sucesso.");
 }
 
 function filtrarUsuarios() {
-    const termoBusca = document.getElementById("buscaUsuario").value.toLowerCase();
+  const termoBusca = document
+    .getElementById("buscaUsuario")
+    .value.toLowerCase();
+  const usuarios = buscarUsuariosSalvos();
 
-    const usuarios = buscarUsuariosSalvos();
+  const usuariosFiltrados = usuarios.filter(
+    (usuario) =>
+      usuario.nome.toLowerCase().includes(termoBusca) ||
+      usuario.matricula.toLowerCase().includes(termoBusca) ||
+      usuario.email.toLowerCase().includes(termoBusca),
+  );
 
-    const usuariosFiltrados = usuarios.filter(function(usuario) {
-        return (
-            usuario.nome.toLowerCase().includes(termoBusca) ||
-            usuario.matricula.toLowerCase().includes(termoBusca) ||
-            usuario.email.toLowerCase().includes(termoBusca)
-        );
-    });
-
-    carregarTabelaUsuarios(usuariosFiltrados);
+  carregarTabelaUsuarios(usuariosFiltrados);
 }
 
-document.getElementById("formUsuario").addEventListener("submit", function(event) {
+document
+  .getElementById("formUsuario")
+  .addEventListener("submit", function (event) {
     event.preventDefault();
 
     const nome = document.getElementById("nomeUsuarioInput").value;
@@ -211,53 +214,49 @@ document.getElementById("formUsuario").addEventListener("submit", function(event
     const email = document.getElementById("emailUsuario").value;
     const senha = document.getElementById("senhaUsuario").value;
     const perfilId = Number(document.getElementById("perfilUsuario").value);
+    const lojaId = document.getElementById("lojaUsuario").value || null;
 
     const usuarios = buscarUsuariosSalvos();
 
     if (usuarioEditandoId === null) {
-        const novoUsuario = {
-            id: Date.now(),
+      const novoUsuario = {
+        id: Date.now(),
+        nome: nome,
+        matricula: matricula,
+        email: email,
+        senha: senha,
+        perfilId: perfilId,
+        lojaId: lojaId,
+      };
+
+      usuarios.push(novoUsuario);
+      salvarUsuarios(usuarios);
+      mostrarAlerta("Usuário cadastrado com sucesso.");
+    } else {
+      const usuariosAtualizados = usuarios.map((usuario) => {
+        if (usuario.id === usuarioEditandoId) {
+          return {
+            ...usuario,
             nome: nome,
             matricula: matricula,
             email: email,
             senha: senha,
-            perfilId: perfilId
-        };
+            perfilId: perfilId,
+            lojaId: lojaId,
+          };
+        }
+        return usuario;
+      });
 
-        usuarios.push(novoUsuario);
-
-        salvarUsuarios(usuarios);
-
-        mostrarAlerta("Usuário cadastrado com sucesso.");
-    } else {
-        const usuariosAtualizados = usuarios.map(function(usuario) {
-            if (usuario.id === usuarioEditandoId) {
-                return {
-                    ...usuario,
-                    nome: nome,
-                    matricula: matricula,
-                    email: email,
-                    senha: senha,
-                    perfilId: perfilId
-                };
-            }
-
-            return usuario;
-        });
-
-        salvarUsuarios(usuariosAtualizados);
-
-        mostrarAlerta("Usuário atualizado com sucesso.");
+      salvarUsuarios(usuariosAtualizados);
+      mostrarAlerta("Usuário atualizado com sucesso.");
     }
 
     carregarTabelaUsuarios();
-
     fecharFormularioUsuario();
-
     usuarioEditandoId = null;
-
     document.getElementById("btnSalvarUsuario").textContent = "Salvar Usuário";
-});
+  });
 
 carregarUsuarioLogado();
 carregarTabelaUsuarios();

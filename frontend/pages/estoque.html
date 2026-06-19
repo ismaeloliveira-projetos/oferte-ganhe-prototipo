@@ -1,229 +1,247 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Estoque | Oferte e Ganhe</title>
+    <title>Estoque | Oferte e Ganhe</title>
 
-  <link rel="stylesheet" href="../css/style.css" />
-</head>
-<body>
-
-  <div class="app-layout">
-
-  
-<aside class="sidebar" id="sidebar">
-  <button class="sidebar-close" onclick="fecharMenuMobile()" aria-label="Fechar menu">
-    X
-  </button>
-
-  <div class="sidebar-brand">
-    <h2>Oferte e Ganhe</h2>
-    <span>Gestão de Talões</span>
-  </div>
-
-  <nav class="sidebar-menu">
-
-    <span class="sidebar-section-title">VISÃO GERAL</span>
-
-    <a href="dashboard.html" class="sidebar-link" data-permissao="dashboard">
-      <span class="sidebar-icon">▣</span>
-      <span>Dashboard</span>
-    </a>
-
-    <span class="sidebar-section-title">TALÕES</span>
-
-    <a href="envios.html" class="sidebar-link" data-permissao="envios">
-      <span class="sidebar-icon">➤</span>
-      <span>Envios</span>
-    </a>
-
-    <a href="estoque.html" class="sidebar-link active" data-permissao="estoque">
-      <span class="sidebar-icon">▦</span>
-      <span>Estoque</span>
-    </a>
-
-    <a href="recebimentos.html" class="sidebar-link" data-permissao="recebimentos">
-      <span class="sidebar-icon">⇄</span>
-      <span>Recebimentos</span>
-    </a>
-
-    <a href="manutencao.html" class="sidebar-link" data-permissao="manutencao">
-      <span class="sidebar-icon">✎</span>
-      <span>Manutenção</span>
-    </a>
-
-    <span class="sidebar-section-title">CADASTROS</span>
-
-    <a href="lojas.html" class="sidebar-link" data-permissao="lojas">
-      <span class="sidebar-icon">⌂</span>
-      <span>Lojas</span>
-    </a>
-
-    <a href="usuarios.html" class="sidebar-link" data-permissao="usuarios">
-      <span class="sidebar-icon">☻</span>
-      <span>Usuários</span>
-    </a>
-
-    <a href="perfis.html" class="sidebar-link" data-permissao="perfis">
-      <span class="sidebar-icon">⚿</span>
-      <span>Perfis de Acesso</span>
-    </a>
-
-    <span class="sidebar-section-title">ANÁLISE</span>
-
-    <a href="relatorios.html" class="sidebar-link">
-      <span class="sidebar-icon" data-permissao="relatorios">▤</span>
-      <span>Relatórios</span>
-    </a>
-
-   
-
-  </nav>
-</aside>
-
-   
-    <div id="menuOverlay" class="menu-overlay" onclick="fecharMenuMobile()">
-      
-    </div>
-
-    
-    <main class="main-content">
-
-      <header class="topbar">
-        <button class="menu-toggle" onclick="abrirMenuMobile()" aria-label="Abrir menu">
-          ☰
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body>
+    <div class="app-layout">
+      <aside class="sidebar" id="sidebar">
+        <button
+          class="sidebar-close"
+          onclick="fecharMenuMobile()"
+          aria-label="Fechar menu"
+        >
+          X
         </button>
 
-
-        
-
-        <div class="topbar-title">
-          <h1>Gestão de Estoque</h1>
-          <p>Controle de estoque mínimo, recomendado e necessidade de reposição</p>
+        <div class="sidebar-brand">
+          <img
+            src="../assets/logo.png"
+            alt="Logo Quero Quero"
+            class="sidebar-logo"
+          />
+          <h2>Oferte e Ganhe</h2>
+          <span>Gestão de Talões</span>
         </div>
 
-        <div class="user-info">
-          <span id="nomeUsuario">Administrador</span>
-          <button class="btn-logout" onclick="logout()">
-            Sair
+        <nav class="sidebar-menu">
+          <span class="sidebar-section-title">VISÃO GERAL</span>
+
+          <a
+            href="dashboard.html"
+            class="sidebar-link"
+            data-permissao="dashboard"
+          >
+            <span class="sidebar-icon">▣</span>
+            <span>Dashboard</span>
+          </a>
+
+          <span class="sidebar-section-title">TALÕES</span>
+
+          <a href="envios.html" class="sidebar-link" data-permissao="envios">
+            <span class="sidebar-icon">➤</span>
+            <span>Envios</span>
+          </a>
+
+          <a
+            href="estoque.html"
+            class="sidebar-link active"
+            data-permissao="estoque"
+          >
+            <span class="sidebar-icon">▦</span>
+            <span>Estoque</span>
+          </a>
+
+          <a
+            href="recebimentos.html"
+            class="sidebar-link"
+            data-permissao="recebimentos"
+          >
+            <span class="sidebar-icon">⇄</span>
+            <span>Recebimentos</span>
+          </a>
+
+          <a
+            href="manutencao.html"
+            class="sidebar-link"
+            data-permissao="manutencao"
+          >
+            <span class="sidebar-icon">✎</span>
+            <span>Manutenção</span>
+          </a>
+
+          <span class="sidebar-section-title">CADASTROS</span>
+
+          <a href="lojas.html" class="sidebar-link" data-permissao="lojas">
+            <span class="sidebar-icon">⌂</span>
+            <span>Lojas</span>
+          </a>
+
+          <a
+            href="usuarios.html"
+            class="sidebar-link"
+            data-permissao="usuarios"
+          >
+            <span class="sidebar-icon">☻</span>
+            <span>Usuários</span>
+          </a>
+
+          <span class="sidebar-section-title">ANÁLISE</span>
+
+          <a href="relatorios.html" class="sidebar-link">
+            <span class="sidebar-icon" data-permissao="relatorios">▤</span>
+            <span>Relatórios</span>
+          </a>
+        </nav>
+      </aside>
+
+      <div
+        id="menuOverlay"
+        class="menu-overlay"
+        onclick="fecharMenuMobile()"
+      ></div>
+
+      <main class="main-content">
+        <header class="topbar">
+          <button
+            class="menu-toggle"
+            onclick="abrirMenuMobile()"
+            aria-label="Abrir menu"
+          >
+            ☰
           </button>
-        </div>
-      </header>
 
-      <section class="dashboard-grid">
-        <div class="dashboard-card">
-          <span>Total em estoque</span>
-          <strong id="totalEstoque"></strong>
-        </div>
-
-        <div class="dashboard-card">
-          <span>Lojas críticas</span>
-          <strong id="lojasCriticas"></strong>
-        </div>
-
-        <div class="dashboard-card warning">
-          <span>Lojas em Atenção</span>
-          <strong id="lojasAtencao"></strong>
-        </div>
-
-        <div class="dashboard-card">
-          <span>Reposição sugerida</span>
-          <strong id="reposicaoSugerida"></strong>
-        </div>
-      </section>
-
-      <section class="content-grid single-column">
-        <div class="content-card table-card">
-          <div class="content-card-header">
-            <h2>Controle de estoque por loja</h2>
-            <span>Quantidade atual, mínima, recomendada e sugestão de reposição</span>
+          <div class="topbar-title">
+            <h1>Gestão de Estoque</h1>
+            <p>
+              Controle de estoque mínimo, recomendado e necessidade de reposição
+            </p>
           </div>
 
-          <div class="table-wrapper">
-            <table class="data-table responsive-table">
-              <thead>
-                <tr>
-                  <th>Código</th>
-                  <th>Loja</th>
-                  <th>Atual</th>
-                  <th>Mínimo</th>
-                  <th>Recomendado</th>
-                  <th>Reposição Sugerida</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-           <tbody id="tabelaEstoque"></tbody>
-             </table>
+          <div class="user-info">
+            <span id="nomeUsuario">Administrador</span>
+            <button class="btn-logout" onclick="logout()">Sair</button>
           </div>
+        </header>
+
+        <section class="dashboard-grid">
+          <div class="dashboard-card">
+            <span>Total em estoque</span>
+            <strong id="totalEstoque"></strong>
+          </div>
+
+          <div class="dashboard-card">
+            <span>Lojas críticas</span>
+            <strong id="lojasCriticas"></strong>
+          </div>
+
+          <div class="dashboard-card warning">
+            <span>Lojas em Atenção</span>
+            <strong id="lojasAtencao"></strong>
+          </div>
+
+          <div class="dashboard-card">
+            <span>Reposição sugerida</span>
+            <strong id="reposicaoSugerida"></strong>
+          </div>
+        </section>
+
+        <section class="content-grid single-column">
+          <div class="content-card table-card">
+            <div class="content-card-header">
+              <h2>Controle de estoque por loja</h2>
+              <span
+                >Quantidade atual, mínima, recomendada e sugestão de
+                reposição</span
+              >
+            </div>
+
+            <div class="table-wrapper">
+              <table class="data-table responsive-table">
+                <thead>
+                  <tr>
+                    <th>Código</th>
+                    <th>Loja</th>
+                    <th>Atual</th>
+                    <th>Mínimo</th>
+                    <th>Recomendado</th>
+                    <th>Reposição Sugerida</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="tabelaEstoque"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <button class="assistant-toggle" onclick="abrirAssistente()">
+      Assistente IA
+    </button>
+
+    <div
+      id="assistantOverlay"
+      class="assistant-overlay"
+      onclick="fecharAssistente()"
+    ></div>
+
+    <aside id="assistantSidebar" class="assistant-sidebar">
+      <div class="assistant-header">
+        <div>
+          <h2>Assistente IA</h2>
+          <p>Consulta inteligente do sistema</p>
         </div>
 
-    
-      </section>
-
-    </main>
-  </div>
-
-
-  <button class="assistant-toggle" onclick="abrirAssistente()">
-    Assistente IA
-  </button>
-
- 
-  <div id="assistantOverlay" class="assistant-overlay" onclick="fecharAssistente()"></div>
-
-
-  <aside id="assistantSidebar" class="assistant-sidebar">
-    <div class="assistant-header">
-      <div>
-        <h2>Assistente IA</h2>
-        <p>Consulta inteligente do sistema</p>
+        <button class="assistant-close" onclick="fecharAssistente()">×</button>
       </div>
 
-      <button class="assistant-close" onclick="fecharAssistente()">
-        ×
-      </button>
-    </div>
-
-    <div id="chatMessages" class="chat-messages">
-      <div class="chat-message assistant">
-        Olá! Você pode perguntar, por exemplo:
-        "Quais lojas estão abaixo do estoque mínimo?"
+      <div id="chatMessages" class="chat-messages">
+        <div class="chat-message assistant">
+          Olá! Você pode perguntar, por exemplo: "Quais lojas estão abaixo do
+          estoque mínimo?"
+        </div>
       </div>
-    </div>
 
-    <div class="assistant-suggestions">
-      <button onclick="usarSugestao('Quais lojas estão abaixo do estoque mínimo?')">
-        Lojas abaixo do mínimo
-      </button>
+      <div class="assistant-suggestions">
+        <button
+          onclick="usarSugestao('Quais lojas estão abaixo do estoque mínimo?')"
+        >
+          Lojas abaixo do mínimo
+        </button>
 
-      <button onclick="usarSugestao('Qual foi o total de talões enviados?')">
-        Total enviado
-      </button>
+        <button onclick="usarSugestao('Qual foi o total de talões enviados?')">
+          Total enviado
+        </button>
 
-      <button onclick="usarSugestao('Quantas lojas existem?')">
-        Total de lojas
-      </button>
-    </div>
+        <button onclick="usarSugestao('Quantas lojas existem?')">
+          Total de lojas
+        </button>
+      </div>
 
-    <div class="chat-input-area">
-      <input
-        type="text"
-        id="chatInput"
-        class="form-input"
-        placeholder="Digite sua pergunta..."
-        onkeydown="verificarEnterAssistente(event)"
-      />
+      <div class="chat-input-area">
+        <input
+          type="text"
+          id="chatInput"
+          class="form-input"
+          placeholder="Digite sua pergunta..."
+          onkeydown="verificarEnterAssistente(event)"
+        />
 
-      <button class="btn-primary" onclick="enviarPerguntaAssistente()">
-        Enviar
-      </button>
-    </div>
-  </aside>
+        <button class="btn-primary" onclick="enviarPerguntaAssistente()">
+          Enviar
+        </button>
+      </div>
+    </aside>
 
-  <script src="../js/mock-data.js"></script>
-  <script src="../js/ui.js"></script>
-  <script src="../js/estoque.js"></script>
-</body>
+    <script src="../js/mock-data.js"></script>
+    <script src="../js/ui.js"></script>
+    <script src="../js/estoque.js"></script>
+  </body>
 </html>

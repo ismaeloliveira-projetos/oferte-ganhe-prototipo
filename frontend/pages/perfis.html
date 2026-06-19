@@ -1,323 +1,417 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Dashboard | Oferte e Ganhe</title>
+    <title>Dashboard | Oferte e Ganhe</title>
 
-  <link rel="stylesheet" href="../css/style.css" />
-</head>
-<body>
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body>
+    <div class="app-layout">
+      <aside class="sidebar" id="sidebar">
+        <button
+          class="sidebar-close"
+          onclick="fecharMenuMobile()"
+          aria-label="Fechar menu"
+        >
+          X
+        </button>
 
-  <div class="app-layout">
+        <div class="sidebar-brand">
+          <img
+            src="../assets/logo.png"
+            alt="Logo Quero Quero"
+            class="sidebar-logo"
+          />
+          <h2>Oferte e Ganhe</h2>
+          <span>Gestão de Talões</span>
+        </div>
 
-  <aside class="sidebar" id="sidebar">
-  <button class="sidebar-close" onclick="fecharMenuMobile()" aria-label="Fechar menu">
-    X
-  </button>
+        <nav class="sidebar-menu">
+          <span class="sidebar-section-title">VISÃO GERAL</span>
 
-  <div class="sidebar-brand">
-    <h2>Oferte e Ganhe</h2>
-    <span>Gestão de Talões</span>
+          <a
+            href="dashboard.html"
+            class="sidebar-link"
+            data-permissao="dashboard"
+          >
+            <span class="sidebar-icon">▣</span>
+            <span>Dashboard</span>
+          </a>
+
+          <span class="sidebar-section-title">TALÕES</span>
+
+          <a href="envios.html" class="sidebar-link" data-permissao="envios">
+            <span class="sidebar-icon">➤</span>
+            <span>Envios</span>
+          </a>
+
+          <a href="estoque.html" class="sidebar-link" data-permissao="estoque">
+            <span class="sidebar-icon">▦</span>
+            <span>Estoque</span>
+          </a>
+
+          <a
+            href="recebimentos.html"
+            class="sidebar-link"
+            data-permissao="recebimentos"
+          >
+            <span class="sidebar-icon">⇄</span>
+            <span>Recebimentos</span>
+          </a>
+
+          <a
+            href="manutencao.html"
+            class="sidebar-link"
+            data-permissao="manutencao"
+          >
+            <span class="sidebar-icon">✎</span>
+            <span>Manutenção</span>
+          </a>
+
+          <span class="sidebar-section-title">CADASTROS</span>
+
+          <a href="lojas.html" class="sidebar-link" data-permissao="lojas">
+            <span class="sidebar-icon">⌂</span>
+            <span>Lojas</span>
+          </a>
+
+          <a
+            href="usuarios.html"
+            class="sidebar-link"
+            data-permissao="usuarios"
+          >
+            <span class="sidebar-icon">☻</span>
+            <span>Usuários</span>
+          </a>
+
+      
+
+          <span class="sidebar-section-title">ANÁLISE</span>
+
+          <a
+            href="relatorios.html"
+            class="sidebar-link"
+            data-permissao="relatorios"
+          >
+            <span class="sidebar-icon">▤</span>
+            <span>Relatórios</span>
+          </a>
+        </nav>
+      </aside>
+
+      <!-- Fundo escuro do menu mobile -->
+      <div
+        id="menuOverlay"
+        class="menu-overlay"
+        onclick="fecharMenuMobile()"
+      ></div>
+
+      <main class="main-content">
+        <header class="topbar">
+          <button
+            class="menu-toggle"
+            onclick="abrirMenuMobile()"
+            aria-label="Abrir menu"
+          >
+            ☰
+          </button>
+
+          <div class="topbar-title">
+            <h1>Perfis de Acesso</h1>
+            <p>Cadastro e gerenciamento das permissões do sistema</p>
+          </div>
+
+          <div class="user-info">
+            <button class="btn-primary" onclick="abrirFormularioPerfil()">
+              + Novo Perfil
+            </button>
+
+            <span id="nomeUsuario">Administrador</span>
+
+            <button class="btn-logout" onclick="logout()">Sair</button>
+          </div>
+        </header>
+
+        <div id="alertaSistema" class="alert-system hidden"></div>
+        <div
+          id="excluirPerfilOverlay"
+          class="bottom-sheet-overlay hidden"
+          onclick="fecharConfirmacaoExclusaoPerfil()"
+        ></div>
+
+        <section
+          id="excluirPerfilContainer"
+          class="bottom-sheet form-bottom-sheet confirm-delete-sheet hidden"
+        >
+          <div class="content-card-header">
+            <h2>Excluir Perfil</h2>
+            <span>Confirme antes de remover este perfil de acesso</span>
+          </div>
+
+          <div class="delete-warning">
+            <strong>Atenção</strong>
+
+            <p>Você está prestes a excluir o perfil:</p>
+
+            <div class="delete-target">
+              <strong id="nomePerfilExclusao">Nome do perfil</strong>
+              <span id="permissoesPerfilExclusao">0 permissões vinculadas</span>
+            </div>
+
+            <p>Essa ação removerá o perfil da lista do protótipo.</p>
+          </div>
+
+          <div class="form-actions">
+            <button
+              type="button"
+              class="btn-danger"
+              onclick="confirmarExclusaoPerfil()"
+            >
+              Sim, excluir
+            </button>
+
+            <button
+              type="button"
+              class="btn-secondary"
+              onclick="fecharConfirmacaoExclusaoPerfil()"
+            >
+              Cancelar
+            </button>
+          </div>
+        </section>
+
+        <div
+          id="formPerfilOverlay"
+          class="bottom-sheet-overlay hidden"
+          onclick="fecharFormularioPerfil()"
+        ></div>
+
+        <section
+          id="formPerfilContainer"
+          class="bottom-sheet form-bottom-sheet hidden"
+        >
+          <div class="content-card-header">
+            <h2>Novo Perfil</h2>
+            <span>Defina o nome e as permissões deste perfil</span>
+          </div>
+
+          <div class="form-grid">
+            
+  <div class="form-group">
+    <label for="nomePerfil">Nome do Perfil</label>
+    <input
+      type="text"
+      id="nomePerfil"
+      class="form-input"
+      placeholder="Ex: Administrador"
+      required
+    />
   </div>
 
-  <nav class="sidebar-menu">
-
-    <span class="sidebar-section-title">VISÃO GERAL</span>
-
-    <a href="dashboard.html" class="sidebar-link" data-permissao="dashboard">
-      <span class="sidebar-icon">▣</span>
-      <span>Dashboard</span>
-    </a>
-
-    <span class="sidebar-section-title">TALÕES</span>
-
-    <a href="envios.html" class="sidebar-link" data-permissao="envios">
-      <span class="sidebar-icon">➤</span>
-      <span>Envios</span>
-    </a>
-
-    <a href="estoque.html" class="sidebar-link" data-permissao="estoque">
-      <span class="sidebar-icon">▦</span>
-      <span>Estoque</span>
-    </a>
-
-    <a href="recebimentos.html" class="sidebar-link" data-permissao="recebimentos">
-      <span class="sidebar-icon">⇄</span>
-      <span>Recebimentos</span>
-    </a>
-
-    <a href="manutencao.html" class="sidebar-link" data-permissao="manutencao">
-      <span class="sidebar-icon">✎</span>
-      <span>Manutenção</span>
-    </a>
-
-    <span class="sidebar-section-title">CADASTROS</span>
-
-    <a href="lojas.html" class="sidebar-link" data-permissao="lojas">
-      <span class="sidebar-icon">⌂</span>
-      <span>Lojas</span>
-    </a>
-
-    <a href="usuarios.html" class="sidebar-link" data-permissao="usuarios">
-      <span class="sidebar-icon">☻</span>
-      <span>Usuários</span>
-    </a>
-
-    <a href="perfis.html" class="sidebar-link active" data-permissao="perfis">
-      <span class="sidebar-icon">⚿</span>
-      <span>Perfis de Acesso</span>
-    </a>
-
-    <span class="sidebar-section-title">ANÁLISE</span>
-
-    <a href="relatorios.html" class="sidebar-link" data-permissao="relatorios">
-      <span class="sidebar-icon">▤</span>
-      <span>Relatórios</span>
-    </a>
-
-   
-
-  </nav>
-</aside>
-
-    <!-- Fundo escuro do menu mobile -->
-    <div id="menuOverlay" class="menu-overlay" onclick="fecharMenuMobile()"></div>
-
-    <main class="main-content">
-
-  <header class="topbar">
-    <button class="menu-toggle" onclick="abrirMenuMobile()" aria-label="Abrir menu">
-      ☰
-    </button>
-
-    <div class="topbar-title">
-      <h1>Perfis de Acesso</h1>
-      <p>Cadastro e gerenciamento das permissões do sistema</p>
-    </div>
-
-    <div class="user-info">
-      <button class="btn-primary" onclick="abrirFormularioPerfil()">
-        + Novo Perfil
-      </button>
-
-      <span id="nomeUsuario">Administrador</span>
-
-      <button class="btn-logout" onclick="logout()">
-        Sair
-      </button>
-    </div>
-  </header>
-
-  <div id="alertaSistema" class="alert-system hidden"></div>
-  <div
-  id="excluirPerfilOverlay"
-  class="bottom-sheet-overlay hidden"
-  onclick="fecharConfirmacaoExclusaoPerfil()">
+  <div class="form-group">
+    <label for="nivelPerfil">Nível Hierárquico (1-4)</label>
+    <input
+      type="number"
+      id="nivelPerfil"
+      class="form-input"
+      min="1"
+      max="4"
+      placeholder="1 (menor) a 4 (maior)"
+      required
+    />
+  </div>
 </div>
 
-<section id="excluirPerfilContainer" class="bottom-sheet form-bottom-sheet confirm-delete-sheet hidden">
-  <div class="content-card-header">
-    <h2>Excluir Perfil</h2>
-    <span>Confirme antes de remover este perfil de acesso</span>
-  </div>
+            <div class="permissions-grid">
+              <label>
+                <input
+                  type="checkbox"
+                  class="permissao-checkbox"
+                  value="dashboard"
+                />
+                Dashboard
+              </label>
 
-  <div class="delete-warning">
-    <strong>Atenção</strong>
+              <label>
+                <input
+                  type="checkbox"
+                  class="permissao-checkbox"
+                  value="lojas"
+                />
+                Lojas
+              </label>
 
-    <p>Você está prestes a excluir o perfil:</p>
+              <label>
+                <input
+                  type="checkbox"
+                  class="permissao-checkbox"
+                  value="usuarios"
+                />
+                Usuários
+              </label>
 
-    <div class="delete-target">
-      <strong id="nomePerfilExclusao">Nome do perfil</strong>
-      <span id="permissoesPerfilExclusao">0 permissões vinculadas</span>
+              <label>
+                <input
+                  type="checkbox"
+                  class="permissao-checkbox"
+                  value="perfis"
+                />
+                Perfis
+              </label>
+
+              <label>
+                <input
+                  type="checkbox"
+                  class="permissao-checkbox"
+                  value="estoque"
+                />
+                Estoque
+              </label>
+
+              <label>
+                <input
+                  type="checkbox"
+                  class="permissao-checkbox"
+                  value="envios"
+                />
+                Envios
+              </label>
+
+              <label>
+                <input
+                  type="checkbox"
+                  class="permissao-checkbox"
+                  value="recebimentos"
+                />
+                Recebimentos
+              </label>
+
+              <label>
+                <input
+                  type="checkbox"
+                  class="permissao-checkbox"
+                  value="manutencao"
+                />
+                Manutenção
+              </label>
+
+              <label>
+                <input
+                  type="checkbox"
+                  class="permissao-checkbox"
+                  value="relatorios"
+                />
+                Relatórios
+              </label>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" id="btnSalvarPerfil" class="btn-primary">
+                Salvar Perfil
+              </button>
+
+              <button
+                type="button"
+                class="btn-secondary"
+                onclick="fecharFormularioPerfil()"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section class="content-grid single-column">
+          <div class="content-card table-card">
+            <div class="content-card-header">
+              <h2>Perfis cadastrados</h2>
+              <span>Controle dos tipos de acesso disponíveis no sistema</span>
+            </div>
+
+            <div class="table-wrapper">
+              <table class="data-table responsive-table">
+                <thead>
+                  <tr>
+                    <th>Perfil</th>
+                    <th>Total de Permissões</th>
+                    <th>Ação</th>
+                  </tr>
+                </thead>
+
+                <tbody id="tabelaPerfis"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
 
-    <p>Essa ação removerá o perfil da lista do protótipo.</p>
-  </div>
-
-  <div class="form-actions">
-    <button type="button" class="btn-danger" onclick="confirmarExclusaoPerfil()">
-      Sim, excluir
+    <!-- Botão flutuante do assistente -->
+    <button class="assistant-toggle" onclick="abrirAssistente()">
+      Assistente IA
     </button>
 
-    <button type="button" class="btn-secondary" onclick="fecharConfirmacaoExclusaoPerfil()">
-      Cancelar
-    </button>
-  </div>
-</section>
+    <!-- Fundo escuro do assistente -->
+    <div
+      id="assistantOverlay"
+      class="assistant-overlay"
+      onclick="fecharAssistente()"
+    ></div>
 
-  <div
-    id="formPerfilOverlay"
-    class="bottom-sheet-overlay hidden"
-    onclick="fecharFormularioPerfil()">
-  </div>
+    <!-- Sidebar do assistente -->
+    <aside id="assistantSidebar" class="assistant-sidebar">
+      <div class="assistant-header">
+        <div>
+          <h2>Assistente IA</h2>
+          <p>Consulta inteligente do sistema</p>
+        </div>
 
-  <section id="formPerfilContainer" class="bottom-sheet form-bottom-sheet hidden">
-    <div class="content-card-header">
-      <h2>Novo Perfil</h2>
-      <span>Defina o nome e as permissões deste perfil</span>
-    </div>
+        <button class="assistant-close" onclick="fecharAssistente()">×</button>
+      </div>
 
-    <form id="formPerfil">
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="nomePerfil">Nome do Perfil</label>
-          <input
-            type="text"
-            id="nomePerfil"
-            class="form-input"
-            placeholder="Ex: Administrador"
-            required
-          />
+      <div id="chatMessages" class="chat-messages">
+        <div class="chat-message assistant">
+          Olá! Você pode perguntar, por exemplo: "Quais lojas estão abaixo do
+          estoque mínimo?"
         </div>
       </div>
 
-      <div class="permissions-grid">
-        <label>
-          <input type="checkbox" class="permissao-checkbox" value="dashboard">
-          Dashboard
-        </label>
-
-        <label>
-          <input type="checkbox" class="permissao-checkbox" value="lojas">
-          Lojas
-        </label>
-
-        <label>
-          <input type="checkbox" class="permissao-checkbox" value="usuarios">
-          Usuários
-        </label>
-
-        <label>
-          <input type="checkbox" class="permissao-checkbox" value="perfis">
-          Perfis
-        </label>
-
-        <label>
-          <input type="checkbox" class="permissao-checkbox" value="estoque">
-          Estoque
-        </label>
-
-        <label>
-          <input type="checkbox" class="permissao-checkbox" value="envios">
-          Envios
-        </label>
-
-        <label>
-          <input type="checkbox" class="permissao-checkbox" value="recebimentos">
-          Recebimentos
-        </label>
-
-        <label>
-          <input type="checkbox" class="permissao-checkbox" value="manutencao">
-          Manutenção
-        </label>
-
-        <label>
-          <input type="checkbox" class="permissao-checkbox" value="relatorios">
-          Relatórios
-        </label>
-      </div>
-
-      <div class="form-actions">
-        <button type="submit" id="btnSalvarPerfil" class="btn-primary">
-          Salvar Perfil
+      <div class="assistant-suggestions">
+        <button
+          onclick="usarSugestao('Quais lojas estão abaixo do estoque mínimo?')"
+        >
+          Lojas abaixo do mínimo
         </button>
 
-        <button type="button" class="btn-secondary" onclick="fecharFormularioPerfil()">
-          Cancelar
+        <button onclick="usarSugestao('Qual foi o total de talões enviados?')">
+          Total enviado
+        </button>
+
+        <button onclick="usarSugestao('Quantas lojas existem?')">
+          Total de lojas
         </button>
       </div>
-    </form>
-  </section>
 
-  <section class="content-grid single-column">
-    <div class="content-card table-card">
-      <div class="content-card-header">
-        <h2>Perfis cadastrados</h2>
-        <span>Controle dos tipos de acesso disponíveis no sistema</span>
+      <div class="chat-input-area">
+        <input
+          type="text"
+          id="chatInput"
+          class="form-input"
+          placeholder="Digite sua pergunta..."
+          onkeydown="verificarEnterAssistente(event)"
+        />
+
+        <button class="btn-primary" onclick="enviarPerguntaAssistente()">
+          Enviar
+        </button>
       </div>
+    </aside>
 
-      <div class="table-wrapper">
-        <table class="data-table responsive-table">
-          <thead>
-            <tr>
-              <th>Perfil</th>
-              <th>Total de Permissões</th>
-              <th>Ação</th>
-            </tr>
-          </thead>
-
-          <tbody id="tabelaPerfis">
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-</main>
-  </div>
-
-  <!-- Botão flutuante do assistente -->
-  <button class="assistant-toggle" onclick="abrirAssistente()">
-    Assistente IA
-  </button>
-
-  <!-- Fundo escuro do assistente -->
-  <div id="assistantOverlay" class="assistant-overlay" onclick="fecharAssistente()"></div>
-
-  <!-- Sidebar do assistente -->
-  <aside id="assistantSidebar" class="assistant-sidebar">
-    <div class="assistant-header">
-      <div>
-        <h2>Assistente IA</h2>
-        <p>Consulta inteligente do sistema</p>
-      </div>
-
-      <button class="assistant-close" onclick="fecharAssistente()">
-        ×
-      </button>
-    </div>
-
-    <div id="chatMessages" class="chat-messages">
-      <div class="chat-message assistant">
-        Olá! Você pode perguntar, por exemplo:
-        "Quais lojas estão abaixo do estoque mínimo?"
-      </div>
-    </div>
-
-    <div class="assistant-suggestions">
-      <button onclick="usarSugestao('Quais lojas estão abaixo do estoque mínimo?')">
-        Lojas abaixo do mínimo
-      </button>
-
-      <button onclick="usarSugestao('Qual foi o total de talões enviados?')">
-        Total enviado
-      </button>
-
-      <button onclick="usarSugestao('Quantas lojas existem?')">
-        Total de lojas
-      </button>
-    </div>
-
-    <div class="chat-input-area">
-      <input
-        type="text"
-        id="chatInput"
-        class="form-input"
-        placeholder="Digite sua pergunta..."
-        onkeydown="verificarEnterAssistente(event)"
-      />
-
-      <button class="btn-primary" onclick="enviarPerguntaAssistente()">
-        Enviar
-      </button>
-    </div>
-  </aside>
-
-  <script src="../js/mock-data.js"></script>
-  <script src="../js/ui.js"></script>
-  <script src="../js/perfis.js"></script>
-</body>
+    <script src="../js/mock-data.js"></script>
+    <script src="../js/ui.js"></script>
+    <script src="../js/perfis.js"></script>
+  </body>
 </html>
