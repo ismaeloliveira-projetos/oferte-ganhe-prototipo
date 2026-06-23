@@ -35,6 +35,17 @@ loginForm.addEventListener("submit", function (event) {
       : null;
 
     if (usuario && perfilDoUsuario) {
+      const sessaoAtiva = localStorage.getItem("sessaoAtiva");
+      if (sessaoAtiva === usuario.email) {
+        btnEntrar.disabled = false;
+        btnEntrar.classList.remove("loading");
+        btnText.classList.remove("hidden");
+        btnLoading.classList.add("hidden");
+        loginError.classList.remove("hidden");
+        loginError.textContent = "Usuário já está logado em outro dispositivo!";
+        return;
+      }
+
       btnEntrar.classList.remove("loading");
       btnEntrar.classList.add("success");
       btnText.textContent = "✓ Logado!";
@@ -50,7 +61,8 @@ loginForm.addEventListener("submit", function (event) {
         permissoes: perfilDoUsuario.permissoes,
       };
 
-      localStorage.setItem("usuarioLogado", JSON.stringify(usuarioLogado));
+      localStorage.setItem("usuarioLogado", JSON.stringify(usuarioLogado)); // não pode faltar
+      localStorage.setItem("sessaoAtiva", usuario.email);
 
       setTimeout(() => {
         window.location.href = "dashboard.html";

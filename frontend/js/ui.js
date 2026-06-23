@@ -410,6 +410,7 @@ function logout() {
   pararTimerSessao();
   sessionStorageSeguro("clear");
   localStorage.removeItem("usuarioLogado");
+  localStorage.removeItem("sessaoAtiva"); // adiciona essa linha
   usuarioLogado = null;
   window.location.href = "login.html";
 }
