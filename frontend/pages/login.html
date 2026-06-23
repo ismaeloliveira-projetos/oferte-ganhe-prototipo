@@ -74,6 +74,30 @@
               <span id="btnText">Entrar</span>
               <span id="btnLoading" class="hidden">⏳ Carregando...</span>
             </button>
+
+            <!-- MODAL RESET DE SENHA -->
+            <div class="modal" id="modalReset">
+              <h3>Redefinir senha</h3>
+              <p>Digite o token recebido e sua nova senha</p>
+
+              <input
+                type="text"
+                id="tokenDigitado"
+                placeholder="Digite o token"
+                maxlength="6"
+              />
+              <input type="password" id="novaSenha" placeholder="Nova senha" />
+              <input
+                type="password"
+                id="confirmarSenha"
+                placeholder="Confirmar nova senha"
+              />
+
+              <div class="msg error hidden" id="msgErrorReset"></div>
+              <div class="msg success hidden" id="msgSuccessReset"></div>
+
+              <button type="button" id="btnConfirmarReset">Confirmar</button>
+            </div>
           </form>
         </section>
       </div>

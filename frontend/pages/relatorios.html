@@ -87,6 +87,11 @@
             <span>Usuários</span>
           </a>
 
+          <a href="perfis.html" class="sidebar-link" data-permissao="perfis">
+            <span class="sidebar-icon">🔐</span>
+            <span>Perfis</span>
+          </a>
+
           <span class="sidebar-section-title">ANÁLISE</span>
 
           <a
@@ -209,6 +214,29 @@
               >
                 Exportar Manutenções
               </button>
+            </div>
+
+            <div class="content-card">
+              <div class="content-card-header">
+                <h2>Relatórios de Cadastros</h2>
+                <span>Exportações de usuários e perfis de acesso</span>
+              </div>
+
+              <div class="actions-list">
+                <button
+                  class="btn-primary"
+                  onclick="exportarRelatorioUsuarios()"
+                >
+                  Exportar Usuários
+                </button>
+
+                <button
+                  class="btn-secondary"
+                  onclick="exportarRelatorioPerfis()"
+                >
+                  Exportar Perfis
+                </button>
+              </div>
             </div>
           </div>
         </section>

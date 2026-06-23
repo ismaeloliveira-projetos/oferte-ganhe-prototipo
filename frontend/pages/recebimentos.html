@@ -87,6 +87,11 @@
             <span>Usuários</span>
           </a>
 
+          <a href="perfis.html" class="sidebar-link" data-permissao="perfis">
+            <span class="sidebar-icon">🔐</span>
+            <span>Perfis</span>
+          </a>
+
           <span class="sidebar-section-title">ANÁLISE</span>
 
           <a
@@ -153,6 +158,11 @@
         </header>
 
         <div id="alertaSistema" class="alert-system hidden"></div>
+
+        <div id="alertaAnomalias" class="anomalia-banner hidden">
+          ⚠️ <strong>Detecção de Anomalias (IA):</strong>
+          <span id="mensagemAnomalias"></span>
+        </div>
 
         <div
           id="formRecebimentoOverlay"

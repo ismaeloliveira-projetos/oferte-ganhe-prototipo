@@ -380,6 +380,67 @@ function exportarRelatorioManutencoes() {
   mostrarAlerta("Relatório de manutenções exportado com sucesso.");
 }
 
+function exportarRelatorioUsuarios() {
+  const banco = carregarBanco();
+  const usuarios = banco.usuarios || [];
+
+  if (usuarios.length === 0) {
+    mostrarAlerta("Nenhum usuário cadastrado para exportar.");
+    return;
+  }
+
+  const cabecalho = montarLinhaCsv(["Nome", "Matrícula", "E-mail", "Perfil"]);
+  const linhas = usuarios.map((usuario) =>
+    montarLinhaCsv([
+      usuario.nome || "-",
+      usuario.matricula || "-",
+      usuario.email || "-",
+      usuario.perfilId || "-",
+    ]),
+  );
+
+  baixarCsv("relatorio-usuarios.csv", [cabecalho, ...linhas]);
+  registrarHistoricoRelatorio(
+    "Usuários",
+    "CSV",
+    "Todos os usuários cadastrados",
+  );
+  carregarCardsRelatorios();
+  carregarTabelaHistoricoRelatorios();
+  mostrarAlerta("Relatório de usuários exportado com sucesso.");
+}
+
+function exportarRelatorioPerfis() {
+  const banco = carregarBanco();
+  const perfis = banco.perfis || [];
+
+  if (perfis.length === 0) {
+    mostrarAlerta("Nenhum perfil cadastrado para exportar.");
+    return;
+  }
+
+  const cabecalho = montarLinhaCsv([
+    "Nome",
+    "Nível",
+    "Permissões",
+    "Total de Permissões",
+  ]);
+  const linhas = perfis.map((perfil) =>
+    montarLinhaCsv([
+      perfil.nome || "-",
+      perfil.nivel || "-",
+      (perfil.permissoes || []).join(", "),
+      (perfil.permissoes || []).length,
+    ]),
+  );
+
+  baixarCsv("relatorio-perfis.csv", [cabecalho, ...linhas]);
+  registrarHistoricoRelatorio("Perfis", "CSV", "Todos os perfis de acesso");
+  carregarCardsRelatorios();
+  carregarTabelaHistoricoRelatorios();
+  mostrarAlerta("Relatório de perfis exportado com sucesso.");
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   carregarUsuarioLogado();
   carregarCardsRelatorios();

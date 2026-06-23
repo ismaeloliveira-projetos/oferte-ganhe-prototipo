@@ -102,30 +102,87 @@ function fecharModal() {
   overlay.classList.remove("active");
 }
 
-// enviar recuperação
+let tokenGerado = null;
+let emailRecuperacao = null;
+
 btnRecuperar.addEventListener("click", () => {
   const email = emailRecuperar.value.trim().toLowerCase();
 
   msgError.classList.add("hidden");
   msgSuccess.classList.add("hidden");
 
-  // validação
   if (!usuarios.includes(email)) {
     msgError.textContent = "E-mail inválido!";
     msgError.classList.remove("hidden");
     return;
   }
 
-  // gerar token
-  const token = Math.floor(100000 + Math.random() * 900000);
-  console.log("TOKEN GERADO:", token);
+  tokenGerado = Math.floor(100000 + Math.random() * 900000);
+  emailRecuperacao = email;
+  console.log("TOKEN GERADO:", tokenGerado);
 
   msgSuccess.textContent = "Token enviado com sucesso para seu e-mail!";
   msgSuccess.classList.remove("hidden");
 
-  // fecha automático
   setTimeout(() => {
     fecharModal();
     emailRecuperar.value = "";
-  }, 2000);
+    abrirModalReset();
+  }, 1500);
+});
+
+function abrirModalReset() {
+  document.getElementById("modalReset").classList.add("active");
+  overlay.classList.add("active");
+}
+
+function fecharModalReset() {
+  document.getElementById("modalReset").classList.remove("active");
+  overlay.classList.remove("active");
+  tokenGerado = null;
+  emailRecuperacao = null;
+}
+
+overlay.addEventListener("click", () => {
+  fecharModal();
+  fecharModalReset();
+});
+
+document.getElementById("btnConfirmarReset").addEventListener("click", () => {
+  const tokenDigitado = document.getElementById("tokenDigitado").value.trim();
+  const novaSenha = document.getElementById("novaSenha").value;
+  const confirmarSenha = document.getElementById("confirmarSenha").value;
+  const msgErrorReset = document.getElementById("msgErrorReset");
+  const msgSuccessReset = document.getElementById("msgSuccessReset");
+
+  msgErrorReset.classList.add("hidden");
+  msgSuccessReset.classList.add("hidden");
+
+  if (String(tokenDigitado) !== String(tokenGerado)) {
+    msgErrorReset.textContent = "Token inválido!";
+    msgErrorReset.classList.remove("hidden");
+    return;
+  }
+
+  if (novaSenha.length < 6) {
+    msgErrorReset.textContent = "A senha deve ter pelo menos 6 caracteres.";
+    msgErrorReset.classList.remove("hidden");
+    return;
+  }
+
+  if (novaSenha !== confirmarSenha) {
+    msgErrorReset.textContent = "As senhas não coincidem!";
+    msgErrorReset.classList.remove("hidden");
+    return;
+  }
+
+  msgSuccessReset.textContent = "Senha redefinida com sucesso!";
+  msgSuccessReset.classList.remove("hidden");
+
+  setTimeout(() => {
+    fecharModalReset();
+    document.getElementById("tokenDigitado").value = "";
+    document.getElementById("novaSenha").value = "";
+    document.getElementById("confirmarSenha").value = "";
+  }, 1500);
 });

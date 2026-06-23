@@ -87,7 +87,14 @@
             <span>Usuários</span>
           </a>
 
-      
+          <a
+            href="perfis.html"
+            class="sidebar-link active"
+            data-permissao="perfis"
+          >
+            <span class="sidebar-icon">🔐</span>
+            <span>Perfis</span>
+          </a>
 
           <span class="sidebar-section-title">ANÁLISE</span>
 
@@ -100,7 +107,7 @@
             <span>Relatórios</span>
           </a>
 
-           <a
+          <a
             href="insights.html"
             class="sidebar-link"
             data-permissao="insights"
@@ -108,8 +115,6 @@
             <span class="sidebar-icon">💡</span>
             <span>Insights</span>
           </a>
-
-          
         </nav>
       </aside>
 
@@ -208,33 +213,34 @@
             <h2>Novo Perfil</h2>
             <span>Defina o nome e as permissões deste perfil</span>
           </div>
+          <form id="formPerfil">
+            <!-- adiciona essa linha -->
 
-          <div class="form-grid">
-            
-  <div class="form-group">
-    <label for="nomePerfil">Nome do Perfil</label>
-    <input
-      type="text"
-      id="nomePerfil"
-      class="form-input"
-      placeholder="Ex: Administrador"
-      required
-    />
-  </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="nomePerfil">Nome do Perfil</label>
+                <input
+                  type="text"
+                  id="nomePerfil"
+                  class="form-input"
+                  placeholder="Ex: Administrador"
+                  required
+                />
+              </div>
 
-  <div class="form-group">
-    <label for="nivelPerfil">Nível Hierárquico (1-4)</label>
-    <input
-      type="number"
-      id="nivelPerfil"
-      class="form-input"
-      min="1"
-      max="4"
-      placeholder="1 (menor) a 4 (maior)"
-      required
-    />
-  </div>
-</div>
+              <div class="form-group">
+                <label for="nivelPerfil">Nível Hierárquico (1-4)</label>
+                <input
+                  type="number"
+                  id="nivelPerfil"
+                  class="form-input"
+                  min="1"
+                  max="4"
+                  placeholder="1 (menor) a 4 (maior)"
+                  required
+                />
+              </div>
+            </div>
 
             <div class="permissions-grid">
               <label>

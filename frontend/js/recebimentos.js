@@ -286,7 +286,46 @@ function atualizarSininhoRecebimentos() {
   }
 }
 
+function detectarAnomalias() {
+  const recebimentos = buscarRecebimentosSalvos();
+  const banner = document.getElementById("alertaAnomalias");
+  const mensagem = document.getElementById("mensagemAnomalias");
+  if (!banner || !mensagem) return;
+
+  // agrupa quantidade recebida por loja
+  const recebimentosPorLoja = {};
+  recebimentos.forEach(function (r) {
+    if (!recebimentosPorLoja[r.codigoLoja])
+      recebimentosPorLoja[r.codigoLoja] = 0;
+    recebimentosPorLoja[r.codigoLoja] += Number(r.quantidadeRecebida);
+  });
+
+  const valores = Object.values(recebimentosPorLoja);
+  if (valores.length < 2) {
+    banner.classList.add("hidden");
+    return;
+  }
+
+  const media = valores.reduce((a, b) => a + b, 0) / valores.length;
+  const anomalias = [];
+
+  Object.entries(recebimentosPorLoja).forEach(function ([codigo, total]) {
+    if (total > media * 1.5) {
+      const loja = buscarLojaPorCodigo(codigo);
+      anomalias.push(loja ? loja.nome : codigo);
+    }
+  });
+
+  if (anomalias.length > 0) {
+    mensagem.textContent = `${anomalias.join(", ")} com volume de recebimento acima da média. Recomenda-se revisão manual.`;
+    banner.classList.remove("hidden");
+  } else {
+    banner.classList.add("hidden");
+  }
+}
+
 carregarUsuarioLogado();
 carregarCardsRecebimentos();
 carregarTabelaRecebimentos();
 atualizarSininhoRecebimentos();
+detectarAnomalias();
