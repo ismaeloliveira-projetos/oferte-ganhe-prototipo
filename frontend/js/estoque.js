@@ -156,7 +156,28 @@ function solicitarTalao(codigoLoja, quantidade, botao) {
   botao.textContent = "Solicitado";
 }
 
+function exibirRanqueamentoPrioridade() {
+  const lojas = buscarLojasSalvas();
+  const banner = document.getElementById("alertaRanqueamento");
+  const mensagem = document.getElementById("mensagemRanqueamento");
+  if (!banner || !mensagem) return;
+
+  const criticas = lojas
+    .filter((loja) => obterStatusEstoque(loja) === "Crítico")
+    .sort((a, b) => obterReposicaoSugerida(b) - obterReposicaoSugerida(a));
+
+  if (criticas.length === 0) {
+    banner.classList.add("hidden");
+    return;
+  }
+
+  const nomes = criticas.map((loja) => loja.nome || loja.codigo).join(", ");
+  mensagem.textContent = `Prioridade de envio sugerida: ${nomes}. Lojas com maior necessidade de reposição.`;
+  banner.classList.remove("hidden");
+}
+
 carregarUsuarioLogado();
 carregarCardsEstoque();
 carregarTabelaEstoque();
 aplicarPermissoesMenu();
+exibirRanqueamentoPrioridade();
