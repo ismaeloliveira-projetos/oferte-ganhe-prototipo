@@ -121,11 +121,6 @@ function protegerPaginaAtual() {
   }
 }
 
-function logout() {
-  localStorage.removeItem("usuarioLogado");
-  window.location.href = "login.html";
-}
-
 function abrirMenuMobile() {
   const sidebar = document.getElementById("sidebar");
   const menuOverlay = document.getElementById("menuOverlay");
@@ -403,4 +398,164 @@ function enviarPerguntaAssistente() {
   }, 500);
 
   input.value = "";
+}
+
+const TIMEOUT_SEGUNDOS = 10;
+const AVISO_ANTES_SEGUNDOS = 5;
+const CHAVE_SESSAO = "og_sessao";
+
+let usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado")) || null;
+
+function logout() {
+  pararTimerSessao();
+  sessionStorageSeguro("clear");
+  localStorage.removeItem("usuarioLogado");
+  usuarioLogado = null;
+  window.location.href = "login.html";
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  const temSidebar = document.getElementById("sidebar");
+
+  if (temSidebar) {
+    carregarUsuarioLogado();
+    criarAssistenteGlobal();
+  }
+
+  if (usuarioLogado) {
+    iniciarSessao();
+  } else {
+    window.location.href = "../index.html";
+  }
+});
+
+let segundosRestantes = TIMEOUT_SEGUNDOS;
+let intervaloSessao = null;
+let modalTimeoutAberto = false;
+
+function injetarModalTimeout() {
+  const modal = document.createElement("div");
+  modal.id = "modalTimeout";
+  modal.className = "modal-overlay";
+  modal.innerHTML = `
+  <div class="modal-caixa">
+    <h2>⚠️ Sessão prestes a expirar</h2>
+    <p>Sua sessão vai encerrar em <strong id="contagemTimeout">60</strong> segundos por inatividade.</p>
+    <div class="modal-botoes">
+      <button class="btn-primary" onclick="continuarSessao()">Continuar sessão</button>
+      <button class="btn-primary" onclick="logout()">Sair agora</button>
+    </div>
+  </div>
+`;
+  document.body.appendChild(modal);
+}
+
+function iniciarSessao() {
+  injetarModalTimeout();
+  sessionStorageSeguro("set", {
+    usuarioId: usuarioLogado.id,
+    inicio: Date.now(),
+  });
+  resetarContadorInatividade();
+  pararTimerSessao();
+  intervaloSessao = setInterval(tickSessao, 1000);
+
+  ["click", "keydown", "mousemove", "scroll", "touchstart"].forEach((evt) => {
+    document.addEventListener(evt, resetarContadorInatividade, {
+      passive: true,
+    });
+  });
+}
+
+function pararTimerSessao() {
+  if (intervaloSessao) clearInterval(intervaloSessao);
+  intervaloSessao = null;
+}
+
+function resetarContadorInatividade() {
+  if (!usuarioLogado) return;
+  segundosRestantes = TIMEOUT_SEGUNDOS;
+  if (modalTimeoutAberto) {
+    continuarSessao();
+  }
+  atualizarVisorTimer();
+}
+
+function tickSessao() {
+  if (!usuarioLogado) return;
+  segundosRestantes--;
+  atualizarVisorTimer();
+
+  if (
+    segundosRestantes <= AVISO_ANTES_SEGUNDOS &&
+    segundosRestantes > 0 &&
+    !modalTimeoutAberto
+  ) {
+    abrirModalTimeout();
+  }
+
+  if (modalTimeoutAberto) {
+    document.getElementById("contagemTimeout").textContent = Math.max(
+      segundosRestantes,
+      0,
+    );
+  }
+
+  // if (segundosRestantes <= 0) {
+  // pararTimerSessao();
+  // fecharModalTimeout();
+  //logout();
+  // alert("Sessão encerrada por inatividade.");
+  // }
+}
+
+function atualizarVisorTimer() {}
+
+function abrirModalTimeout() {
+  modalTimeoutAberto = true;
+  document.getElementById("contagemTimeout").textContent = segundosRestantes;
+  document.getElementById("modalTimeout").classList.add("ativo");
+}
+
+function fecharModalTimeout() {
+  modalTimeoutAberto = false;
+  document.getElementById("modalTimeout").classList.remove("ativo");
+}
+
+function continuarSessao() {
+  fecharModalTimeout();
+  segundosRestantes = TIMEOUT_SEGUNDOS;
+  atualizarVisorTimer();
+}
+
+function sessionStorageSeguro(acao, valor) {
+  try {
+    if (acao === "set") {
+      sessionStorage.setItem(CHAVE_SESSAO, JSON.stringify(valor));
+      return;
+    }
+    if (acao === "clear") {
+      sessionStorage.removeItem(CHAVE_SESSAO);
+      return;
+    }
+    if (acao === "get") {
+      const v = sessionStorage.getItem(CHAVE_SESSAO);
+      return v ? JSON.parse(v) : null;
+    }
+  } catch (e) {
+    return null;
+  }
+}
+
+function mostrarToast(mensagem, erro = false) {
+  const toast = document.createElement("div");
+  toast.className = `toast ${erro ? "toast-erro" : "toast-sucesso"}`;
+  toast.textContent = mensagem;
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.classList.add("visivel"), 10);
+  setTimeout(() => {
+    toast.classList.remove("visivel");
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
 }

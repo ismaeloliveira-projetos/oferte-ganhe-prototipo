@@ -1,376 +1,381 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>Dashboard | Oferte e Ganhe</title>
-
-  <link rel="stylesheet" href="../css/style.css" />
-</head>
-<body>
-
-  <div class="app-layout">
-
-  <aside class="sidebar" id="sidebar">
-  <button class="sidebar-close" onclick="fecharMenuMobile()" aria-label="Fechar menu">
-    X
-  </button>
-
-  <div class="sidebar-brand">
-  <img src="../assets/logo.png" alt="Logo Quero Quero" class="sidebar-logo" />
-  <h2>Oferte e Ganhe</h2>
-  <span>Gestão de Talões</span>
-</div>
-
-  <nav class="sidebar-menu">
-
-    <span class="sidebar-section-title">VISÃO GERAL</span>
-
-    <a href="dashboard.html" class="sidebar-link" data-permissao="dashboard">
-      <span class="sidebar-icon">▣</span>
-      <span>Dashboard</span>
-    </a>
-
-    <span class="sidebar-section-title">TALÕES</span>
-
-    <a href="envios.html" class="sidebar-link" data-permissao="envios">
-      <span class="sidebar-icon">➤</span>
-      <span>Envios</span>
-    </a>
-
-    <a href="estoque.html" class="sidebar-link" data-permissao="estoque">
-      <span class="sidebar-icon">▦</span>
-      <span>Estoque</span>
-    </a>
-
-    <a href="recebimentos.html" class="sidebar-link" data-permissao="recebimentos">
-      <span class="sidebar-icon">⇄</span>
-      <span>Recebimentos</span>
-    </a>
-
-    <a href="manutencao.html" class="sidebar-link" data-permissao="manutencao">
-      <span class="sidebar-icon">✎</span>
-      <span>Manutenção</span>
-    </a>
-
-    <span class="sidebar-section-title">CADASTROS</span>
-
-    <a href="lojas.html" class="sidebar-link active" data-permissao="lojas">
-      <span class="sidebar-icon">⌂</span>
-      <span>Lojas</span>
-    </a>
-
-    <a href="usuarios.html" class="sidebar-link" data-permissao="usuarios">
-      <span class="sidebar-icon">☻</span>
-      <span>Usuários</span>
-    </a>
-
-  
-    <span class="sidebar-section-title">ANÁLISE</span>
-
-    <a href="relatorios.html" class="sidebar-link" data-permissao="relatorios">
-      <span class="sidebar-icon">▤</span>
-      <span>Relatórios</span>
-    </a>
-
-   
-
-  </nav>
-</aside>
-
-    <!-- Fundo escuro do menu mobile -->
-    <div id="menuOverlay" class="menu-overlay" onclick="fecharMenuMobile()"></div>
-
-    <!-- Conteúdo principal -->
-    <main class="main-content">
-
-      <header class="topbar">
-        <button class="menu-toggle" onclick="abrirMenuMobile()" aria-label="Abrir menu">
-          ☰
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lojas | Oferte e Ganhe</title>
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body>
+    <div class="app-layout">
+      <aside class="sidebar" id="sidebar">
+        <button
+          class="sidebar-close"
+          onclick="fecharMenuMobile()"
+          aria-label="Fechar menu"
+        >
+          X
         </button>
-
-        <div class="topbar-title">
-          <h1>Gestão de Lojas</h1>
-          <p>Cadastro e acompanhamento das lojas participantes</p>
+        <div class="sidebar-brand">
+          <img
+            src="../assets/logo.png"
+            alt="Logo Quero Quero"
+            class="sidebar-logo"
+          />
+          <h2>Oferte e Ganhe</h2>
+          <span>Gestão de Talões</span>
         </div>
 
-         <div class="user-info">
-          <button class="btn-primary" onclick="abrirFormularioLoja()">
-            + Nova Loja
-          </button>
+        <nav class="sidebar-menu">
+          <span class="sidebar-section-title">VISÃO GERAL</span>
+          <a
+            href="dashboard.html"
+            class="sidebar-link"
+            data-permissao="dashboard"
+          >
+            <span class="sidebar-icon">▣</span>
+            <span>Dashboard</span>
+          </a>
 
-          <span id="nomeUsuario">Administrador</span>
-          <button class="btn-logout" onclick="logout()">
-            Sair
-          </button>
-        </div>
+          <span class="sidebar-section-title">TALÕES</span>
+          <a href="envios.html" class="sidebar-link" data-permissao="envios">
+            <span class="sidebar-icon">➤</span>
+            <span>Envios</span>
+          </a>
+          <a href="estoque.html" class="sidebar-link" data-permissao="estoque">
+            <span class="sidebar-icon">▦</span>
+            <span>Estoque</span>
+          </a>
+          <a
+            href="recebimentos.html"
+            class="sidebar-link"
+            data-permissao="recebimentos"
+          >
+            <span class="sidebar-icon">⇄</span>
+            <span>Recebimentos</span>
+          </a>
+          <a
+            href="manutencao.html"
+            class="sidebar-link"
+            data-permissao="manutencao"
+          >
+            <span class="sidebar-icon">✎</span>
+            <span>Manutenção</span>
+          </a>
 
-      </header>
+          <span class="sidebar-section-title">CADASTROS</span>
+          <a
+            href="lojas.html"
+            class="sidebar-link active"
+            data-permissao="lojas"
+          >
+            <span class="sidebar-icon">⌂</span>
+            <span>Lojas</span>
+          </a>
+          <a
+            href="usuarios.html"
+            class="sidebar-link"
+            data-permissao="usuarios"
+          >
+            <span class="sidebar-icon">☻</span>
+            <span>Usuários</span>
+          </a>
 
-      <div id="alertaSistema" class="alert-system hidden"></div>
+          <span class="sidebar-section-title">ANÁLISE</span>
+          <a
+            href="relatorios.html"
+            class="sidebar-link"
+            data-permissao="relatorios"
+          >
+            <span class="sidebar-icon">▤</span>
+            <span>Relatórios</span>
+          </a>
+          <a
+            href="insights.html"
+            class="sidebar-link"
+            data-permissao="insights"
+          >
+            <span class="sidebar-icon">💡</span>
+            <span>Insights</span>
+          </a>
+        </nav>
+      </aside>
+
       <div
-  id="excluirLojaOverlay"
-  class="bottom-sheet-overlay hidden"
-  onclick="fecharConfirmacaoExclusaoLoja()">
-</div>
+        id="menuOverlay"
+        class="menu-overlay"
+        onclick="fecharMenuMobile()"
+      ></div>
 
-<section id="excluirLojaContainer" class="bottom-sheet form-bottom-sheet confirm-delete-sheet hidden">
-  <div class="content-card-header">
-    <h2>Excluir Loja</h2>
-    <span>Confirme antes de remover esta loja do sistema</span>
-  </div>
-
-  <div class="delete-warning">
-    <strong>Atenção</strong>
-
-    <p>Você está prestes a excluir a loja:</p>
-
-    <div class="delete-target">
-      <strong id="nomeLojaExclusao">Nome da loja</strong>
-      <span id="codigoLojaExclusao">Código da loja</span>
-    </div>
-
-    <p>Essa ação removerá a loja da lista do protótipo.</p>
-  </div>
-
-  <div class="form-actions">
-    <button type="button" class="btn-danger" onclick="confirmarExclusaoLoja()">
-      Sim, excluir
-    </button>
-
-    <button type="button" class="btn-secondary" onclick="fecharConfirmacaoExclusaoLoja()">
-      Cancelar
-    </button>
-  </div>
-</section>
-
-        <div
-         id="formLojaOverlay"
-          class="bottom-sheet-overlay hidden"
-           onclick="fecharFormularioLoja()">
-          </div>
-
-
-      <section id="formLojaContainer" class="bottom-sheet form-bottom-sheet hidden">
-       <div class="content-card-header">
-        <h2>Nova Loja</h2>
-        <span>Preencha os dados para cadastrar uma nova loja</span>
-      </div>
-
-      
-      <form id="formLoja">
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="codigoLoja">Código da Loja</label>
-            <input
-             type="text"
-             id="codigoLoja"
-             class="form-input"
-             placeholder="(ex: LOJA123)"
-              required
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="nomeLoja">Nome da Loja</label>
-            <input
-              type="text"
-              class="form-input"
-              id="nomeLoja"
-              placeholder="Digite o nome da loja"
-              required
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="estoqueAtual">Estoque Atual</label>
-            <input
-              type="number"
-              class="form-input"
-              id="estoqueAtual"
-              placeholder="Digite o estoque atual"
-              required
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="estoqueMinimo">Estoque Mínimo</label>
-            <input
-              type="number"
-              class="form-input"
-              id="estoqueMinimo"
-              placeholder="Digite o estoque mínimo"
-              required
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="estoqueRecomendado">Estoque Recomendado</label>
-            <input
-              type="number"
-              class="form-input"
-              id="estoqueRecomendado"
-              placeholder="Digite o estoque recomendado"
-              required
-            />
+      <!-- DETALHES DA LOJA -->
+      <div
+        id="detalhesLojaOverlay"
+        class="bottom-sheet-overlay hidden"
+        onclick="fecharDetalhesLoja()"
+      ></div>
+      <section id="detalhesLojaContainer" class="bottom-sheet hidden">
+        <div class="bottom-sheet-header">
+          <div>
+            <h2>Detalhes da Loja</h2>
+            <span>Resumo operacional da loja selecionada</span>
           </div>
         </div>
+        <div id="detalhesLojaConteudo" class="bottom-sheet-content"></div>
+        <div class="bottom-sheet-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            onclick="fecharDetalhesLoja()"
+          >
+            Fechar
+          </button>
+        </div>
+      </section>
 
+      <!-- EXCLUIR LOJA -->
+      <div
+        id="excluirLojaOverlay"
+        class="bottom-sheet-overlay hidden"
+        onclick="fecharConfirmacaoExclusaoLoja()"
+      ></div>
+      <section
+        id="excluirLojaContainer"
+        class="bottom-sheet form-bottom-sheet confirm-delete-sheet hidden"
+      >
+        <div class="content-card-header">
+          <h2>Excluir Loja</h2>
+          <span>Confirme antes de remover esta loja do sistema</span>
+        </div>
+        <div class="delete-warning">
+          <strong>Atenção</strong>
+          <p>Você está prestes a excluir a loja:</p>
+          <div class="delete-target">
+            <strong id="nomeLojaExclusao">Nome da loja</strong>
+            <span id="codigoLojaExclusao">Código da loja</span>
+          </div>
+          <p>Essa ação removerá a loja da lista do protótipo.</p>
+        </div>
         <div class="form-actions">
-          <button type="submit" id="btnSalvarLoja" class="btn-primary">
-            Salvar
+          <button
+            type="button"
+            class="btn-danger"
+            onclick="confirmarExclusaoLoja()"
+          >
+            Sim, excluir
           </button>
-
-       <button type="button" class="btn-secondary" onclick="fecharFormularioLoja()">
-        Cancelar
-      </button>
+          <button
+            type="button"
+            class="btn-secondary"
+            onclick="fecharConfirmacaoExclusaoLoja()"
+          >
+            Cancelar
+          </button>
         </div>
-      </form>
       </section>
 
+      <!-- NOVA LOJA -->
       <div
-      id="detalhesLojaOverlay"
-       class="bottom-sheet-overlay hidden"
-       onclick="fecharDetalhesLoja()">
+        id="formLojaOverlay"
+        class="bottom-sheet-overlay hidden"
+        onclick="fecharFormularioLoja()"
+      ></div>
+      <section
+        id="formLojaContainer"
+        class="bottom-sheet form-bottom-sheet hidden"
+      >
+        <div class="content-card-header">
+          <h2>Nova Loja</h2>
+          <span>Preencha os dados para cadastrar uma nova loja</span>
+        </div>
+        <form id="formLoja">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="codigoLoja">Código da Loja</label>
+              <input
+                type="text"
+                id="codigoLoja"
+                class="form-input"
+                placeholder="(ex: LOJA123)"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="nomeLoja">Nome da Loja</label>
+              <input
+                type="text"
+                class="form-input"
+                id="nomeLoja"
+                placeholder="Digite o nome da loja"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="estoqueAtual">Estoque Atual</label>
+              <input
+                type="number"
+                class="form-input"
+                id="estoqueAtual"
+                placeholder="Digite o estoque atual"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="estoqueMinimo">Estoque Mínimo</label>
+              <input
+                type="number"
+                class="form-input"
+                id="estoqueMinimo"
+                placeholder="Digite o estoque mínimo"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="estoqueRecomendado">Estoque Recomendado</label>
+              <input
+                type="number"
+                class="form-input"
+                id="estoqueRecomendado"
+                placeholder="Digite o estoque recomendado"
+                required
+              />
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" id="btnSalvarLoja" class="btn-primary">
+              Salvar Loja
+            </button>
+            <button
+              type="button"
+              class="btn-secondary"
+              onclick="fecharFormularioLoja()"
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <main class="main-content">
+        <header class="topbar">
+          <button
+            class="menu-toggle"
+            onclick="abrirMenuMobile()"
+            aria-label="Abrir menu"
+          >
+            ☰
+          </button>
+          <div class="topbar-title">
+            <h1>Gestão de Lojas</h1>
+            <p>Cadastro e acompanhamento das lojas participantes</p>
+          </div>
+          <div class="user-info">
+            <button class="btn-primary" onclick="abrirFormularioLoja()">
+              + Nova Loja
+            </button>
+            <span id="nomeUsuario">Administrador</span>
+            <button class="btn-logout" onclick="logout()">Sair</button>
+          </div>
+        </header>
+
+        <div id="alertaSistema" class="alert-system hidden"></div>
+
+        <section class="dashboard-grid">
+          <div class="dashboard-card">
+            <span>Total de lojas</span>
+            <strong id="totalLojas">0</strong>
+          </div>
+          <div class="dashboard-card">
+            <span>Lojas ativas</span>
+            <strong id="lojasAtivas">0</strong>
+          </div>
+          <div class="dashboard-card warning">
+            <span>Estoque crítico</span>
+            <strong id="lojasCriticas">0</strong>
+          </div>
+          <div class="dashboard-card">
+            <span>Estoque em atenção</span>
+            <strong id="lojasAtencao">0</strong>
+          </div>
+        </section>
+
+        <section class="content-grid single-column">
+          <div class="content-card table-card">
+            <div class="content-card-header">
+              <h2>Lojas cadastradas</h2>
+              <span>Monitoramento de reposição</span>
+            </div>
+            <div class="table-wrapper">
+              <table class="data-table responsive-table">
+                <thead>
+                  <tr>
+                    <th>Cód. Loja</th>
+                    <th>Nome da Loja</th>
+                    <th>Estoque Atual</th>
+                    <th>Estoque Mínimo</th>
+                    <th>Estoque Recomendado</th>
+                    <th>Status</th>
+                    <th>Ação</th>
+                  </tr>
+                </thead>
+                <tbody id="tabelaLojas"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
 
-<section id="detalhesLojaContainer" class="bottom-sheet hidden">
-  <div class="bottom-sheet-header">
-    <div>
-      <h2>Detalhes da Loja</h2>
-      <span>Resumo operacional da loja selecionada</span>
-    </div>
-
-    <div id="detalhesLojaConteudo" class="bottom-sheet-content">
-      <!--js preenche aqui-->
-  </div>
-
-    <div class="bottom-sheet-actions">
-    <button type="button" class="btn-secondary" onclick="fecharDetalhesLoja()">
-      Fechar
+    <button class="assistant-toggle" onclick="abrirAssistente()">
+      Assistente IA
     </button>
-  </div>
-</section>
-    
-  
-
-
-
-
-      <section class="dashboard-grid">
-        <div class="dashboard-card">
-          <span>Total de lojas</span>
-          <strong id="totalLojas">0</strong>
+    <div
+      id="assistantOverlay"
+      class="assistant-overlay"
+      onclick="fecharAssistente()"
+    ></div>
+    <aside id="assistantSidebar" class="assistant-sidebar">
+      <div class="assistant-header">
+        <div>
+          <h2>Assistente IA</h2>
+          <p>Consulta inteligente do sistema</p>
         </div>
-
-        <div class="dashboard-card">
-          <span>Lojas ativas</span>
-          <strong id="lojasAtivas">0</strong>
-        </div>
-
-        <div class="dashboard-card warning">
-          <span>Estoque crítico</span>
-          <strong id="lojasCriticas">0</strong>
-        </div>
-
-        <div class="dashboard-card">
-          <span>Estoque em atenção</span>
-          <strong id="lojasAtencao">0</strong>
-        </div>
-      </section>
-
-      <section class="content-grid single-column">
-        <div class="content-card table-card">
-          <div class="content-card-header">
-            <h2>Lojas cadastradas</h2>
-            <span>Monitoramento de reposição</span>
-          </div>
-
-          <div class="table-wrapper">
-            <table class="data-table responsive-table">
-              <thead>
-                <tr>
-                  <th>Cód. Loja</th>
-                  <th>Nome da Loja</th>
-                  <th>Estoque Atual</th>
-                  <th>Estoque Mínimo</th>
-                  <th>Estoque Recomendado</th>
-                  <th>Status</th>
-                  <th>Ação</th>
-                </tr>
-              </thead>
-              <tbody id="tabelaLojas">
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-    
-      </section>
-
-    </main>
-  </div>
-
-  <!-- Botão flutuante do assistente -->
-  <button class="assistant-toggle" onclick="abrirAssistente()">
-    Assistente IA
-  </button>
-
-  <!-- Fundo escuro do assistente -->
-  <div id="assistantOverlay" class="assistant-overlay" onclick="fecharAssistente()"></div>
-
-  <!-- Sidebar do assistente -->
-  <aside id="assistantSidebar" class="assistant-sidebar">
-    <div class="assistant-header">
-      <div>
-        <h2>Assistente IA</h2>
-        <p>Consulta inteligente do sistema</p>
+        <button class="assistant-close" onclick="fecharAssistente()">×</button>
       </div>
-
-      <button class="assistant-close" onclick="fecharAssistente()">
-        ×
-      </button>
-    </div>
-
-    <div id="chatMessages" class="chat-messages">
-      <div class="chat-message assistant">
-        Olá! Você pode perguntar, por exemplo:
-        "Quais lojas estão abaixo do estoque mínimo?"
+      <div id="chatMessages" class="chat-messages">
+        <div class="chat-message assistant">
+          Olá! Você pode perguntar, por exemplo: "Quais lojas estão abaixo do
+          estoque mínimo?"
+        </div>
       </div>
-    </div>
+      <div class="assistant-suggestions">
+        <button
+          onclick="usarSugestao('Quais lojas estão abaixo do estoque mínimo?')"
+        >
+          Lojas abaixo do mínimo
+        </button>
+        <button onclick="usarSugestao('Qual foi o total de talões enviados?')">
+          Total enviado
+        </button>
+        <button onclick="usarSugestao('Quantas lojas existem?')">
+          Total de lojas
+        </button>
+      </div>
+      <div class="chat-input-area">
+        <input
+          type="text"
+          id="chatInput"
+          class="form-input"
+          placeholder="Digite sua pergunta..."
+          onkeydown="verificarEnterAssistente(event)"
+        />
+        <button class="btn-primary" onclick="enviarPerguntaAssistente()">
+          Enviar
+        </button>
+      </div>
+    </aside>
 
-    <div class="assistant-suggestions">
-      <button onclick="usarSugestao('Quais lojas estão abaixo do estoque mínimo?')">
-        Lojas abaixo do mínimo
-      </button>
-
-      <button onclick="usarSugestao('Qual foi o total de talões enviados?')">
-        Total enviado
-      </button>
-
-      <button onclick="usarSugestao('Quantas lojas existem?')">
-        Total de lojas
-      </button>
-    </div>
-
-    <div class="chat-input-area">
-      <input
-        type="text"
-        id="chatInput"
-        class="form-input"
-        placeholder="Digite sua pergunta..."
-        onkeydown="verificarEnterAssistente(event)"
-      />
-
-      <button class="btn-primary" onclick="enviarPerguntaAssistente()">
-        Enviar
-      </button>
-    </div>
-  </aside>
-
-  <script src="../js/mock-data.js"></script>
-  <script src="../js/ui.js"></script>
-  <script src="../js/lojas.js"></script>
-</body>
+    <script src="../js/mock-data.js"></script>
+    <script src="../js/ui.js"></script>
+    <script src="../js/lojas.js"></script>
+  </body>
 </html>

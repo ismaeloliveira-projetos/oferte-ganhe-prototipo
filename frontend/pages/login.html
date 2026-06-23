@@ -45,6 +45,27 @@
               />
             </div>
 
+            <button type="button" id="btnEsqueciSenha" class="link">
+              Esqueceu a senha?
+            </button>
+
+            <!-- OVERLAY -->
+            <div class="overlay" id="overlay"></div>
+
+            <!-- MODAL -->
+            <div class="modal" id="modal">
+              <h3>Recuperar senha</h3>
+
+              <p>Digite seu email para receber o token</p>
+
+              <input type="email" id="emailRecuperar" placeholder="Seu email" />
+
+              <div class="msg error hidden" id="msgError"></div>
+              <div class="msg success hidden" id="msgSuccess"></div>
+
+              <button type="button" id="btnRecuperar">Enviar</button>
+            </div>
+
             <div id="loginError" class="alert-error hidden">
               Erro ao fazer login. Verifique seu e-mail e senha.
             </div>

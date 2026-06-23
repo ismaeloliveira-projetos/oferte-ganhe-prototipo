@@ -1,3 +1,5 @@
+let envioSelecionadoId = null;
+
 function buscarTodosEnvios() {
   const banco = carregarBanco();
   if (!banco.envios) {
@@ -95,18 +97,73 @@ function carregarTabelaEnvios() {
     const classeStatus = obterClasseStatusEnvio(envio.status);
 
     tabela.innerHTML += `
-            <tr>
-                <td>${formatarDataHora(envio.dataHora)}</td>
-                <td>${loja ? loja.nome : "Loja desconhecida"}</td>
-                <td>${envio.quantidade}</td>
-                <td>${envio.responsavel}</td>
-                <td><span class="badge-status ${classeStatus}">${envio.status}</span></td>
-                <td><button class="btn-table-action btn-sm">Ver Detalhes</button></td>
-            </tr>
-        `;
+      <tr>
+        <td>${formatarDataHora(envio.dataHora)}</td>
+        <td>${loja ? loja.nome : "Loja desconhecida"}</td>
+        <td>${envio.quantidade}</td>
+        <td>${envio.responsavel}</td>
+        <td><span class="badge-status ${classeStatus}">${envio.status}</span></td>
+        <td><button class="btn-table-action btn-sm" onclick="verDetalhesEnvio(${envio.id})">Ver Detalhes</button></td>
+      </tr>
+    `;
   });
 
   aplicarResponsividadeTabelas();
+}
+
+function verDetalhesEnvio(id) {
+  const envios = buscarTodosEnvios();
+  const envio = envios.find((e) => e.id === id);
+
+  if (!envio) {
+    mostrarAlerta("Envio não encontrado.");
+    return;
+  }
+
+  const loja = buscarLojaPorCodigo(envio.codigoLoja);
+  const status = envio.status;
+  const classeStatus = obterClasseStatusEnvio(status);
+
+  const conteudo = document.getElementById("detalhesEnvioConteudo");
+  conteudo.innerHTML = `
+    <div class="detail-row">
+      <strong>ID do Envio</strong>
+      <span>${envio.id}</span>
+    </div>
+    
+    <div class="detail-row">
+      <strong>Data/Hora</strong>
+      <span>${formatarDataHora(envio.dataHora)}</span>
+    </div>
+    <div class="detail-row">
+      <strong>Loja</strong>
+      <span>${loja ? loja.nome : "Loja desconhecida"} (${envio.codigoLoja})</span>
+    </div>
+    <div class="detail-row">
+      <strong>Quantidade de Talões</strong>
+      <span>${envio.quantidade}</span>
+    </div>
+    <div class="detail-row">
+      <strong>Código da Remessa</strong>
+      <span>${envio.remessa}</span>
+    </div>
+    <div class="detail-row">
+      <strong>Responsável</strong>
+      <span>${envio.responsavel}</span>
+    </div>
+    <div class="detail-row">
+      <strong>Status</strong>
+      <span class="badge ${classeStatus}">${status}</span>
+    </div>
+  `;
+
+  document.getElementById("detalhesEnvioContainer").classList.remove("hidden");
+  document.getElementById("detalhesEnvioOverlay").classList.remove("hidden");
+}
+
+function fecharDetalhesEnvio() {
+  document.getElementById("detalhesEnvioContainer").classList.add("hidden");
+  document.getElementById("detalhesEnvioOverlay").classList.add("hidden");
 }
 
 function carregarLojasNoFormulario() {

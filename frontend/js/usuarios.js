@@ -3,12 +3,12 @@ let usuarioExcluindoId = null;
 
 function buscarUsuariosSalvos() {
   const banco = carregarBanco();
-  return banco.usuarios;
+  return banco.usuarios || [];
 }
 
 function buscarPerfisSalvos() {
   const banco = carregarBanco();
-  return banco.perfis;
+  return banco.perfis || [];
 }
 
 function buscarLojasSalvas() {
@@ -24,6 +24,10 @@ function salvarUsuarios(usuarios) {
 
 function mostrarAlerta(mensagem) {
   const alerta = document.getElementById("alertaSistema");
+  if (!alerta) {
+    alert(mensagem);
+    return;
+  }
   alerta.textContent = mensagem;
   alerta.classList.remove("hidden");
   setTimeout(() => alerta.classList.add("hidden"), 3000);
@@ -45,6 +49,7 @@ function obterNomeLoja(codigoLoja) {
 function carregarPerfisNoFormulario() {
   const selectPerfil = document.getElementById("perfilUsuario");
   const perfis = buscarPerfisSalvos();
+  if (!selectPerfil) return;
   selectPerfil.innerHTML = "";
   perfis.forEach((perfil) => {
     selectPerfil.innerHTML += `<option value="${perfil.id}">${perfil.nome}</option>`;
@@ -54,6 +59,7 @@ function carregarPerfisNoFormulario() {
 function carregarLojasNoFormulario() {
   const selectLoja = document.getElementById("lojaUsuario");
   const lojas = buscarLojasSalvas();
+  if (!selectLoja) return;
   selectLoja.innerHTML = `<option value="">Administrador Geral (Todas as lojas)</option>`;
   lojas.forEach((loja) => {
     selectLoja.innerHTML += `<option value="${loja.codigo}">${loja.codigo} - ${loja.nome}</option>`;
@@ -62,6 +68,8 @@ function carregarLojasNoFormulario() {
 
 function carregarTabelaUsuarios(listaUsuarios) {
   const tabela = document.getElementById("tabelaUsuarios");
+  if (!tabela) return;
+
   tabela.innerHTML = "";
   const usuarioLogado = buscarUsuarioLogado();
   const usuarios = listaUsuarios || buscarUsuariosSalvos();
@@ -72,22 +80,22 @@ function carregarTabelaUsuarios(listaUsuarios) {
     const podeEditar = podeGerenciar(usuarioLogado, usuario);
 
     const botaoEditar = podeEditar
-      ? `<button class="btn-table-action btn-sm" onclick="editarUsuario(${usuario.id})">Editar</button>`
+      ? `<button class="btn-table-action btn-sm" onclick="window.editarUsuario(${usuario.id})">Editar</button>`
       : "";
     const botaoExcluir = podeEditar
-      ? `<button class="btn-table-action btn-sm" onclick="excluirUsuario(${usuario.id})">Excluir</button>`
+      ? `<button class="btn-table-action btn-sm" onclick="window.excluirUsuario(${usuario.id})">Excluir</button>`
       : "";
 
     tabela.innerHTML += `
-            <tr>
-                <td>${usuario.nome}</td>
-                <td>${usuario.matricula}</td>
-                <td>${usuario.email}</td>
-                <td><span class="badge badge-normal">${nomePerfil}</span></td>
-                <td>${nomeLoja}</td>
-                <td>${botaoEditar} ${botaoExcluir}</td>
-            </tr>
-        `;
+      <tr>
+        <td>${usuario.nome}</td>
+        <td>${usuario.matricula}</td>
+        <td>${usuario.email}</td>
+        <td><span class="badge badge-normal">${nomePerfil}</span></td>
+        <td>${nomeLoja}</td>
+        <td>${botaoEditar} ${botaoExcluir}</td>
+      </tr>
+    `;
   });
 
   aplicarResponsividadeTabelas();
@@ -95,80 +103,111 @@ function carregarTabelaUsuarios(listaUsuarios) {
 
 function abrirFormularioUsuario() {
   usuarioEditandoId = null;
-  document.getElementById("formUsuario").reset();
+  const form = document.getElementById("formUsuario");
+  if (form) form.reset();
   carregarPerfisNoFormulario();
   carregarLojasNoFormulario();
-  document.getElementById("btnSalvarUsuario").textContent = "Salvar Usuário";
-  document.getElementById("formUsuarioContainer").classList.remove("hidden");
-  document.getElementById("formUsuarioOverlay").classList.remove("hidden");
+  const btnSalvar = document.getElementById("btnSalvarUsuario");
+  if (btnSalvar) btnSalvar.textContent = "Salvar Usuário";
+
+  const container = document.getElementById("formUsuarioContainer");
+  const overlay = document.getElementById("formUsuarioOverlay");
+  if (container) container.classList.remove("hidden");
+  if (overlay) overlay.classList.remove("hidden");
 }
 
 function fecharFormularioUsuario() {
-  document.getElementById("formUsuarioContainer").classList.add("hidden");
-  document.getElementById("formUsuarioOverlay").classList.add("hidden");
+  const container = document.getElementById("formUsuarioContainer");
+  const overlay = document.getElementById("formUsuarioOverlay");
+  if (container) container.classList.add("hidden");
+  if (overlay) overlay.classList.add("hidden");
 }
 
-function editarUsuario(id) {
-  const usuarioLogado = buscarUsuarioLogado();
-  const usuarios = buscarUsuariosSalvos();
-  const usuarioEncontrado = usuarios.find((usuario) => usuario.id === id);
+window.editarUsuario = function (id) {
+  try {
+    const usuarioLogado = buscarUsuarioLogado();
+    const usuarios = buscarUsuariosSalvos();
+    const usuarioEncontrado = usuarios.find((usuario) => usuario.id === id);
 
-  if (!usuarioEncontrado) {
-    mostrarAlerta("Usuário não encontrado.");
-    return;
+    if (!usuarioEncontrado) {
+      mostrarAlerta("Usuário não encontrado.");
+      return;
+    }
+
+    if (!podeGerenciar(usuarioLogado, usuarioEncontrado)) {
+      mostrarAlerta("Você não tem permissão para editar este usuário.");
+      return;
+    }
+
+    usuarioEditandoId = id;
+    carregarPerfisNoFormulario();
+    carregarLojasNoFormulario();
+
+    const inputNome = document.getElementById("nomeUsuarioInput");
+    const inputMatricula = document.getElementById("matriculaUsuario");
+    const inputEmail = document.getElementById("emailUsuario");
+    const inputSenha = document.getElementById("senhaUsuario");
+    const selectPerfil = document.getElementById("perfilUsuario");
+    const selectLoja = document.getElementById("lojaUsuario");
+    const btnSalvar = document.getElementById("btnSalvarUsuario");
+
+    if (inputNome) inputNome.value = usuarioEncontrado.nome;
+    if (inputMatricula) inputMatricula.value = usuarioEncontrado.matricula;
+    if (inputEmail) inputEmail.value = usuarioEncontrado.email;
+    if (inputSenha) inputSenha.value = usuarioEncontrado.senha;
+    if (selectPerfil) selectPerfil.value = usuarioEncontrado.perfilId;
+    if (selectLoja) selectLoja.value = usuarioEncontrado.lojaId || "";
+    if (btnSalvar) btnSalvar.textContent = "Atualizar Usuário";
+
+    const container = document.getElementById("formUsuarioContainer");
+    const overlay = document.getElementById("formUsuarioOverlay");
+    if (container) container.classList.remove("hidden");
+    if (overlay) overlay.classList.remove("hidden");
+  } catch (erro) {
+    console.error("Erro em editarUsuario:", erro);
+    mostrarAlerta("Erro ao abrir formulário de edição");
   }
+};
 
-  if (!podeGerenciar(usuarioLogado, usuarioEncontrado)) {
-    mostrarAlerta("Você não tem permissão para editar este usuário.");
-    return;
+window.excluirUsuario = function (id) {
+  try {
+    const usuarioLogado = buscarUsuarioLogado();
+    const usuarios = buscarUsuariosSalvos();
+    const usuarioEncontrado = usuarios.find((usuario) => usuario.id === id);
+
+    if (!usuarioEncontrado) {
+      mostrarAlerta("Usuário não encontrado.");
+      return;
+    }
+
+    if (!podeGerenciar(usuarioLogado, usuarioEncontrado)) {
+      mostrarAlerta("Você não tem permissão para excluir este usuário.");
+      return;
+    }
+
+    usuarioExcluindoId = id;
+    const nome = document.getElementById("nomeUsuarioExclusao");
+    const email = document.getElementById("emailUsuarioExclusao");
+
+    if (nome) nome.textContent = usuarioEncontrado.nome;
+    if (email) email.textContent = usuarioEncontrado.email;
+
+    const container = document.getElementById("excluirUsuarioContainer");
+    const overlay = document.getElementById("excluirUsuarioOverlay");
+    if (container) container.classList.remove("hidden");
+    if (overlay) overlay.classList.remove("hidden");
+  } catch (erro) {
+    console.error("Erro em excluirUsuario:", erro);
+    mostrarAlerta("Erro ao abrir confirmação de exclusão");
   }
-
-  usuarioEditandoId = id;
-  carregarPerfisNoFormulario();
-  carregarLojasNoFormulario();
-
-  document.getElementById("nomeUsuarioInput").value = usuarioEncontrado.nome;
-  document.getElementById("matriculaUsuario").value =
-    usuarioEncontrado.matricula;
-  document.getElementById("emailUsuario").value = usuarioEncontrado.email;
-  document.getElementById("senhaUsuario").value = usuarioEncontrado.senha;
-  document.getElementById("perfilUsuario").value = usuarioEncontrado.perfilId;
-  document.getElementById("lojaUsuario").value = usuarioEncontrado.lojaId || "";
-
-  document.getElementById("btnSalvarUsuario").textContent = "Atualizar Usuário";
-  document.getElementById("formUsuarioContainer").classList.remove("hidden");
-  document.getElementById("formUsuarioOverlay").classList.remove("hidden");
-}
-
-function excluirUsuario(id) {
-  const usuarioLogado = buscarUsuarioLogado();
-  const usuarios = buscarUsuariosSalvos();
-  const usuarioEncontrado = usuarios.find((usuario) => usuario.id === id);
-
-  if (!usuarioEncontrado) {
-    mostrarAlerta("Usuário não encontrado.");
-    return;
-  }
-
-  if (!podeGerenciar(usuarioLogado, usuarioEncontrado)) {
-    mostrarAlerta("Você não tem permissão para excluir este usuário.");
-    return;
-  }
-
-  usuarioExcluindoId = id;
-  document.getElementById("nomeUsuarioExclusao").textContent =
-    usuarioEncontrado.nome;
-  document.getElementById("emailUsuarioExclusao").textContent =
-    usuarioEncontrado.email;
-
-  document.getElementById("excluirUsuarioContainer").classList.remove("hidden");
-  document.getElementById("excluirUsuarioOverlay").classList.remove("hidden");
-}
+};
 
 function fecharConfirmacaoExclusaoUsuario() {
   usuarioExcluindoId = null;
-  document.getElementById("excluirUsuarioContainer").classList.add("hidden");
-  document.getElementById("excluirUsuarioOverlay").classList.add("hidden");
+  const container = document.getElementById("excluirUsuarioContainer");
+  const overlay = document.getElementById("excluirUsuarioOverlay");
+  if (container) container.classList.add("hidden");
+  if (overlay) overlay.classList.add("hidden");
 }
 
 function confirmarExclusaoUsuario() {
@@ -204,9 +243,9 @@ function filtrarUsuarios() {
   carregarTabelaUsuarios(usuariosFiltrados);
 }
 
-document
-  .getElementById("formUsuario")
-  .addEventListener("submit", function (event) {
+const formUsuario = document.getElementById("formUsuario");
+if (formUsuario) {
+  formUsuario.addEventListener("submit", function (event) {
     event.preventDefault();
 
     const nome = document.getElementById("nomeUsuarioInput").value;
@@ -255,8 +294,11 @@ document
     carregarTabelaUsuarios();
     fecharFormularioUsuario();
     usuarioEditandoId = null;
-    document.getElementById("btnSalvarUsuario").textContent = "Salvar Usuário";
+    const btnSalvar = document.getElementById("btnSalvarUsuario");
+    if (btnSalvar) btnSalvar.textContent = "Salvar Usuário";
   });
+}
 
 carregarUsuarioLogado();
 carregarTabelaUsuarios();
+aplicarPermissoesMenu();

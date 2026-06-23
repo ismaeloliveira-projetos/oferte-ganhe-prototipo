@@ -67,3 +67,65 @@ loginForm.addEventListener("submit", function (event) {
     }
   }, 1500);
 });
+
+const btnEsqueciSenha = document.getElementById("btnEsqueciSenha");
+const modal = document.getElementById("modal");
+const overlay = document.getElementById("overlay");
+
+const btnRecuperar = document.getElementById("btnRecuperar");
+const emailRecuperar = document.getElementById("emailRecuperar");
+
+const msgError = document.getElementById("msgError");
+const msgSuccess = document.getElementById("msgSuccess");
+
+// emails válidos (simulação)
+const usuarios = [
+  "admin@empresa.com",
+  "operador@empresa.com",
+  "loja@empresa.com",
+];
+
+// abrir modal
+btnEsqueciSenha.addEventListener("click", () => {
+  modal.classList.add("active");
+  overlay.classList.add("active");
+
+  msgError.classList.add("hidden");
+  msgSuccess.classList.add("hidden");
+});
+
+// fechar clicando fora
+overlay.addEventListener("click", fecharModal);
+
+function fecharModal() {
+  modal.classList.remove("active");
+  overlay.classList.remove("active");
+}
+
+// enviar recuperação
+btnRecuperar.addEventListener("click", () => {
+  const email = emailRecuperar.value.trim().toLowerCase();
+
+  msgError.classList.add("hidden");
+  msgSuccess.classList.add("hidden");
+
+  // validação
+  if (!usuarios.includes(email)) {
+    msgError.textContent = "E-mail inválido!";
+    msgError.classList.remove("hidden");
+    return;
+  }
+
+  // gerar token
+  const token = Math.floor(100000 + Math.random() * 900000);
+  console.log("TOKEN GERADO:", token);
+
+  msgSuccess.textContent = "Token enviado com sucesso para seu e-mail!";
+  msgSuccess.classList.remove("hidden");
+
+  // fecha automático
+  setTimeout(() => {
+    fecharModal();
+    emailRecuperar.value = "";
+  }, 2000);
+});

@@ -13,6 +13,15 @@ function obterClassesStatus(status) {
   return "badge-normal";
 }
 
+function buscarTodasLojas() {
+  const banco = carregarBanco();
+  if (!banco.lojas) {
+    banco.lojas = [];
+    salvarBanco(banco);
+  }
+  return banco.lojas;
+}
+
 function buscarLojasSalvas() {
   const banco = carregarBanco();
   if (!banco.lojas) {
@@ -30,6 +39,10 @@ function salvarLojas(lojas) {
 
 function mostrarAlerta(mensagem) {
   const alerta = document.getElementById("alertaSistema");
+  if (!alerta) {
+    alert(mensagem);
+    return;
+  }
   alerta.textContent = mensagem;
   alerta.classList.remove("hidden");
   setTimeout(() => alerta.classList.add("hidden"), 3000);
@@ -46,10 +59,15 @@ function carregarCardsLojas() {
     (loja) => obterStatusEstoque(loja) === "Atenção",
   ).length;
 
-  document.getElementById("totalLojas").textContent = totalLojas;
-  document.getElementById("lojasAtivas").textContent = lojasAtivas;
-  document.getElementById("lojasCriticas").textContent = lojasCriticas;
-  document.getElementById("lojasAtencao").textContent = lojasAtencao;
+  const el1 = document.getElementById("totalLojas");
+  const el2 = document.getElementById("lojasAtivas");
+  const el3 = document.getElementById("lojasCriticas");
+  const el4 = document.getElementById("lojasAtencao");
+
+  if (el1) el1.textContent = totalLojas;
+  if (el2) el2.textContent = lojasAtivas;
+  if (el3) el3.textContent = lojasCriticas;
+  if (el4) el4.textContent = lojasAtencao;
 }
 
 function carregarTabelaLojas() {
@@ -72,9 +90,9 @@ function carregarTabelaLojas() {
         <td>${loja.estoqueRecomendado}</td>
         <td><span class="badge ${classesStatus}">${status}</span></td>
         <td>
-          <button class="btn-table-action btn-sm" onclick="verDetalhesLoja('${loja.codigo}')">Ver detalhes</button>
-          <button class="btn-table-action btn-sm" onclick="editarLoja('${loja.codigo}')">Editar</button>
-          <button class="btn-table-action btn-sm" onclick="excluirLoja('${loja.codigo}')">Excluir</button>
+          <button class="btn-table-action btn-sm" onclick="window.verDetalhesLoja('${loja.codigo}')">Ver detalhes</button>
+          <button class="btn-table-action btn-sm" onclick="window.editarLoja('${loja.codigo}')">Editar</button>
+          <button class="btn-table-action btn-sm" onclick="window.excluirLoja('${loja.codigo}')">Excluir</button>
         </td>
       </tr>
     `;
@@ -84,36 +102,182 @@ function carregarTabelaLojas() {
 }
 
 function fecharDetalhesLoja() {
-  document.getElementById("detalhesLojaContainer").classList.add("hidden");
-  document.getElementById("detalhesLojaOverlay").classList.add("hidden");
+  const container = document.getElementById("detalhesLojaContainer");
+  const overlay = document.getElementById("detalhesLojaOverlay");
+  if (container) container.classList.add("hidden");
+  if (overlay) overlay.classList.add("hidden");
 }
 
 function abrirFormularioLoja() {
-  document.getElementById("formLoja").reset();
+  const form = document.getElementById("formLoja");
+  if (form) form.reset();
   codigoLojaEditando = null;
-  document.getElementById("estoqueMinimo").value = 200;
-  document.getElementById("estoqueRecomendado").value = 300;
-  document.getElementById("estoqueMinimo").readOnly = true;
-  document.getElementById("estoqueRecomendado").readOnly = true;
-  document.getElementById("btnSalvarLoja").textContent = "Salvar Loja";
-  document.getElementById("formLojaContainer").classList.remove("hidden");
-  document.getElementById("formLojaOverlay").classList.remove("hidden");
+
+  const estoqueMin = document.getElementById("estoqueMinimo");
+  const estoqueRec = document.getElementById("estoqueRecomendado");
+  if (estoqueMin) {
+    estoqueMin.value = 200;
+    estoqueMin.readOnly = true;
+  }
+  if (estoqueRec) {
+    estoqueRec.value = 300;
+    estoqueRec.readOnly = true;
+  }
+
+  const btnSalvar = document.getElementById("btnSalvarLoja");
+  if (btnSalvar) btnSalvar.textContent = "Salvar Loja";
+
+  const container = document.getElementById("formLojaContainer");
+  const overlay = document.getElementById("formLojaOverlay");
+  if (container) container.classList.remove("hidden");
+  if (overlay) overlay.classList.remove("hidden");
 }
 
 function fecharFormularioLoja() {
-  document.getElementById("formLojaContainer").classList.add("hidden");
-  document.getElementById("formLojaOverlay").classList.add("hidden");
+  const container = document.getElementById("formLojaContainer");
+  const overlay = document.getElementById("formLojaOverlay");
+  if (container) container.classList.add("hidden");
+  if (overlay) overlay.classList.add("hidden");
 }
 
-document
-  .getElementById("formLoja")
-  .addEventListener("submit", function (event) {
+window.verDetalhesLoja = function (codigo) {
+  const todasLojas = buscarTodasLojas();
+  const loja = todasLojas.find((l) => l.codigo === codigo);
+
+  if (!loja) {
+    mostrarAlerta("Loja não encontrada.");
+    return;
+  }
+
+  const status = obterStatusEstoque(loja);
+  const classeStatus = obterClassesStatus(status);
+  const conteudo = document.getElementById("detalhesLojaConteudo");
+
+  if (!conteudo) return;
+
+  const faltaParaMinimo = Math.max(loja.estoqueMinimo - loja.estoqueAtual, 0);
+  const faltaParaRecomendado = Math.max(
+    loja.estoqueRecomendado - loja.estoqueAtual,
+    0,
+  );
+
+  let mensagemStatus = "A loja está com estoque dentro do nível esperado.";
+  if (status === "Crítico")
+    mensagemStatus = "Esta loja está em situação crítica.";
+  if (status === "Atenção") mensagemStatus = "Esta loja precisa de atenção.";
+
+  conteudo.innerHTML = `
+    <div class="detail-row"><strong>Código</strong><span>${loja.codigo}</span></div>
+    <div class="detail-row"><strong>Nome</strong><span>${loja.nome}</span></div>
+    <div class="detail-row"><strong>Estoque atual</strong><span>${loja.estoqueAtual} talões</span></div>
+    <div class="detail-row"><strong>Estoque mínimo</strong><span>${loja.estoqueMinimo} talões</span></div>
+    <div class="detail-row"><strong>Estoque recomendado</strong><span>${loja.estoqueRecomendado} talões</span></div>
+    <div class="detail-row"><strong>Status</strong><span class="badge ${classeStatus}">${status}</span></div>
+    <div class="detail-row"><strong>Falta para mínimo</strong><span>${faltaParaMinimo} talões</span></div>
+    <div class="detail-row"><strong>Falta para recomendado</strong><span>${faltaParaRecomendado} talões</span></div>
+    <div class="detail-insight"><strong>Análise:</strong> ${mensagemStatus}</div>
+  `;
+
+  const container = document.getElementById("detalhesLojaContainer");
+  const overlay = document.getElementById("detalhesLojaOverlay");
+  if (container) container.classList.remove("hidden");
+  if (overlay) overlay.classList.remove("hidden");
+};
+
+window.editarLoja = function (codigo) {
+  const todasLojas = buscarTodasLojas();
+  const lojaEncontrada = todasLojas.find((l) => l.codigo === codigo);
+
+  if (!lojaEncontrada) {
+    mostrarAlerta("Loja não encontrada.");
+    return;
+  }
+
+  codigoLojaEditando = codigo;
+  const inputCodigo = document.getElementById("codigoLoja");
+  const inputNome = document.getElementById("nomeLoja");
+  const inputEstoque = document.getElementById("estoqueAtual");
+  const inputMin = document.getElementById("estoqueMinimo");
+  const inputRec = document.getElementById("estoqueRecomendado");
+  const btnSalvar = document.getElementById("btnSalvarLoja");
+
+  if (inputCodigo) inputCodigo.value = lojaEncontrada.codigo;
+  if (inputNome) inputNome.value = lojaEncontrada.nome;
+  if (inputEstoque) inputEstoque.value = lojaEncontrada.estoqueAtual;
+  if (inputMin) {
+    inputMin.value = lojaEncontrada.estoqueMinimo;
+    inputMin.readOnly = false;
+  }
+  if (inputRec) {
+    inputRec.value = lojaEncontrada.estoqueRecomendado;
+    inputRec.readOnly = false;
+  }
+  if (btnSalvar) btnSalvar.textContent = "Atualizar Loja";
+
+  const container = document.getElementById("formLojaContainer");
+  const overlay = document.getElementById("formLojaOverlay");
+  if (container) container.classList.remove("hidden");
+  if (overlay) overlay.classList.remove("hidden");
+};
+
+window.excluirLoja = function (codigo) {
+  const todasLojas = buscarTodasLojas();
+  const lojaEncontrada = todasLojas.find((l) => l.codigo === codigo);
+
+  if (!lojaEncontrada) {
+    mostrarAlerta("Loja não encontrada.");
+    return;
+  }
+
+  codigoLojaExcluindo = codigo;
+  const nome = document.getElementById("nomeLojaExclusao");
+  const cod = document.getElementById("codigoLojaExclusao");
+
+  if (nome) nome.textContent = lojaEncontrada.nome;
+  if (cod) cod.textContent = "Código: " + lojaEncontrada.codigo;
+
+  const container = document.getElementById("excluirLojaContainer");
+  const overlay = document.getElementById("excluirLojaOverlay");
+  if (container) container.classList.remove("hidden");
+  if (overlay) overlay.classList.remove("hidden");
+};
+
+function fecharConfirmacaoExclusaoLoja() {
+  codigoLojaExcluindo = null;
+  const container = document.getElementById("excluirLojaContainer");
+  const overlay = document.getElementById("excluirLojaOverlay");
+  if (container) container.classList.add("hidden");
+  if (overlay) overlay.classList.add("hidden");
+}
+
+function confirmarExclusaoLoja() {
+  if (codigoLojaExcluindo === null) {
+    mostrarAlerta("Nenhuma loja selecionada.");
+    return;
+  }
+
+  const lojas = buscarTodasLojas();
+  const lojasAtualizadas = lojas.filter(
+    (l) => l.codigo !== codigoLojaExcluindo,
+  );
+
+  salvarLojas(lojasAtualizadas);
+  carregarCardsLojas();
+  carregarTabelaLojas();
+  fecharConfirmacaoExclusaoLoja();
+  mostrarAlerta("Loja excluída com sucesso.");
+}
+
+const formLoja = document.getElementById("formLoja");
+if (formLoja) {
+  formLoja.addEventListener("submit", function (event) {
     event.preventDefault();
 
     const botaoSalvar = document.getElementById("btnSalvarLoja");
-    botaoSalvar.textContent = "Salvando...";
-    botaoSalvar.classList.add("loading");
-    botaoSalvar.disabled = true;
+    if (botaoSalvar) {
+      botaoSalvar.textContent = "Salvando...";
+      botaoSalvar.disabled = true;
+    }
 
     setTimeout(() => {
       const codigo = document.getElementById("codigoLoja").value;
@@ -128,7 +292,7 @@ document
         document.getElementById("estoqueRecomendado").value,
       );
 
-      const lojas = buscarLojasSalvas();
+      const lojas = buscarTodasLojas();
 
       if (codigoLojaEditando === null) {
         const novaLoja = {
@@ -163,123 +327,18 @@ document
       carregarCardsLojas();
       carregarTabelaLojas();
 
-      botaoSalvar.textContent = "Salvo!";
-      botaoSalvar.classList.remove("loading");
-      botaoSalvar.classList.add("success");
+      if (botaoSalvar) {
+        botaoSalvar.textContent = "Salvar Loja";
+        botaoSalvar.disabled = false;
+      }
 
       setTimeout(() => {
         document.getElementById("formLoja").reset();
         fecharFormularioLoja();
         codigoLojaEditando = null;
-        botaoSalvar.textContent = "Salvar Loja";
-        botaoSalvar.classList.remove("success");
-        botaoSalvar.disabled = false;
       }, 700);
     }, 800);
   });
-
-function verDetalhesLoja(codigo) {
-  const lojas = buscarLojasSalvas();
-  const loja = lojas.find((l) => l.codigo === codigo);
-
-  if (!loja) {
-    mostrarAlerta("Loja não encontrada.");
-    return;
-  }
-
-  const status = obterStatusEstoque(loja);
-  const classeStatus = obterClassesStatus(status);
-  const conteudo = document.getElementById("detalhesLojaConteudo");
-
-  const faltaParaMinimo = Math.max(loja.estoqueMinimo - loja.estoqueAtual, 0);
-  const faltaParaRecomendado = Math.max(
-    loja.estoqueRecomendado - loja.estoqueAtual,
-    0,
-  );
-
-  let mensagemStatus = "A loja está com estoque dentro do nível esperado.";
-  if (status === "Crítico")
-    mensagemStatus = "Esta loja está em situação crítica.";
-  if (status === "Atenção") mensagemStatus = "Esta loja precisa de atenção.";
-
-  conteudo.innerHTML = `
-    <div class="detail-row"><strong>Código</strong><span>${loja.codigo}</span></div>
-    <div class="detail-row"><strong>Nome</strong><span>${loja.nome}</span></div>
-    <div class="detail-row"><strong>Estoque atual</strong><span>${loja.estoqueAtual} talões</span></div>
-    <div class="detail-row"><strong>Estoque mínimo</strong><span>${loja.estoqueMinimo} talões</span></div>
-    <div class="detail-row"><strong>Estoque recomendado</strong><span>${loja.estoqueRecomendado} talões</span></div>
-    <div class="detail-row"><strong>Status</strong><span class="badge ${classeStatus}">${status}</span></div>
-    <div class="detail-row"><strong>Falta para mínimo</strong><span>${faltaParaMinimo} talões</span></div>
-    <div class="detail-row"><strong>Falta para recomendado</strong><span>${faltaParaRecomendado} talões</span></div>
-    <div class="detail-insight"><strong>Análise:</strong> ${mensagemStatus}</div>
-  `;
-
-  document.getElementById("detalhesLojaContainer").classList.remove("hidden");
-  document.getElementById("detalhesLojaOverlay").classList.remove("hidden");
-}
-
-function editarLoja(codigo) {
-  const lojas = buscarLojasSalvas();
-  const lojaEncontrada = lojas.find((l) => l.codigo === codigo);
-
-  if (!lojaEncontrada) {
-    mostrarAlerta("Loja não encontrada.");
-    return;
-  }
-
-  codigoLojaEditando = codigo;
-  document.getElementById("codigoLoja").value = lojaEncontrada.codigo;
-  document.getElementById("nomeLoja").value = lojaEncontrada.nome;
-  document.getElementById("estoqueAtual").value = lojaEncontrada.estoqueAtual;
-  document.getElementById("estoqueMinimo").value = lojaEncontrada.estoqueMinimo;
-  document.getElementById("estoqueRecomendado").value =
-    lojaEncontrada.estoqueRecomendado;
-  document.getElementById("estoqueMinimo").readOnly = false;
-  document.getElementById("estoqueRecomendado").readOnly = false;
-  document.getElementById("btnSalvarLoja").textContent = "Atualizar Loja";
-  document.getElementById("formLojaContainer").classList.remove("hidden");
-  document.getElementById("formLojaOverlay").classList.remove("hidden");
-}
-
-function excluirLoja(codigo) {
-  const lojas = buscarLojasSalvas();
-  const lojaEncontrada = lojas.find((l) => l.codigo === codigo);
-
-  if (!lojaEncontrada) {
-    mostrarAlerta("Loja não encontrada.");
-    return;
-  }
-
-  codigoLojaExcluindo = codigo;
-  document.getElementById("nomeLojaExclusao").textContent = lojaEncontrada.nome;
-  document.getElementById("codigoLojaExclusao").textContent =
-    "Código: " + lojaEncontrada.codigo;
-  document.getElementById("excluirLojaContainer").classList.remove("hidden");
-  document.getElementById("excluirLojaOverlay").classList.remove("hidden");
-}
-
-function fecharConfirmacaoExclusaoLoja() {
-  codigoLojaExcluindo = null;
-  document.getElementById("excluirLojaContainer").classList.add("hidden");
-  document.getElementById("excluirLojaOverlay").classList.add("hidden");
-}
-
-function confirmarExclusaoLoja() {
-  if (codigoLojaExcluindo === null) {
-    mostrarAlerta("Nenhuma loja selecionada.");
-    return;
-  }
-
-  const lojas = buscarLojasSalvas();
-  const lojasAtualizadas = lojas.filter(
-    (l) => l.codigo !== codigoLojaExcluindo,
-  );
-
-  salvarLojas(lojasAtualizadas);
-  carregarCardsLojas();
-  carregarTabelaLojas();
-  fecharConfirmacaoExclusaoLoja();
-  mostrarAlerta("Loja excluída com sucesso.");
 }
 
 carregarUsuarioLogado();

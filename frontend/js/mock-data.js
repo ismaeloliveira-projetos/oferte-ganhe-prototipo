@@ -72,6 +72,7 @@ const recebimentosMockados = [
     dataHora: "2026-06-01 17:10",
     responsavel: "Administrador",
     status: "Recebido",
+    observacao: "Recebido sem divergência",
   },
   {
     id: 2,
@@ -81,6 +82,7 @@ const recebimentosMockados = [
     dataHora: "2026-06-02 10:40",
     responsavel: "Administrador",
     status: "Divergente",
+    observacao: "Quantidade inferior à esperada, faltam 10 talões",
   },
   {
     id: 3,
@@ -90,6 +92,7 @@ const recebimentosMockados = [
     dataHora: "-",
     responsavel: "-",
     status: "Pendente",
+    observacao: "-",
   },
 ];
 
@@ -129,6 +132,18 @@ function criarBancoInicial() {
         senha: "123456",
         perfilId: 1,
         lojaId: null,
+        permissoes: [
+          "dashboard",
+          "lojas",
+          "usuarios",
+          "perfis",
+          "estoque",
+          "envios",
+          "recebimentos",
+          "manutencao",
+          "relatorios",
+          "insights",
+        ],
       },
       {
         id: 2,
@@ -138,6 +153,17 @@ function criarBancoInicial() {
         senha: "123456",
         perfilId: 2,
         lojaId: "001",
+        permissoes: [
+          "dashboard",
+          "lojas",
+          "usuarios",
+          "estoque",
+          "envios",
+          "recebimentos",
+          "manutencao",
+          "relatorios",
+          "insights",
+        ],
       },
       {
         id: 3,
@@ -147,6 +173,16 @@ function criarBancoInicial() {
         senha: "123456",
         perfilId: 3,
         lojaId: "001",
+        permissoes: [
+          "dashboard",
+          "usuarios",
+          "estoque",
+          "envios",
+          "recebimentos",
+          "manutencao",
+          "relatorios",
+          "insights",
+        ],
       },
       {
         id: 4,
@@ -156,6 +192,7 @@ function criarBancoInicial() {
         senha: "123456",
         perfilId: 4,
         lojaId: "001",
+        permissoes: ["dashboard", "estoque", "envios", "recebimentos"],
       },
     ],
 
@@ -185,7 +222,6 @@ function criarBancoInicial() {
           "dashboard",
           "lojas",
           "usuarios",
-          "perfis",
           "estoque",
           "envios",
           "recebimentos",
@@ -200,7 +236,7 @@ function criarBancoInicial() {
         nivel: 2,
         permissoes: [
           "dashboard",
-          "lojas",
+          "usuarios",
           "estoque",
           "envios",
           "recebimentos",

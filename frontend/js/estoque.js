@@ -25,6 +25,17 @@ function obterEstoqueRecomendado(loja) {
   return Number(loja.estoqueRecomendado ?? loja.recomendado ?? 0);
 }
 
+function obterReposicaoSugerida(loja) {
+  const estoqueAtual = obterEstoqueAtual(loja);
+  const estoqueRecomendado = obterEstoqueRecomendado(loja);
+
+  if (estoqueAtual >= estoqueRecomendado) {
+    return 0;
+  }
+
+  return Math.max(0, estoqueRecomendado - estoqueAtual);
+}
+
 function obterStatusEstoque(loja) {
   const estoqueAtual = obterEstoqueAtual(loja);
   const estoqueMinimo = obterEstoqueMinimo(loja);
@@ -59,9 +70,10 @@ function carregarCardsEstoque() {
   const lojasAtencao = lojas.filter(
     (loja) => obterStatusEstoque(loja) === "Atenção",
   ).length;
-  const lojasNormais = lojas.filter(
-    (loja) => obterStatusEstoque(loja) === "Normal",
-  ).length;
+  const reposicaoSugerida = lojas.reduce(
+    (total, loja) => total + obterReposicaoSugerida(loja),
+    0,
+  );
 
   atualizarTexto(
     ["totalEstoque", "totalTaloesEstoque", "estoqueTotal"],
@@ -75,7 +87,7 @@ function carregarCardsEstoque() {
     ["lojasAtencao", "totalLojasAtencao", "estoqueAtencao"],
     lojasAtencao,
   );
-  atualizarTexto(["lojasNormais", "totalLojasNormais"], lojasNormais);
+  atualizarTexto(["reposicaoSugerida"], reposicaoSugerida);
 }
 
 function carregarTabelaEstoque() {
@@ -92,22 +104,56 @@ function carregarTabelaEstoque() {
     const estoqueAtual = obterEstoqueAtual(loja);
     const estoqueMinimo = obterEstoqueMinimo(loja);
     const estoqueRecomendado = obterEstoqueRecomendado(loja);
+    const reposicaoSugerida = obterReposicaoSugerida(loja);
     const status = obterStatusEstoque(loja);
     const classeStatus = obterClasseStatusEstoque(status);
 
     tabela.innerHTML += `
-            <tr>
-                <td>${loja.codigo || loja.cod_loja || "-"}</td>
-                <td>${loja.nome || loja.nome_loja || "Loja sem nome"}</td>
-                <td>${estoqueAtual}</td>
-                <td>${estoqueMinimo}</td>
-                <td>${estoqueRecomendado}</td>
-                <td><span class="badge-status ${classeStatus}">${status}</span></td>
-            </tr>
-        `;
+  <tr>
+    <td>${loja.codigo || loja.cod_loja || "-"}</td>
+    <td>${loja.nome || loja.nome_loja || "Loja sem nome"}</td>
+    <td>${estoqueAtual}</td>
+    <td>${estoqueMinimo}</td>
+    <td>${estoqueRecomendado}</td>
+    <td>${reposicaoSugerida}</td>
+    <td><span class="badge-status ${classeStatus}">${status}</span></td>
+    <td>
+      <button
+        class="btn-primary btn-solicitar"
+        onclick="solicitarTalao('${loja.codigo || loja.cod_loja}', ${reposicaoSugerida}, this)"
+        ${reposicaoSugerida === 0 ? "disabled" : ""}
+      >
+        Solicitar
+      </button>
+    </td>
+  </tr>
+`;
   });
 
   aplicarResponsividadeTabelas();
+}
+
+function solicitarTalao(codigoLoja, quantidade, botao) {
+  const banco = carregarBanco();
+
+  const solicitacao = {
+    id: Date.now(),
+    codigoLoja: codigoLoja,
+    quantidade: quantidade,
+    dataSolicitacao: new Date().toLocaleDateString("pt-BR"),
+    status: "Pendente",
+  };
+
+  if (!banco.solicitacoes) banco.solicitacoes = [];
+  banco.solicitacoes.push(solicitacao);
+  salvarBanco(banco);
+
+  mostrarToast(
+    `Solicitação de ${quantidade} talões para a loja ${codigoLoja} registrada com sucesso!`,
+  );
+
+  botao.disabled = true;
+  botao.textContent = "Solicitado";
 }
 
 carregarUsuarioLogado();
