@@ -163,6 +163,32 @@
           </div>
         </section>
 
+        <section class="dashboard-analytics-grid">
+          <div class="content-card dashboard-chart-card">
+            <div class="content-card-header">
+              <h2>Histórico de envios</h2>
+              <span>Comparativo dos últimos 6 meses</span>
+            </div>
+
+            <div class="metricas-grid" id="metricasEnvios"></div>
+
+            <div class="chart-section-title">
+              Evolução mensal de talões enviados
+            </div>
+
+            <div class="historico-lista" id="historicoEnvios"></div>
+          </div>
+
+          <div class="content-card dashboard-chart-card">
+            <div class="content-card-header">
+              <h2>Status das lojas</h2>
+              <span>Distribuição atual do estoque</span>
+            </div>
+
+            <div id="resumoStatusLojas" class="status-summary-list"></div>
+          </div>
+        </section>
+
         <section class="content-grid">
           <div class="content-card table-card">
             <div class="content-card-header">
@@ -201,6 +227,7 @@
 
     <script src="../js/mock-data.js"></script>
     <script src="../js/ui.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
     <script src="../js/dashboard.js"></script>
   </body>
 </html>

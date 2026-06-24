@@ -120,6 +120,8 @@ function criarBancoInicial() {
       };
     }),
 
+    historicoEnvios: historicoEnviosMockado,
+
     envios: enviosMockados,
     recebimentos: recebimentosMockados,
 
@@ -265,11 +267,27 @@ function criarBancoInicial() {
   };
 }
 
+const historicoEnviosMockado = [
+  { mes: "Jan", ano: 2026, totalEnviado: 180 },
+  { mes: "Fev", ano: 2026, totalEnviado: 220 },
+  { mes: "Mar", ano: 2026, totalEnviado: 195 },
+  { mes: "Abr", ano: 2026, totalEnviado: 260 },
+  { mes: "Mai", ano: 2026, totalEnviado: 310 },
+  { mes: "Jun", ano: 2026, totalEnviado: 240 },
+];
+
 function carregarBanco() {
   const bancoSalvo = localStorage.getItem(DB_KEY);
 
   if (bancoSalvo) {
-    return JSON.parse(bancoSalvo);
+    const banco = JSON.parse(bancoSalvo);
+
+    if (!banco.historicoEnvios) {
+      banco.historicoEnvios = historicoEnviosMockado;
+      salvarBanco(banco);
+    }
+
+    return banco;
   }
 
   const bancoInicial = criarBancoInicial();

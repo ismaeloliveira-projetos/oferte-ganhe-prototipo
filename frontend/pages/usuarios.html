@@ -222,12 +222,14 @@
         />
       </div>
 
-      <div class="form-group">
-        <label for="perfilUsuario">Perfil de Acesso</label>
-        <select id="perfilUsuario" class="form-input" required>
-        </select>
+     <div class="form-group">
+  <label for="perfilUsuario">Perfil de Acesso</label>
 
-        <div class="form-group">
+  <select id="perfilUsuario" class="form-input" required>
+  </select>
+</div>
+
+<div class="form-group">
   <label for="lojaUsuario">Loja Vinculada</label>
 
   <select id="lojaUsuario" class="form-input">
@@ -237,17 +239,19 @@
   </select>
 </div>
 
-      </div>
-    </div>
+  <div class="form-actions">
+  <button type="submit" class="btn-primary">
+    Salvar Usuário
+  </button>
 
-    <div class="form-actions">
-      <button type="submit" id="btnSalvarUsuario" class="btn-primary">
-        Salvar Usuário
-      </button>
-
-      <button type="button" class="btn-secondary" onclick="fecharFormularioUsuario()">
-        Cancelar
-      </button>
+  <button
+    type="button"
+    class="btn-secondary"
+    onclick="fecharFormularioUsuario()"
+  >
+    Cancelar
+  </button>
+</div>
     </div>
   </form>
 </section>
