@@ -532,6 +532,33 @@ video {
   background-color: var(--qq-green-dark);
 }
 
+.table-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-table-action {
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .table-actions {
+    flex-direction: column;
+    width: 100%;
+    align-items: flex-end;
+    gap: 4px;
+  }
+
+  .btn-table-action {
+    width: 30%;
+    min-height: 20px;
+    font-size: 10px;
+    white-space: nowrap;
+    width: auto;
+  }
+}
+
 .insights-list {
   display: flex;
   flex-direction: column;
@@ -999,7 +1026,8 @@ video {
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  min-width: 0;
+  gap: 10px;
 }
 
 .form-group label {
@@ -2077,7 +2105,7 @@ video {
 }
 .btn-secondary {
   background-color: rgb(239, 234, 234);
-  color: var(--qq-dark);
+  color: var(--qq-green-dark);
   border: 1px solid var(--qq-green-dark);
   border-radius: 10px;
   padding: 12px 18px;
@@ -2088,6 +2116,10 @@ video {
   font-size: inherit; /* adiciona isso */
 }
 
+.btn-secondary:hover {
+  background-color: rgba(207, 202, 202, 0.792);
+}
+
 .anomalia-banner {
   background-color: #fff3cd;
   border: 1px solid #ffc107;
@@ -2096,4 +2128,39 @@ video {
   margin-bottom: 1rem;
   color: #856404;
   font-size: 14px;
+}
+
+/* ===== RELATÓRIOS ===== */
+.rel-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.rel-card {
+  background: white;
+  padding: 22px;
+  border-radius: 16px;
+  min-width: 0;
+}
+
+.rel-card-header {
+  margin-bottom: 16px;
+}
+
+.rel-card-header h2 {
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+
+.rel-card-header span {
+  color: var(--qq-gray);
+  font-size: 13px;
+}
+
+@media (max-width: 768px) {
+  .rel-grid {
+    grid-template-columns: 1fr;
+  }
 }

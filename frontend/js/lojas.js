@@ -90,10 +90,20 @@ function carregarTabelaLojas() {
         <td>${loja.estoqueRecomendado}</td>
         <td><span class="badge ${classesStatus}">${status}</span></td>
         <td>
-          <button class="btn-table-action btn-sm" onclick="window.verDetalhesLoja('${loja.codigo}')">Ver detalhes</button>
-          <button class="btn-table-action btn-sm" onclick="window.editarLoja('${loja.codigo}')">Editar</button>
-          <button class="btn-table-action btn-sm" onclick="window.excluirLoja('${loja.codigo}')">Excluir</button>
-        </td>
+  <div class="table-actions">
+    <button class="btn-table-action btn-sm" onclick="window.editarLoja('${loja.codigo}')">
+      Editar
+    </button>
+
+    <button class="btn-table-action btn-sm" onclick="window.excluirLoja('${loja.codigo}')">
+      Excluir
+    </button>
+
+    <button class="btn-table-action btn-sm" onclick="window.verDetalhesLoja('${loja.codigo}')">
+      Ver detalhes
+    </button>
+  </div>
+</td>
       </tr>
     `;
   });

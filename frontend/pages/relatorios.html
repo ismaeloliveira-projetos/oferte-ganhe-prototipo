@@ -165,14 +165,36 @@
             <strong id="totalRecebimentosRelatorio">0</strong>
           </div>
         </section>
+        <section class="rel-grid">
+          <div class="rel-card">
+            <div class="rel-card-header">
+              <h2>Relatórios de Movimentações</h2>
+              <span>Exportações de envios, recebimentos e manutenções</span>
+            </div>
+            <div class="actions-list">
+              <button class="btn-primary" onclick="exportarRelatorioEnvios()">
+                Exportar Envios
+              </button>
+              <button
+                class="btn-primary"
+                onclick="exportarRelatorioRecebimentos()"
+              >
+                Exportar Recebimentos
+              </button>
+              <button
+                class="btn-secondary"
+                onclick="exportarRelatorioManutencoes()"
+              >
+                Exportar Manutenções
+              </button>
+            </div>
+          </div>
 
-        <section class="content-grid">
-          <div class="content-card">
-            <div class="content-card-header">
+          <div class="rel-card">
+            <div class="rel-card-header">
               <h2>Relatórios de Estoque</h2>
               <span>Exportações baseadas no saldo atual das lojas</span>
             </div>
-
             <div class="actions-list">
               <button
                 class="btn-primary"
@@ -180,7 +202,6 @@
               >
                 Exportar Estoque Geral
               </button>
-
               <button
                 class="btn-secondary"
                 onclick="exportarRelatorioEstoqueCritico()"
@@ -190,53 +211,18 @@
             </div>
           </div>
 
-          <div class="content-card">
-            <div class="content-card-header">
-              <h2>Relatórios de Movimentações</h2>
-              <span>Exportações de envios, recebimentos e manutenções</span>
+          <div class="rel-card">
+            <div class="rel-card-header">
+              <h2>Relatórios de Cadastros</h2>
+              <span>Exportações de usuários e perfis de acesso</span>
             </div>
-
             <div class="actions-list">
-              <button class="btn-primary" onclick="exportarRelatorioEnvios()">
-                Exportar Envios
+              <button class="btn-primary" onclick="exportarRelatorioUsuarios()">
+                Exportar Usuários
               </button>
-
-              <button
-                class="btn-primary"
-                onclick="exportarRelatorioRecebimentos()"
-              >
-                Exportar Recebimentos
+              <button class="btn-secondary" onclick="exportarRelatorioPerfis()">
+                Exportar Perfis
               </button>
-
-              <button
-                class="btn-secondary"
-                onclick="exportarRelatorioManutencoes()"
-              >
-                Exportar Manutenções
-              </button>
-            </div>
-
-            <div class="content-card">
-              <div class="content-card-header">
-                <h2>Relatórios de Cadastros</h2>
-                <span>Exportações de usuários e perfis de acesso</span>
-              </div>
-
-              <div class="actions-list">
-                <button
-                  class="btn-primary"
-                  onclick="exportarRelatorioUsuarios()"
-                >
-                  Exportar Usuários
-                </button>
-
-                <button
-                  class="btn-secondary"
-                  onclick="exportarRelatorioPerfis()"
-                >
-                  Exportar Perfis
-                </button>
-              </div>
             </div>
           </div>
         </section>
