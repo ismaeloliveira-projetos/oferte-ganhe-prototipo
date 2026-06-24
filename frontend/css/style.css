@@ -2653,3 +2653,13 @@ video {
   gap: 12px;
   margin-top: 24px;
 }
+
+/* botao de logado com sucesso */
+#btnEntrar.btn-primary {
+  background: var(--qq-green, #009739);
+  color: #ffffff;
+}
+
+#btnEntrar.btn-primary:hover {
+  background: var(--qq-green-dark, #007a2f);
+}
