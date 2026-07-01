@@ -1,5 +1,5 @@
 const http = require("http");
-const { query } = require("./config/database");
+const { query, pool } = require("./config/database");
 
 const PORT = process.env.PORT || 3000;
 
@@ -85,6 +85,7 @@ async function roteador(req, res) {
     return enviarJson(res, 200, resultado.rows);
   }
 
+  // rota para cadastrar uma nova loja //
   if (req.method === "POST" && url.pathname === "/api/lojas") {
     const dados = await lerCorpoJson(req);
 
@@ -92,6 +93,8 @@ async function roteador(req, res) {
       .trim()
       .padStart(3, "0");
     const nome = String(dados.nome || "").trim();
+
+    const estoqueAtual = Number(dados.estoqueAtual ?? 0);
     const estoqueMinimo = Number(dados.estoqueMinimo ?? 200);
     const estoqueRecomendado = Number(dados.estoqueRecomendado ?? 300);
 
@@ -101,9 +104,13 @@ async function roteador(req, res) {
       });
     }
 
-    if (Number.isNaN(estoqueMinimo) || Number.isNaN(estoqueRecomendado)) {
+    if (
+      Number.isNaN(estoqueAtual) ||
+      Number.isNaN(estoqueMinimo) ||
+      Number.isNaN(estoqueRecomendado)
+    ) {
       return enviarJson(res, 400, {
-        erro: "Estoque mínimo e estoque recomendado devem ser números.",
+        erro: "Estoque atual, mínimo e recomendado devem ser números.",
       });
     }
 
@@ -122,41 +129,79 @@ async function roteador(req, res) {
       });
     }
 
-    // $1, $2,.. queries parametrizadas, separam o código dos dados impedindo que inputs do usuário sejam executados
-    const resultado = await query(
-      `
-      INSERT INTO lojas (
-        id,
-        codigo_loja,
-        nome_loja,
-        quantidade_minima,
-        quantidade_recomendada,
-        ativo,
-        criado_em
-      )
-      VALUES (
-        (SELECT COALESCE(MAX(id), 0) + 1 FROM lojas),
-        $1, 
-        $2,
-        $3,
-        $4,
-        true,
-        NOW()
-      )
-      RETURNING
-        id AS id,
-        codigo_loja AS codigo,
-        nome_loja AS nome,
-        0 AS "estoqueAtual",
-        quantidade_minima AS "estoqueMinimo",
-        quantidade_recomendada AS "estoqueRecomendado",
-        ativo AS ativo,
-        criado_em AS "criadoEm"
-    `,
-      [codigo, nome, estoqueMinimo, estoqueRecomendado],
-    );
+    const client = await pool.connect();
 
-    return enviarJson(res, 201, resultado.rows[0]);
+    try {
+      await client.query("BEGIN");
+
+      const resultadoLoja = await client.query(
+        `
+        INSERT INTO lojas (
+          id,
+          codigo_loja,
+          nome_loja,
+          quantidade_minima,
+          quantidade_recomendada,
+          ativo,
+          criado_em
+        )
+        VALUES (
+          (SELECT COALESCE(MAX(id), 0) + 1 FROM lojas),
+          $1,
+          $2,
+          $3,
+          $4,
+          true,
+          NOW()
+        )
+        RETURNING
+          id,
+          codigo_loja,
+          nome_loja,
+          quantidade_minima,
+          quantidade_recomendada,
+          ativo,
+          criado_em
+      `,
+        [codigo, nome, estoqueMinimo, estoqueRecomendado],
+      );
+
+      const lojaCriada = resultadoLoja.rows[0];
+
+      await client.query(
+        `
+        INSERT INTO estoques_lojas (
+          loja_id,
+          estoque_atual,
+          atualizado_em
+        )
+        VALUES (
+          $1,
+          $2,
+          NOW()
+        )
+      `,
+        [lojaCriada.id, estoqueAtual],
+      );
+
+      await client.query("COMMIT");
+
+      return enviarJson(res, 201, {
+        id: lojaCriada.id,
+        codigo: lojaCriada.codigo_loja,
+        nome: lojaCriada.nome_loja,
+        estoqueAtual: estoqueAtual,
+        estoqueMinimo: lojaCriada.quantidade_minima,
+        estoqueRecomendado: lojaCriada.quantidade_recomendada,
+        ativo: lojaCriada.ativo,
+        criadoEm: lojaCriada.criado_em,
+      });
+    } catch (erro) {
+      await client.query("ROLLBACK");
+      throw erro;
+    } finally {
+      client.release();
+    }
   }
 
   return enviarJson(res, 404, {

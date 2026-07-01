@@ -329,6 +329,10 @@ if (formLoja) {
       const codigo = document.getElementById("codigoLoja").value;
       const nome = document.getElementById("nomeLoja").value;
 
+      const estoqueAtual = Number(
+        document.getElementById("estoqueAtual").value,
+      );
+
       const estoqueMinimo = Number(
         document.getElementById("estoqueMinimo").value,
       );
@@ -337,19 +341,15 @@ if (formLoja) {
         document.getElementById("estoqueRecomendado").value,
       );
 
-      if (codigoLojaEditando !== null) {
-        mostrarAlerta(
-          "Edição de loja no banco será implementada na próxima etapa.",
-        );
-        return;
-      }
-
       const novaLoja = {
         codigo,
         nome,
+        estoqueAtual,
         estoqueMinimo,
         estoqueRecomendado,
       };
+
+      console.log("Enviando loja para API:", novaLoja);
 
       await cadastrarLojaApi(novaLoja);
 
@@ -360,6 +360,7 @@ if (formLoja) {
 
       formLoja.reset();
       fecharFormularioLoja();
+
       codigoLojaEditando = null;
     } catch (erro) {
       console.error("Erro ao salvar loja:", erro);
