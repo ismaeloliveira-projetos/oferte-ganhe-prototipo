@@ -35,6 +35,24 @@ async function buscarLojasApi() {
   return lojas;
 }
 
+async function cadastrarLojaApi(novaLoja) {
+  const resposta = await fetch("http://localhost:3000/api/lojas", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(novaLoja),
+  });
+
+  const dados = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(dados.erro || "Erro ao cadastrar loja.");
+  }
+
+  return dados;
+}
+
 function salvarLojas(lojas) {
   const banco = carregarBanco();
   banco.lojas = lojas;
@@ -295,75 +313,63 @@ function confirmarExclusaoLoja() {
 }
 
 const formLoja = document.getElementById("formLoja");
+
 if (formLoja) {
-  formLoja.addEventListener("submit", function (event) {
+  formLoja.addEventListener("submit", async function (event) {
     event.preventDefault();
 
     const botaoSalvar = document.getElementById("btnSalvarLoja");
+
     if (botaoSalvar) {
       botaoSalvar.textContent = "Salvando...";
       botaoSalvar.disabled = true;
     }
 
-    setTimeout(() => {
+    try {
       const codigo = document.getElementById("codigoLoja").value;
       const nome = document.getElementById("nomeLoja").value;
-      const estoqueAtual = Number(
-        document.getElementById("estoqueAtual").value,
-      );
+
       const estoqueMinimo = Number(
         document.getElementById("estoqueMinimo").value,
       );
+
       const estoqueRecomendado = Number(
         document.getElementById("estoqueRecomendado").value,
       );
 
-      const lojas = buscarTodasLojas();
-
-      if (codigoLojaEditando === null) {
-        const novaLoja = {
-          codigo,
-          nome,
-          estoqueAtual,
-          estoqueMinimo,
-          estoqueRecomendado,
-          status: "Ativa",
-        };
-        lojas.push(novaLoja);
-        salvarLojas(lojas);
-        mostrarAlerta("Loja cadastrada com sucesso.");
-      } else {
-        const lojasAtualizadas = lojas.map((loja) => {
-          if (loja.codigo === codigoLojaEditando) {
-            return {
-              ...loja,
-              codigo,
-              nome,
-              estoqueAtual,
-              estoqueMinimo,
-              estoqueRecomendado,
-            };
-          }
-          return loja;
-        });
-        salvarLojas(lojasAtualizadas);
-        mostrarAlerta("Loja atualizada com sucesso.");
+      if (codigoLojaEditando !== null) {
+        mostrarAlerta(
+          "Edição de loja no banco será implementada na próxima etapa.",
+        );
+        return;
       }
 
-      carregarCardsLojas();
-      carregarTabelaLojas();
+      const novaLoja = {
+        codigo,
+        nome,
+        estoqueMinimo,
+        estoqueRecomendado,
+      };
 
+      await cadastrarLojaApi(novaLoja);
+
+      mostrarAlerta("Loja cadastrada com sucesso no banco de dados.");
+
+      await carregarCardsLojas();
+      await carregarTabelaLojas();
+
+      formLoja.reset();
+      fecharFormularioLoja();
+      codigoLojaEditando = null;
+    } catch (erro) {
+      console.error("Erro ao salvar loja:", erro);
+      mostrarAlerta(erro.message);
+    } finally {
       if (botaoSalvar) {
         botaoSalvar.textContent = "Salvar Loja";
         botaoSalvar.disabled = false;
       }
-
-      setTimeout(() => {
-        document.getElementById("formLoja").reset();
-        fecharFormularioLoja();
-        codigoLojaEditando = null;
-      }, 700);
-    }, 800);
+    }
   });
 }
 
