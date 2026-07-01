@@ -400,7 +400,7 @@ function enviarPerguntaAssistente() {
   input.value = "";
 }
 
-const TIMEOUT_SEGUNDOS = 10;
+const TIMEOUT_SEGUNDOS = 12;
 const AVISO_ANTES_SEGUNDOS = 5;
 const CHAVE_SESSAO = "og_sessao";
 
