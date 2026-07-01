@@ -74,6 +74,23 @@ async function atualizarLojaApi(codigoOriginal, lojaAtualizada) {
   return dados;
 }
 
+async function inativarLojaApi(codigo) {
+  const resposta = await fetch(
+    `http://localhost:3000/api/lojas/${codigo}/inativar`,
+    {
+      method: "PATCH",
+    },
+  );
+
+  const dados = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(dados.erro || "Erro ao inativar loja.");
+  }
+
+  return dados;
+}
+
 function salvarLojas(lojas) {
   const banco = carregarBanco();
   banco.lojas = lojas;
@@ -323,22 +340,25 @@ function fecharConfirmacaoExclusaoLoja() {
   if (overlay) overlay.classList.add("hidden");
 }
 
-function confirmarExclusaoLoja() {
+async function confirmarExclusaoLoja() {
   if (codigoLojaExcluindo === null) {
     mostrarAlerta("Nenhuma loja selecionada.");
     return;
   }
 
-  const lojas = buscarTodasLojas();
-  const lojasAtualizadas = lojas.filter(
-    (l) => l.codigo !== codigoLojaExcluindo,
-  );
+  try {
+    await inativarLojaApi(codigoLojaExcluindo);
 
-  salvarLojas(lojasAtualizadas);
-  carregarCardsLojas();
-  carregarTabelaLojas();
-  fecharConfirmacaoExclusaoLoja();
-  mostrarAlerta("Loja excluída com sucesso.");
+    await carregarCardsLojas();
+    await carregarTabelaLojas();
+
+    fecharConfirmacaoExclusaoLoja();
+
+    mostrarAlerta("Loja inativada com sucesso.");
+  } catch (erro) {
+    console.error("Erro ao inativar loja:", erro);
+    mostrarAlerta(erro.message);
+  }
 }
 
 const formLoja = document.getElementById("formLoja");

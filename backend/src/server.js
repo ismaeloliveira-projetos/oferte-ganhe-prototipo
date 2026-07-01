@@ -8,7 +8,7 @@ function aplicarCors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
     "Access-Control-Allow-Methods",
-    "GET, POST, PUT, DELETE, OPTIONS",
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS",
   );
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
@@ -79,6 +79,7 @@ async function roteador(req, res) {
     FROM lojas l
     LEFT JOIN estoques_lojas e
       ON e.loja_id = l.id
+      WHERE l.ativo = true
     ORDER BY l.id ASC
   `);
 
@@ -296,6 +297,52 @@ async function roteador(req, res) {
       estoqueRecomendado: lojaAtualizada.quantidade_recomendada,
       ativo: lojaAtualizada.ativo,
       criadoEm: lojaAtualizada.criado_em,
+    });
+  }
+
+  // rota para inativar uma loja existente //
+  if (
+    req.method === "PATCH" &&
+    url.pathname.startsWith("/api/lojas/") &&
+    url.pathname.endsWith("/inativar")
+  ) {
+    const partesUrl = url.pathname.split("/");
+    const codigo = decodeURIComponent(partesUrl[3]);
+
+    const resultado = await query(
+      `
+      UPDATE lojas
+      SET ativo = false
+      WHERE codigo_loja = $1
+      RETURNING
+        id,
+        codigo_loja,
+        nome_loja,
+        quantidade_minima,
+        quantidade_recomendada,
+        ativo,
+        criado_em
+    `,
+      [codigo],
+    );
+
+    if (resultado.rows.length === 0) {
+      return enviarJson(res, 404, {
+        erro: "Loja não encontrada.",
+      });
+    }
+
+    const lojaInativada = resultado.rows[0];
+
+    return enviarJson(res, 200, {
+      id: lojaInativada.id,
+      codigo: lojaInativada.codigo_loja,
+      nome: lojaInativada.nome_loja,
+      estoqueMinimo: lojaInativada.quantidade_minima,
+      estoqueRecomendado: lojaInativada.quantidade_recomendada,
+      ativo: lojaInativada.ativo,
+      criadoEm: lojaInativada.criado_em,
+      mensagem: "Loja inativada com sucesso.",
     });
   }
 
