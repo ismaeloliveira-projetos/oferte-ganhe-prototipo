@@ -204,6 +204,101 @@ async function roteador(req, res) {
     }
   }
 
+  // rota para atualizar uma loja existente //
+  if (req.method === "PUT" && url.pathname.startsWith("/api/lojas/")) {
+    const codigoOriginal = decodeURIComponent(url.pathname.split("/").pop());
+
+    const dados = await lerCorpoJson(req);
+
+    const codigo = String(dados.codigo || "")
+      .trim()
+      .padStart(3, "0");
+
+    const nome = String(dados.nome || "").trim();
+
+    const estoqueMinimo = Number(dados.estoqueMinimo ?? 200);
+    const estoqueRecomendado = Number(dados.estoqueRecomendado ?? 300);
+
+    if (!codigo || !nome) {
+      return enviarJson(res, 400, {
+        erro: "Código e nome da loja são obrigatórios.",
+      });
+    }
+
+    if (Number.isNaN(estoqueMinimo) || Number.isNaN(estoqueRecomendado)) {
+      return enviarJson(res, 400, {
+        erro: "Estoque mínimo e estoque recomendado devem ser números.",
+      });
+    }
+
+    const lojaComMesmoCodigo = await query(
+      `
+      SELECT id
+      FROM lojas
+      WHERE codigo_loja = $1
+        AND codigo_loja <> $2
+    `,
+      [codigo, codigoOriginal],
+    );
+
+    if (lojaComMesmoCodigo.rows.length > 0) {
+      return enviarJson(res, 409, {
+        erro: "Já existe outra loja cadastrada com esse código.",
+      });
+    }
+
+    const resultado = await query(
+      `
+      UPDATE lojas
+      SET
+        codigo_loja = $1,
+        nome_loja = $2,
+        quantidade_minima = $3,
+        quantidade_recomendada = $4
+      WHERE codigo_loja = $5
+      RETURNING
+        id,
+        codigo_loja,
+        nome_loja,
+        quantidade_minima,
+        quantidade_recomendada,
+        ativo,
+        criado_em
+    `,
+      [codigo, nome, estoqueMinimo, estoqueRecomendado, codigoOriginal],
+    );
+
+    if (resultado.rows.length === 0) {
+      return enviarJson(res, 404, {
+        erro: "Loja não encontrada.",
+      });
+    }
+
+    const lojaAtualizada = resultado.rows[0];
+
+    const resultadoEstoque = await query(
+      `
+      SELECT estoque_atual
+      FROM estoques_lojas
+      WHERE loja_id = $1
+    `,
+      [lojaAtualizada.id],
+    );
+
+    const estoqueAtual = resultadoEstoque.rows[0]?.estoque_atual ?? 0;
+
+    return enviarJson(res, 200, {
+      id: lojaAtualizada.id,
+      codigo: lojaAtualizada.codigo_loja,
+      nome: lojaAtualizada.nome_loja,
+      estoqueAtual: estoqueAtual,
+      estoqueMinimo: lojaAtualizada.quantidade_minima,
+      estoqueRecomendado: lojaAtualizada.quantidade_recomendada,
+      ativo: lojaAtualizada.ativo,
+      criadoEm: lojaAtualizada.criado_em,
+    });
+  }
+
   return enviarJson(res, 404, {
     erro: "Rota não encontrada",
   });

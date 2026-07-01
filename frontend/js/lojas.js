@@ -53,6 +53,27 @@ async function cadastrarLojaApi(novaLoja) {
   return dados;
 }
 
+async function atualizarLojaApi(codigoOriginal, lojaAtualizada) {
+  const resposta = await fetch(
+    `http://localhost:3000/api/lojas/${codigoOriginal}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(lojaAtualizada),
+    },
+  );
+
+  const dados = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(dados.erro || "Erro ao atualizar loja.");
+  }
+
+  return dados;
+}
+
 function salvarLojas(lojas) {
   const banco = carregarBanco();
   banco.lojas = lojas;
@@ -242,13 +263,21 @@ window.editarLoja = function (codigo) {
   const inputCodigo = document.getElementById("codigoLoja");
   const inputNome = document.getElementById("nomeLoja");
   const inputEstoque = document.getElementById("estoqueAtual");
+
+  if (inputEstoque) {
+    inputEstoque.value = 0;
+    inputEstoque.readOnly = false;
+  }
   const inputMin = document.getElementById("estoqueMinimo");
   const inputRec = document.getElementById("estoqueRecomendado");
   const btnSalvar = document.getElementById("btnSalvarLoja");
 
   if (inputCodigo) inputCodigo.value = lojaEncontrada.codigo;
   if (inputNome) inputNome.value = lojaEncontrada.nome;
-  if (inputEstoque) inputEstoque.value = lojaEncontrada.estoqueAtual;
+  if (inputEstoque) {
+    inputEstoque.value = lojaEncontrada.estoqueAtual;
+    inputEstoque.readOnly = true;
+  }
   if (inputMin) {
     inputMin.value = lojaEncontrada.estoqueMinimo;
     inputMin.readOnly = false;
@@ -341,19 +370,34 @@ if (formLoja) {
         document.getElementById("estoqueRecomendado").value,
       );
 
-      const novaLoja = {
-        codigo,
-        nome,
-        estoqueAtual,
-        estoqueMinimo,
-        estoqueRecomendado,
-      };
+      if (codigoLojaEditando === null) {
+        const novaLoja = {
+          codigo,
+          nome,
+          estoqueAtual,
+          estoqueMinimo,
+          estoqueRecomendado,
+        };
 
-      console.log("Enviando loja para API:", novaLoja);
+        console.log("Cadastrando loja na API:", novaLoja);
 
-      await cadastrarLojaApi(novaLoja);
+        await cadastrarLojaApi(novaLoja);
 
-      mostrarAlerta("Loja cadastrada com sucesso no banco de dados.");
+        mostrarAlerta("Loja cadastrada com sucesso no banco de dados.");
+      } else {
+        const lojaAtualizada = {
+          codigo,
+          nome,
+          estoqueMinimo,
+          estoqueRecomendado,
+        };
+
+        console.log("Atualizando loja na API:", lojaAtualizada);
+
+        await atualizarLojaApi(codigoLojaEditando, lojaAtualizada);
+
+        mostrarAlerta("Loja atualizada com sucesso no banco de dados.");
+      }
 
       await carregarCardsLojas();
       await carregarTabelaLojas();
