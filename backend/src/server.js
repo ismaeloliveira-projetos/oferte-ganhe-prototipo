@@ -44,13 +44,14 @@ async function roteador(req, res) {
   if (req.method === "GET" && url.pathname === "/api/lojas") {
     const resultado = await query(`
       SELECT
-      id,
-      codigo_loja,
-      nome_loja,
-      quantidade_minima,
-      quantidade_recomendada,
-      ativo,
-      criado_em
+      id AS id,
+      codigo_loja AS codigo,
+      nome_loja AS nome,
+      0 AS "estoqueAtual",
+      quantidade_minima AS "estoqueMinimo",
+      quantidade_recomendada AS "estoqueRecomendado",
+      ativo AS ativo,
+      criado_em AS "criadoEm"
     FROM lojas
     ORDER BY id ASC
   `);

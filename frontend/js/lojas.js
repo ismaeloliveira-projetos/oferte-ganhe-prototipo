@@ -1,5 +1,6 @@
 let codigoLojaEditando = null;
 let codigoLojaExcluindo = null;
+let lojasCarregadas = [];
 
 function obterStatusEstoque(loja) {
   if (loja.estoqueAtual <= loja.estoqueMinimo) return "Crítico";
@@ -22,13 +23,16 @@ function buscarTodasLojas() {
   return banco.lojas;
 }
 
-function buscarLojasSalvas() {
-  const banco = carregarBanco();
-  if (!banco.lojas) {
-    banco.lojas = [];
-    salvarBanco(banco);
+async function buscarLojasApi() {
+  const resposta = await fetch("http://localhost:3000/api/lojas");
+
+  if (!resposta.ok) {
+    throw new Error("Erro ao buscar lojas no backend");
   }
-  return filtrarPorLoja(banco.lojas, buscarUsuarioLogado(), "codigo");
+
+  const lojas = await resposta.json();
+
+  return lojas;
 }
 
 function salvarLojas(lojas) {
@@ -48,67 +52,82 @@ function mostrarAlerta(mensagem) {
   setTimeout(() => alerta.classList.add("hidden"), 3000);
 }
 
-function carregarCardsLojas() {
-  const lojas = buscarLojasSalvas();
-  const totalLojas = lojas.length;
-  const lojasAtivas = lojas.length;
-  const lojasCriticas = lojas.filter(
-    (loja) => obterStatusEstoque(loja) === "Crítico",
-  ).length;
-  const lojasAtencao = lojas.filter(
-    (loja) => obterStatusEstoque(loja) === "Atenção",
-  ).length;
+async function carregarCardsLojas() {
+  try {
+    const lojas = await buscarLojasApi();
 
-  const el1 = document.getElementById("totalLojas");
-  const el2 = document.getElementById("lojasAtivas");
-  const el3 = document.getElementById("lojasCriticas");
-  const el4 = document.getElementById("lojasAtencao");
+    const totalLojas = lojas.length;
+    const lojasAtivas = lojas.filter((loja) => loja.ativo === true).length;
 
-  if (el1) el1.textContent = totalLojas;
-  if (el2) el2.textContent = lojasAtivas;
-  if (el3) el3.textContent = lojasCriticas;
-  if (el4) el4.textContent = lojasAtencao;
+    const lojasCriticas = lojas.filter(
+      (loja) => obterStatusEstoque(loja) === "Crítico",
+    ).length;
+
+    const lojasAtencao = lojas.filter(
+      (loja) => obterStatusEstoque(loja) === "Atenção",
+    ).length;
+
+    const el1 = document.getElementById("totalLojas");
+    const el2 = document.getElementById("lojasAtivas");
+    const el3 = document.getElementById("lojasCriticas");
+    const el4 = document.getElementById("lojasAtencao");
+
+    if (el1) el1.textContent = totalLojas;
+    if (el2) el2.textContent = lojasAtivas;
+    if (el3) el3.textContent = lojasCriticas;
+    if (el4) el4.textContent = lojasAtencao;
+  } catch (erro) {
+    console.error("Erro ao carregar cards de lojas:", erro);
+    alert("Não foi possível carregar os dados das lojas.");
+  }
 }
 
-function carregarTabelaLojas() {
+async function carregarTabelaLojas() {
   const tabela = document.getElementById("tabelaLojas");
   if (!tabela) return;
 
-  tabela.innerHTML = "";
-  const lojas = buscarLojasSalvas();
+  try {
+    tabela.innerHTML = "";
 
-  lojas.forEach((loja) => {
-    const status = obterStatusEstoque(loja);
-    const classesStatus = obterClassesStatus(status);
+    const lojas = await buscarLojasApi();
+    lojasCarregadas = lojas;
 
-    tabela.innerHTML += `
-      <tr>
-        <td>${loja.codigo}</td>
-        <td>${loja.nome}</td>
-        <td>${loja.estoqueAtual}</td>
-        <td>${loja.estoqueMinimo}</td>
-        <td>${loja.estoqueRecomendado}</td>
-        <td><span class="badge ${classesStatus}">${status}</span></td>
-        <td>
-  <div class="table-actions">
-    <button class="btn-table-action btn-sm" onclick="window.editarLoja('${loja.codigo}')">
-      Editar
-    </button>
+    lojas.forEach((loja) => {
+      const status = obterStatusEstoque(loja);
+      const classesStatus = obterClassesStatus(status);
 
-    <button class="btn-table-action btn-sm" onclick="window.excluirLoja('${loja.codigo}')">
-      Excluir
-    </button>
+      tabela.innerHTML += `
+        <tr>
+          <td>${loja.codigo}</td>
+          <td>${loja.nome}</td>
+          <td>${loja.estoqueAtual}</td>
+          <td>${loja.estoqueMinimo}</td>
+          <td>${loja.estoqueRecomendado}</td>
+          <td><span class="badge ${classesStatus}">${status}</span></td>
+          <td>
+            <div class="table-actions">
+              <button class="btn-table-action btn-sm" onclick="window.editarLoja('${loja.codigo}')">
+                Editar
+              </button>
 
-    <button class="btn-table-action btn-sm" onclick="window.verDetalhesLoja('${loja.codigo}')">
-      Ver detalhes
-    </button>
-  </div>
-</td>
-      </tr>
-    `;
-  });
+              <button class="btn-table-action btn-sm" onclick="window.excluirLoja('${loja.codigo}')">
+                Excluir
+              </button>
 
-  aplicarResponsividadeTabelas();
+              <button class="btn-table-action btn-sm" onclick="window.verDetalhesLoja('${loja.codigo}')">
+                Ver detalhes
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+
+    aplicarResponsividadeTabelas();
+  } catch (erro) {
+    console.error("Erro ao carregar tabela de lojas:", erro);
+    mostrarAlerta("Não foi possível carregar as lojas cadastradas.");
+  }
 }
 
 function fecharDetalhesLoja() {
@@ -151,8 +170,7 @@ function fecharFormularioLoja() {
 }
 
 window.verDetalhesLoja = function (codigo) {
-  const todasLojas = buscarTodasLojas();
-  const loja = todasLojas.find((l) => l.codigo === codigo);
+  const loja = lojasCarregadas.find((l) => l.codigo === codigo);
 
   if (!loja) {
     mostrarAlerta("Loja não encontrada.");
@@ -195,8 +213,7 @@ window.verDetalhesLoja = function (codigo) {
 };
 
 window.editarLoja = function (codigo) {
-  const todasLojas = buscarTodasLojas();
-  const lojaEncontrada = todasLojas.find((l) => l.codigo === codigo);
+  const lojaEncontrada = lojasCarregadas.find((l) => l.codigo === codigo);
 
   if (!lojaEncontrada) {
     mostrarAlerta("Loja não encontrada.");
@@ -231,8 +248,7 @@ window.editarLoja = function (codigo) {
 };
 
 window.excluirLoja = function (codigo) {
-  const todasLojas = buscarTodasLojas();
-  const lojaEncontrada = todasLojas.find((l) => l.codigo === codigo);
+  const lojaEncontrada = lojasCarregadas.find((l) => l.codigo === codigo);
 
   if (!lojaEncontrada) {
     mostrarAlerta("Loja não encontrada.");
