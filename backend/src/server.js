@@ -67,17 +67,19 @@ async function roteador(req, res) {
 
   if (req.method === "GET" && url.pathname === "/api/lojas") {
     const resultado = await query(`
-      SELECT
-      id AS id,
-      codigo_loja AS codigo,
-      nome_loja AS nome,
-      0 AS "estoqueAtual",
-      quantidade_minima AS "estoqueMinimo",
-      quantidade_recomendada AS "estoqueRecomendado",
-      ativo AS ativo,
-      criado_em AS "criadoEm"
-    FROM lojas
-    ORDER BY id ASC
+    SELECT
+      l.id AS id,
+      l.codigo_loja AS codigo,
+      l.nome_loja AS nome,
+      COALESCE(e.estoque_atual, 0) AS "estoqueAtual",
+      l.quantidade_minima AS "estoqueMinimo",
+      l.quantidade_recomendada AS "estoqueRecomendado",
+      l.ativo AS ativo,
+      l.criado_em AS "criadoEm"
+    FROM lojas l
+    LEFT JOIN estoques_lojas e
+      ON e.loja_id = l.id
+    ORDER BY l.id ASC
   `);
 
     return enviarJson(res, 200, resultado.rows);
