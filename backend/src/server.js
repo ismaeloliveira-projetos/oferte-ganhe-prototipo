@@ -5,6 +5,7 @@ const { aplicarCors, enviarJson } = require("./utils/http");
 const { tratarRotasLojas } = require("./routes/lojas.routes");
 const { tratarRotasEnvios } = require("./routes/envios.routes");
 const { tratarRotasRecebimentos } = require("./routes/recebimentos.routes");
+const { tratarRotasEstoques } = require("./routes/estoques.routes");
 
 const PORT = process.env.PORT || 3000;
 
@@ -41,6 +42,12 @@ async function roteador(req, res) {
   const rotaRecebimentosAtendida = await tratarRotasRecebimentos(req, res, url);
 
   if (rotaRecebimentosAtendida) {
+    return;
+  }
+
+  const rotaEstoquesAtendida = await tratarRotasEstoques(req, res, url);
+
+  if (rotaEstoquesAtendida) {
     return;
   }
 
