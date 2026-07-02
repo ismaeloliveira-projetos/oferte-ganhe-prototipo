@@ -1,66 +1,43 @@
-function buscarTodosRecebimentos() {
-  const banco = carregarBanco();
-  if (!banco.recebimentos) {
-    banco.recebimentos = [];
-    salvarBanco(banco);
+let recebimentosCarregados = [];
+let enviosCarregados = [];
+
+// Funções para interagir com a API do backend
+async function buscarRecebimentosApi() {
+  const resposta = await fetch("http://localhost:3000/api/recebimentos");
+
+  if (!resposta.ok) {
+    throw new Error("Erro ao buscar recebimentos no backend.");
   }
-  return banco.recebimentos;
+
+  return await resposta.json();
 }
 
-function buscarRecebimentosSalvos() {
-  return filtrarPorLoja(
-    buscarTodosRecebimentos(),
-    buscarUsuarioLogado(),
-    "codigoLoja",
-  );
-}
+async function buscarEnviosApi() {
+  const resposta = await fetch("http://localhost:3000/api/envios");
 
-function buscarTodosEnvios() {
-  const banco = carregarBanco();
-  if (!banco.envios) {
-    banco.envios = [];
-    salvarBanco(banco);
+  if (!resposta.ok) {
+    throw new Error("Erro ao buscar envios no backend.");
   }
-  return banco.envios;
+
+  return await resposta.json();
 }
 
-function buscarEnviosSalvos() {
-  return filtrarPorLoja(
-    buscarTodosEnvios(),
-    buscarUsuarioLogado(),
-    "codigoLoja",
-  );
-}
+async function confirmarRecebimentoApi(novoRecebimento) {
+  const resposta = await fetch("http://localhost:3000/api/recebimentos", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(novoRecebimento),
+  });
 
-function buscarTodasLojas() {
-  const banco = carregarBanco();
-  if (!banco.lojas) {
-    banco.lojas = [];
-    salvarBanco(banco);
+  const dados = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(dados.erro || "Erro ao confirmar recebimento.");
   }
-  return banco.lojas;
-}
 
-function buscarLojasSalvas() {
-  return filtrarPorLoja(buscarTodasLojas(), buscarUsuarioLogado(), "codigo");
-}
-
-function salvarRecebimentos(recebimentos) {
-  const banco = carregarBanco();
-  banco.recebimentos = recebimentos;
-  salvarBanco(banco);
-}
-
-function salvarEnvios(envios) {
-  const banco = carregarBanco();
-  banco.envios = envios;
-  salvarBanco(banco);
-}
-
-function salvarLojas(lojas) {
-  const banco = carregarBanco();
-  banco.lojas = lojas;
-  salvarBanco(banco);
+  return dados;
 }
 
 function mostrarAlerta(mensagem) {
@@ -70,25 +47,6 @@ function mostrarAlerta(mensagem) {
   setTimeout(() => alerta.classList.add("hidden"), 3000);
 }
 
-function obterUsuarioLogado() {
-  const usuarioSalvo = localStorage.getItem("usuarioLogado");
-  if (!usuarioSalvo) return { nome: "Administrador" };
-  const usuario = JSON.parse(usuarioSalvo);
-  return {
-    nome:
-      usuario.nome || usuario.nomeCompleto || usuario.email || "Administrador",
-  };
-}
-
-function obterCodigoLojaDoEnvio(envio) {
-  return envio.codigoLoja || envio.lojaCodigo || envio.codigo || "";
-}
-
-function buscarLojaPorCodigo(codigoLoja) {
-  const lojas = buscarLojasSalvas();
-  return lojas.find((loja) => loja.codigo === codigoLoja);
-}
-
 function formatarDataHora(dataHora) {
   if (!dataHora) return "-";
   const data = new Date(dataHora);
@@ -96,85 +54,152 @@ function formatarDataHora(dataHora) {
   return data.toLocaleString("pt-BR");
 }
 
-function carregarCardsRecebimentos() {
-  const recebimentos = buscarRecebimentosSalvos();
-  const envios = buscarEnviosSalvos();
+async function carregarCardsRecebimentos() {
+  try {
+    const recebimentos = await buscarRecebimentosApi();
+    const envios = await buscarEnviosApi();
 
-  const totalRecebimentos = recebimentos.length;
-  const totalTaloesRecebidos = recebimentos.reduce(
-    (total, r) => total + Number(r.quantidadeRecebida),
-    0,
-  );
-  const enviosPendentes = envios.filter(
-    (envio) => envio.status === "Pendente",
-  ).length;
-  const lojasAtualizadas = new Set(recebimentos.map((r) => r.codigoLoja)).size;
+    recebimentosCarregados = recebimentos;
+    enviosCarregados = envios;
 
-  document.getElementById("totalRecebimentos").textContent = totalRecebimentos;
-  document.getElementById("totalTaloesRecebidos").textContent =
-    totalTaloesRecebidos;
-  document.getElementById("enviosPendentesRecebimento").textContent =
-    enviosPendentes;
-  document.getElementById("lojasAtualizadasRecebimento").textContent =
-    lojasAtualizadas;
+    const totalRecebimentos = recebimentos.length;
 
-  atualizarSininhoRecebimentos();
-}
+    const totalTaloesRecebidos = recebimentos.reduce(
+      (total, recebimento) => total + Number(recebimento.quantidadeRecebida),
+      0,
+    );
 
-function carregarTabelaRecebimentos() {
-  const tabela = document.getElementById("tabelaRecebimentos");
-  tabela.innerHTML = "";
-  const recebimentos = buscarRecebimentosSalvos();
+    const enviosPendentes = envios.filter(
+      (envio) => envio.status === "PENDENTE",
+    ).length;
 
-  recebimentos.forEach(function (recebimento) {
-    const loja = buscarLojaPorCodigo(recebimento.codigoLoja);
-    tabela.innerHTML += `
-            <tr>
-                <td>${formatarDataHora(recebimento.dataHora)}</td>
-                <td>${loja ? loja.nome : "Loja desconhecida"}</td>
-                <td>${recebimento.quantidadeRecebida}</td>
-                <td>${recebimento.responsavel}</td>
-                <td><span class="badge-status badge-normal">Confirmado</span></td>
-                <td>${recebimento.observacao || "-"}</td>
-            </tr>
-        `;
-  });
+    const lojasAtualizadas = new Set(
+      recebimentos.map((recebimento) => recebimento.codigoLoja),
+    ).size;
 
-  aplicarResponsividadeTabelas();
-}
+    document.getElementById("totalRecebimentos").textContent =
+      totalRecebimentos;
 
-function carregarEnviosPendentesNoFormulario() {
-  const selectEnvio = document.getElementById("envioRecebimento");
-  const envios = buscarEnviosSalvos();
-  selectEnvio.innerHTML = "";
-  let encontrouPendente = false;
+    document.getElementById("totalTaloesRecebidos").textContent =
+      totalTaloesRecebidos;
 
-  envios.forEach(function (envio) {
-    if (envio.status === "Pendente") {
-      encontrouPendente = true;
-      const codigoLoja = obterCodigoLojaDoEnvio(envio);
-      const loja = buscarLojaPorCodigo(codigoLoja);
-      const nomeLoja = loja ? loja.nome : "Loja desconhecida";
+    document.getElementById("enviosPendentesRecebimento").textContent =
+      enviosPendentes;
 
-      selectEnvio.innerHTML += `
-                <option value="${envio.id}">
-                    ${nomeLoja} - ${envio.quantidade} talões - ${envio.remessa || "Sem remessa"}
-                </option>
-            `;
-    }
-  });
+    document.getElementById("lojasAtualizadasRecebimento").textContent =
+      lojasAtualizadas;
 
-  if (!encontrouPendente) {
-    selectEnvio.innerHTML = `<option value="">Nenhum envio pendente</option>`;
+    await atualizarSininhoRecebimentos();
+  } catch (erro) {
+    console.error("Erro ao carregar cards de recebimentos:", erro);
+    mostrarAlerta("Não foi possível carregar os indicadores de recebimentos.");
   }
 }
 
-function abrirFormularioRecebimento() {
+async function carregarTabelaRecebimentos() {
+  const tabela = document.getElementById("tabelaRecebimentos");
+
+  if (!tabela) return;
+
+  try {
+    tabela.innerHTML = "";
+
+    const recebimentos = await buscarRecebimentosApi();
+    recebimentosCarregados = recebimentos;
+
+    recebimentos.forEach(function (recebimento) {
+      tabela.innerHTML += `
+        <tr>
+          <td>${formatarDataHora(recebimento.dataRecebimento)}</td>
+          <td>${recebimento.codigoLoja} - ${recebimento.nomeLoja}</td>
+          <td>${recebimento.quantidadeRecebida}</td>
+          <td>${recebimento.usuarioRecebimentoId || "Não informado"}</td>
+          <td><span class="badge-status badge-normal">Confirmado</span></td>
+          <td>${recebimento.observacao || "-"}</td>
+        </tr>
+      `;
+    });
+
+    aplicarResponsividadeTabelas();
+  } catch (erro) {
+    console.error("Erro ao carregar tabela de recebimentos:", erro);
+    mostrarAlerta("Não foi possível carregar os recebimentos.");
+  }
+}
+
+async function carregarEnviosPendentesNoFormulario() {
+  const selectEnvio = document.getElementById("envioRecebimento");
+
+  if (!selectEnvio) return;
+
+  try {
+    const envios = await buscarEnviosApi();
+
+    enviosCarregados = envios;
+
+    const enviosPendentes = envios.filter(
+      (envio) => envio.status === "PENDENTE",
+    );
+
+    selectEnvio.innerHTML = "";
+
+    if (enviosPendentes.length === 0) {
+      selectEnvio.innerHTML = `<option value="">Nenhum envio pendente</option>`;
+      return;
+    }
+
+    enviosPendentes.forEach((envio) => {
+      selectEnvio.innerHTML += `
+        <option value="${envio.id}">
+          ${envio.codigoLoja} - ${envio.nomeLoja} | ${envio.quantidadeEnviada} talões | ${envio.codigoRemessa}
+        </option>
+      `;
+    });
+
+    preencherQuantidadeDoEnvioSelecionado();
+  } catch (erro) {
+    console.error("Erro ao carregar envios pendentes:", erro);
+    mostrarAlerta("Não foi possível carregar os envios pendentes.");
+  }
+}
+
+// Função para preencher a quantidade de talões do envio selecionado no formulário
+function preencherQuantidadeDoEnvioSelecionado() {
+  const selectEnvio = document.getElementById("envioRecebimento");
+  const inputQuantidade = document.getElementById("quantidadeRecebida");
+
+  if (!selectEnvio || !inputQuantidade) return;
+
+  const envioSelecionado = enviosCarregados.find(
+    (envio) => String(envio.id) === String(selectEnvio.value),
+  );
+
+  if (!envioSelecionado) {
+    inputQuantidade.value = "";
+    return;
+  }
+
+  inputQuantidade.value = envioSelecionado.quantidadeEnviada;
+}
+// Adiciona o evento de mudança ao select de envios para atualizar a quantidade automaticamente
+const selectEnvioRecebimento = document.getElementById("envioRecebimento");
+
+if (selectEnvioRecebimento) {
+  selectEnvioRecebimento.addEventListener(
+    "change",
+    preencherQuantidadeDoEnvioSelecionado,
+  );
+}
+
+async function abrirFormularioRecebimento() {
   document.getElementById("formRecebimento").reset();
-  carregarEnviosPendentesNoFormulario();
+
+  await carregarEnviosPendentesNoFormulario();
+
   document
     .getElementById("formRecebimentoContainer")
     .classList.remove("hidden");
+
   document.getElementById("formRecebimentoOverlay").classList.remove("hidden");
 }
 
@@ -183,149 +208,165 @@ function fecharFormularioRecebimento() {
   document.getElementById("formRecebimentoOverlay").classList.add("hidden");
 }
 
-document
-  .getElementById("formRecebimento")
-  .addEventListener("submit", function (event) {
+document.getElementById("formRecebimento");
+
+const formRecebimento = document.getElementById("formRecebimento");
+
+if (formRecebimento) {
+  formRecebimento.addEventListener("submit", async function (event) {
     event.preventDefault();
 
-    const idEnvioSelecionado =
-      document.getElementById("envioRecebimento").value;
+    const envioId = Number(document.getElementById("envioRecebimento").value);
+
     const quantidadeRecebida = Number(
       document.getElementById("quantidadeRecebida").value,
     );
-    const observacao = document.getElementById("observacaoRecebimento").value;
-    const usuario = obterUsuarioLogado();
 
-    if (idEnvioSelecionado === "") {
+    const observacao = document
+      .getElementById("observacaoRecebimento")
+      .value.trim();
+
+    if (!envioId) {
       mostrarAlerta("Selecione um envio pendente.");
       return;
     }
+
     if (quantidadeRecebida <= 0) {
       mostrarAlerta("Informe uma quantidade válida.");
       return;
     }
 
-    const envios = buscarTodosEnvios();
-    const envioSelecionado = envios.find(
-      (envio) => String(envio.id) === String(idEnvioSelecionado),
+    const envioSelecionado = enviosCarregados.find(
+      (envio) => Number(envio.id) === envioId,
     );
 
     if (!envioSelecionado) {
       mostrarAlerta("Envio não encontrado.");
       return;
     }
-    if (envioSelecionado.status !== "Pendente") {
+
+    if (envioSelecionado.status !== "PENDENTE") {
       mostrarAlerta("Este envio já foi recebido.");
       return;
     }
-    if (quantidadeRecebida > Number(envioSelecionado.quantidade)) {
-      mostrarAlerta("A quantidade recebida não pode ser maior que a enviada.");
+
+    if (quantidadeRecebida !== Number(envioSelecionado.quantidadeEnviada)) {
+      mostrarAlerta(
+        "Por enquanto, o recebimento precisa ser total, igual à quantidade enviada.",
+      );
       return;
     }
-
-    const codigoLoja = obterCodigoLojaDoEnvio(envioSelecionado);
-    if (!codigoLoja) {
-      mostrarAlerta("Não foi possível identificar a loja do envio.");
-      return;
-    }
-
-    const recebimentos = buscarTodosRecebimentos();
 
     const novoRecebimento = {
-      id: Date.now(),
-      dataHora: new Date().toISOString(),
-      envioId: envioSelecionado.id || null,
-      codigoLoja: codigoLoja,
-      quantidadeRecebida: quantidadeRecebida,
-      responsavel: usuario.nome,
-      observacao: observacao,
+      envioId,
+      quantidadeRecebida,
+      usuarioRecebimentoId: null,
+      observacao: observacao || "Recebimento confirmado pela tela.",
     };
 
-    recebimentos.push(novoRecebimento);
-    envioSelecionado.status = "Recebido";
+    try {
+      await confirmarRecebimentoApi(novoRecebimento);
 
-    const lojas = buscarTodasLojas();
-    const lojasAtualizadas = lojas.map(function (loja) {
-      if (loja.codigo === codigoLoja) {
-        return {
-          ...loja,
-          estoqueAtual: Number(loja.estoqueAtual) + quantidadeRecebida,
-        };
-      }
-      return loja;
-    });
+      await carregarCardsRecebimentos();
+      await carregarTabelaRecebimentos();
+      await detectarAnomalias();
 
-    salvarRecebimentos(recebimentos);
-    salvarEnvios(envios);
-    salvarLojas(lojasAtualizadas);
+      fecharFormularioRecebimento();
 
-    carregarCardsRecebimentos();
-    carregarTabelaRecebimentos();
-    fecharFormularioRecebimento();
-    mostrarAlerta("Recebimento registrado e estoque atualizado com sucesso.");
-  });
-
-function atualizarSininhoRecebimentos() {
-  const envios = buscarEnviosSalvos();
-  const enviosPendentes = envios.filter(
-    (envio) => envio.status === "Pendente",
-  ).length;
-  const contador = document.getElementById("contadorEnviosPendentes");
-  const botaoSininho = document.querySelector(".notification-button");
-
-  if (!contador || !botaoSininho) return;
-
-  if (enviosPendentes > 0) {
-    contador.textContent = enviosPendentes;
-    contador.classList.remove("hidden");
-    botaoSininho.classList.add("has-notification");
-  } else {
-    contador.textContent = "0";
-    contador.classList.add("hidden");
-    botaoSininho.classList.remove("has-notification");
-  }
-}
-
-function detectarAnomalias() {
-  const recebimentos = buscarRecebimentosSalvos();
-  const banner = document.getElementById("alertaAnomalias");
-  const mensagem = document.getElementById("mensagemAnomalias");
-  if (!banner || !mensagem) return;
-
-  // agrupa quantidade recebida por loja
-  const recebimentosPorLoja = {};
-  recebimentos.forEach(function (r) {
-    if (!recebimentosPorLoja[r.codigoLoja])
-      recebimentosPorLoja[r.codigoLoja] = 0;
-    recebimentosPorLoja[r.codigoLoja] += Number(r.quantidadeRecebida);
-  });
-
-  const valores = Object.values(recebimentosPorLoja);
-  if (valores.length < 2) {
-    banner.classList.add("hidden");
-    return;
-  }
-
-  const media = valores.reduce((a, b) => a + b, 0) / valores.length;
-  const anomalias = [];
-
-  Object.entries(recebimentosPorLoja).forEach(function ([codigo, total]) {
-    if (total > media * 1.5) {
-      const loja = buscarLojaPorCodigo(codigo);
-      anomalias.push(loja ? loja.nome : codigo);
+      mostrarAlerta("Recebimento confirmado e estoque atualizado com sucesso.");
+    } catch (erro) {
+      console.error("Erro ao confirmar recebimento:", erro);
+      mostrarAlerta(erro.message);
     }
   });
+}
 
-  if (anomalias.length > 0) {
-    mensagem.textContent = `${anomalias.join(", ")} com volume de recebimento acima da média. Recomenda-se revisão manual.`;
-    banner.classList.remove("hidden");
-  } else {
-    banner.classList.add("hidden");
+async function atualizarSininhoRecebimentos() {
+  try {
+    const envios = await buscarEnviosApi();
+
+    enviosCarregados = envios;
+
+    const enviosPendentes = envios.filter(
+      (envio) => envio.status === "PENDENTE",
+    ).length;
+
+    const contador = document.getElementById("contadorEnviosPendentes");
+    const botaoSininho = document.querySelector(".notification-button");
+
+    if (!contador || !botaoSininho) return;
+
+    if (enviosPendentes > 0) {
+      contador.textContent = enviosPendentes;
+      contador.classList.remove("hidden");
+      botaoSininho.classList.add("has-notification");
+    } else {
+      contador.textContent = "0";
+      contador.classList.add("hidden");
+      botaoSininho.classList.remove("has-notification");
+    }
+  } catch (erro) {
+    console.error("Erro ao atualizar sininho:", erro);
   }
 }
 
-carregarUsuarioLogado();
-carregarCardsRecebimentos();
-carregarTabelaRecebimentos();
-atualizarSininhoRecebimentos();
-detectarAnomalias();
+async function detectarAnomalias() {
+  try {
+    const recebimentos = await buscarRecebimentosApi();
+
+    const banner = document.getElementById("alertaAnomalias");
+    const mensagem = document.getElementById("mensagemAnomalias");
+
+    if (!banner || !mensagem) return;
+
+    const recebimentosPorLoja = {};
+
+    recebimentos.forEach(function (recebimento) {
+      if (!recebimentosPorLoja[recebimento.codigoLoja]) {
+        recebimentosPorLoja[recebimento.codigoLoja] = {
+          nomeLoja: recebimento.nomeLoja,
+          total: 0,
+        };
+      }
+
+      recebimentosPorLoja[recebimento.codigoLoja].total += Number(
+        recebimento.quantidadeRecebida,
+      );
+    });
+
+    const valores = Object.values(recebimentosPorLoja).map(
+      (item) => item.total,
+    );
+
+    if (valores.length < 2) {
+      banner.classList.add("hidden");
+      return;
+    }
+
+    const media = valores.reduce((a, b) => a + b, 0) / valores.length;
+
+    const anomalias = Object.values(recebimentosPorLoja)
+      .filter((item) => item.total > media * 1.5)
+      .map((item) => item.nomeLoja);
+
+    if (anomalias.length > 0) {
+      mensagem.textContent = `${anomalias.join(", ")} com volume de recebimento acima da média. Recomenda-se revisão manual.`;
+      banner.classList.remove("hidden");
+    } else {
+      banner.classList.add("hidden");
+    }
+  } catch (erro) {
+    console.error("Erro ao detectar anomalias:", erro);
+  }
+}
+
+async function iniciarPaginaRecebimentos() {
+  carregarUsuarioLogado();
+
+  await carregarCardsRecebimentos();
+  await carregarTabelaRecebimentos();
+  await atualizarSininhoRecebimentos();
+  await detectarAnomalias();
+}
+
+iniciarPaginaRecebimentos();
