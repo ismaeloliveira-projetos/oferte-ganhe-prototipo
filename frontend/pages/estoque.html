@@ -204,6 +204,33 @@
       </main>
     </div>
 
+    <div
+      id="historicoEstoqueOverlay"
+      class="bottom-sheet-overlay hidden"
+      onclick="fecharHistoricoEstoque()"
+    ></div>
+
+    <section id="historicoEstoqueContainer" class="bottom-sheet hidden">
+      <div class="bottom-sheet-header">
+        <div>
+          <h2>Histórico de Estoque</h2>
+          <span>Movimentações registradas para esta loja</span>
+        </div>
+      </div>
+
+      <div id="historicoEstoqueConteudo" class="bottom-sheet-content"></div>
+
+      <div class="bottom-sheet-actions">
+        <button
+          type="button"
+          class="btn-secondary"
+          onclick="fecharHistoricoEstoque()"
+        >
+          Fechar
+        </button>
+      </div>
+    </section>
+
     <button class="assistant-toggle" onclick="abrirAssistente()">
       Assistente IA
     </button>

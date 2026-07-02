@@ -10,6 +10,30 @@ async function buscarEstoquesApi() {
   return await resposta.json();
 }
 
+// Função para buscar o histórico de movimentações de estoque de uma loja específica
+async function buscarMovimentacoesEstoqueApi(lojaId) {
+  const resposta = await fetch(
+    `http://localhost:3000/api/movimentacoes-estoque?lojaId=${lojaId}`,
+  );
+
+  if (!resposta.ok) {
+    throw new Error("Erro ao buscar histórico de movimentações.");
+  }
+
+  return await resposta.json();
+}
+
+function formatarTipoMovimentacao(tipo) {
+  if (tipo === "RECEBIMENTO") return "Recebimento";
+  if (tipo === "MANUTENCAO_ENTRADA") return "Manutenção Entrada";
+  if (tipo === "MANUTENCAO_SAIDA") return "Manutenção Saída";
+  if (tipo === "AVARIA") return "Avaria";
+  if (tipo === "EXTRAVIO") return "Extravio";
+  if (tipo === "CORRECAO") return "Correção";
+
+  return tipo;
+}
+
 function obterReposicaoSugerida(estoque) {
   const estoqueAtual = Number(estoque.estoqueAtual);
   const estoqueRecomendado = Number(estoque.estoqueRecomendado);
@@ -135,15 +159,24 @@ async function carregarTabelaEstoque() {
             </span>
           </td>
           <td>${formatarDataHora(estoque.atualizadoEm)}</td>
-          <td>
-            <button
-              class="btn-primary btn-solicitar"
-              onclick="solicitarTalao(${estoque.lojaId}, ${reposicaoSugerida}, this)"
-              ${reposicaoSugerida === 0 ? "disabled" : ""}
-            >
-              Solicitar
-            </button>
-          </td>
+    <td>
+  <div class="table-actions estoque-actions">
+    <button
+      class="btn-primary btn-solicitar"
+      onclick="solicitarTalao(${estoque.lojaId}, ${reposicaoSugerida}, this)"
+      ${reposicaoSugerida === 0 ? "disabled" : ""}
+    >
+      Solicitar
+    </button>
+
+    <button
+      class="btn-table-action btn-sm"
+      onclick="verHistoricoEstoque(${estoque.lojaId})"
+    >
+      Histórico
+    </button>
+  </div>
+</td>
         </tr>
       `;
     });
@@ -221,6 +254,87 @@ async function iniciarPaginaEstoque() {
   await exibirRanqueamentoPrioridade();
 
   aplicarPermissoesMenu();
+}
+
+async function verHistoricoEstoque(lojaId) {
+  const conteudo = document.getElementById("historicoEstoqueConteudo");
+
+  if (!conteudo) {
+    mostrarMensagem("Área de histórico não encontrada no HTML.");
+    return;
+  }
+
+  try {
+    const movimentacoes = await buscarMovimentacoesEstoqueApi(lojaId);
+
+    if (movimentacoes.length === 0) {
+      conteudo.innerHTML = `
+        <p class="empty-state">
+          Nenhuma movimentação encontrada para esta loja.
+        </p>
+      `;
+    } else {
+      conteudo.innerHTML = "";
+
+      movimentacoes.forEach((movimentacao) => {
+        conteudo.innerHTML += `
+          <div class="detail-card">
+            <div class="detail-row">
+              <strong>Data</strong>
+              <span>${formatarDataHora(movimentacao.criadoEm)}</span>
+            </div>
+
+            <div class="detail-row">
+              <strong>Tipo</strong>
+              <span>${formatarTipoMovimentacao(movimentacao.tipoMovimentacao)}</span>
+            </div>
+
+            <div class="detail-row">
+              <strong>Quantidade</strong>
+              <span>${movimentacao.quantidade}</span>
+            </div>
+
+            <div class="detail-row">
+              <strong>Saldo anterior</strong>
+              <span>${movimentacao.saldoAnterior}</span>
+            </div>
+
+            <div class="detail-row">
+              <strong>Saldo posterior</strong>
+              <span>${movimentacao.saldoPosterior}</span>
+            </div>
+
+            <div class="detail-row">
+              <strong>Remessa</strong>
+              <span>${movimentacao.codigoRemessa || "-"}</span>
+            </div>
+
+            <div class="detail-row">
+              <strong>Observação</strong>
+              <span>${movimentacao.observacao || "-"}</span>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    document
+      .getElementById("historicoEstoqueContainer")
+      .classList.remove("hidden");
+
+    document
+      .getElementById("historicoEstoqueOverlay")
+      .classList.remove("hidden");
+  } catch (erro) {
+    console.error("Erro ao carregar histórico:", erro);
+    mostrarMensagem("Não foi possível carregar o histórico de estoque.");
+  }
+}
+
+function fecharHistoricoEstoque() {
+  document.getElementById("historicoEstoqueContainer").classList.add("hidden");
+
+  document.getElementById("historicoEstoqueOverlay").classList.add("hidden");
 }
 
 iniciarPaginaEstoque();
