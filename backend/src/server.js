@@ -4,6 +4,7 @@ const { query, pool } = require("./config/database");
 const { aplicarCors, enviarJson } = require("./utils/http");
 const { tratarRotasLojas } = require("./routes/lojas.routes");
 const { tratarRotasEnvios } = require("./routes/envios.routes");
+const { tratarRotasRecebimentos } = require("./routes/recebimentos.routes");
 
 const PORT = process.env.PORT || 3000;
 
@@ -34,6 +35,12 @@ async function roteador(req, res) {
   const rotaEnviosAtendida = await tratarRotasEnvios(req, res, url);
 
   if (rotaEnviosAtendida) {
+    return;
+  }
+
+  const rotaRecebimentosAtendida = await tratarRotasRecebimentos(req, res, url);
+
+  if (rotaRecebimentosAtendida) {
     return;
   }
 
