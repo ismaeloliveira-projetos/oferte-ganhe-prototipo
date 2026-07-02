@@ -2,6 +2,33 @@ const { pool } = require("../config/database");
 const { enviarJson, lerCorpoJson } = require("../utils/http");
 
 async function tratarRotasRecebimentos(req, res, url) {
+  // Rota para listar todos os recebimentos de talões
+  if (req.method === "GET" && url.pathname === "/api/recebimentos") {
+    const resultado = await pool.query(`
+    SELECT
+      r.id AS id,
+      r.envio_id AS "envioId",
+      r.loja_id AS "lojaId",
+      l.codigo_loja AS "codigoLoja",
+      l.nome_loja AS "nomeLoja",
+      e.codigo_remessa AS "codigoRemessa",
+      e.quantidade_enviada AS "quantidadeEnviada",
+      r.quantidade_recebida AS "quantidadeRecebida",
+      r.usuario_recebimento_id AS "usuarioRecebimentoId",
+      r.data_recebimento AS "dataRecebimento",
+      r.observacao AS observacao,
+      r.criado_em AS "criadoEm"
+    FROM recebimentos_taloes r
+    JOIN envios_taloes e
+      ON e.id = r.envio_id
+    JOIN lojas l
+      ON l.id = r.loja_id
+    ORDER BY r.data_recebimento DESC
+  `);
+
+    enviarJson(res, 200, resultado.rows);
+    return true;
+  }
   // Rota para criar um recebimento de talões
   if (req.method === "POST" && url.pathname === "/api/recebimentos") {
     const dados = await lerCorpoJson(req);
