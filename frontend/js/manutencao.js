@@ -1,56 +1,64 @@
-function buscarTodasManutencoes() {
-  const banco = carregarBanco();
-  if (!banco.manutencoes) {
-    banco.manutencoes = [];
-    salvarBanco(banco);
+let manutencoesCarregadas = [];
+let estoquesCarregados = [];
+
+async function buscarManutencoesApi() {
+  const resposta = await fetch("http://localhost:3000/api/manutencoes");
+
+  if (!resposta.ok) {
+    throw new Error("Erro ao buscar manutenções no backend.");
   }
-  return banco.manutencoes;
+
+  return await resposta.json();
 }
 
-function buscarManutencoesSalvas() {
-  return filtrarPorLoja(
-    buscarTodasManutencoes(),
-    buscarUsuarioLogado(),
-    "codigoLoja",
-  );
-}
+async function buscarEstoquesApi() {
+  const resposta = await fetch("http://localhost:3000/api/estoques");
 
-function buscarTodasLojas() {
-  const banco = carregarBanco();
-  if (!banco.lojas) {
-    banco.lojas = [];
-    salvarBanco(banco);
+  if (!resposta.ok) {
+    throw new Error("Erro ao buscar estoques no backend.");
   }
-  return banco.lojas;
+
+  return await resposta.json();
 }
 
-function buscarLojasSalvas() {
-  return filtrarPorLoja(buscarTodasLojas(), buscarUsuarioLogado(), "codigo");
-}
+async function cadastrarManutencaoApi(novaManutencao) {
+  const resposta = await fetch("http://localhost:3000/api/manutencoes", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(novaManutencao),
+  });
 
-function salvarManutencoes(manutencoes) {
-  const banco = carregarBanco();
-  banco.manutencoes = manutencoes;
-  salvarBanco(banco);
-}
+  const dados = await resposta.json();
 
-function salvarLojas(lojas) {
-  const banco = carregarBanco();
-  banco.lojas = lojas;
-  salvarBanco(banco);
+  if (!resposta.ok) {
+    throw new Error(dados.erro || "Erro ao cadastrar manutenção.");
+  }
+
+  return dados;
 }
 
 function mostrarAlerta(mensagem) {
   const alerta = document.getElementById("alertaSistema");
+
+  if (!alerta) return;
+
   alerta.textContent = mensagem;
   alerta.classList.remove("hidden");
+
   setTimeout(() => alerta.classList.add("hidden"), 3000);
 }
 
 function obterUsuarioLogado() {
   const usuarioSalvo = localStorage.getItem("usuarioLogado");
-  if (!usuarioSalvo) return { nome: "Administrador" };
+
+  if (!usuarioSalvo) {
+    return { nome: "Administrador" };
+  }
+
   const usuario = JSON.parse(usuarioSalvo);
+
   return {
     nome:
       usuario.nome || usuario.nomeCompleto || usuario.email || "Administrador",
@@ -59,127 +67,173 @@ function obterUsuarioLogado() {
 
 function formatarDataHora(dataHora) {
   if (!dataHora) return "-";
+
   const data = new Date(dataHora);
+
   if (isNaN(data.getTime())) return dataHora;
+
   return data.toLocaleString("pt-BR");
 }
 
-function buscarLojaPorCodigo(codigoLoja) {
-  const lojas = buscarLojasSalvas();
-  return lojas.find((loja) => loja.codigo === codigoLoja);
+function formatarTipoManutencao(tipo) {
+  if (tipo === "AJUSTE_ENTRADA") return "Ajuste de Entrada";
+  if (tipo === "AJUSTE_SAIDA") return "Ajuste de Saída";
+  if (tipo === "AVARIA") return "Avaria";
+  if (tipo === "EXTRAVIO") return "Extravio";
+  if (tipo === "CORRECAO") return "Correção";
+
+  return tipo;
 }
 
-function obterEstoqueAtualDaLoja(loja) {
-  return Number(
-    loja.estoqueAtual ??
-      loja.quantidadeAtual ??
-      loja.recomendado ??
-      loja.estoqueRecomendado ??
-      0,
-  );
-}
+function obterClasseTipoManutencao(tipo) {
+  if (tipo === "AJUSTE_ENTRADA") return "badge-normal";
 
-function normalizarTipoManutencao(tipo) {
-  return tipo.toLowerCase().trim();
-}
-
-function carregarLojasNoFormulario() {
-  const selectLoja = document.getElementById("lojaManutencao");
-  const lojas = buscarLojasSalvas();
-  selectLoja.innerHTML = "";
-
-  if (lojas.length === 0) {
-    selectLoja.innerHTML = `<option value="">Nenhuma loja cadastrada</option>`;
-    return;
+  if (tipo === "AJUSTE_SAIDA" || tipo === "AVARIA" || tipo === "EXTRAVIO") {
+    return "badge-critico";
   }
 
-  lojas.forEach((loja) => {
-    selectLoja.innerHTML += `<option value="${loja.codigo}">${loja.codigo} - ${loja.nome}</option>`;
-  });
+  return "badge-atencao";
+}
+
+function tipoEhSaida(tipo) {
+  return tipo === "AJUSTE_SAIDA" || tipo === "AVARIA" || tipo === "EXTRAVIO";
+}
+
+async function carregarLojasNoFormulario() {
+  const selectLoja = document.getElementById("lojaManutencao");
+
+  if (!selectLoja) return;
+
+  try {
+    const estoques = await buscarEstoquesApi();
+    estoquesCarregados = estoques;
+
+    selectLoja.innerHTML = "";
+
+    if (estoques.length === 0) {
+      selectLoja.innerHTML = `<option value="">Nenhuma loja cadastrada</option>`;
+      return;
+    }
+
+    estoques.forEach((estoque) => {
+      selectLoja.innerHTML += `
+        <option value="${estoque.lojaId}">
+          ${estoque.codigoLoja} - ${estoque.nomeLoja} | Estoque: ${estoque.estoqueAtual}
+        </option>
+      `;
+    });
+  } catch (erro) {
+    console.error("Erro ao carregar lojas no formulário:", erro);
+    mostrarAlerta("Não foi possível carregar as lojas.");
+  }
 }
 
 function preencherResponsavelManutencao() {
   const usuario = obterUsuarioLogado();
   const inputResponsavel = document.getElementById("responsavelManutencao");
-  if (inputResponsavel) inputResponsavel.value = usuario.nome;
+
+  if (inputResponsavel) {
+    inputResponsavel.value = usuario.nome;
+  }
 }
 
-function obterClasseTipoManutencao(tipo) {
-  const tipoNormalizado = normalizarTipoManutencao(tipo);
-  if (tipoNormalizado === "entrada") return "badge-normal";
-  if (
-    tipoNormalizado === "saída" ||
-    tipoNormalizado === "saida" ||
-    tipoNormalizado === "perda" ||
-    tipoNormalizado === "avaria"
-  )
-    return "badge-critico";
-  return "badge-atencao";
+async function carregarCardsManutencao() {
+  try {
+    const manutencoes = await buscarManutencoesApi();
+
+    manutencoesCarregadas = manutencoes;
+
+    const totalManutencoes = manutencoes.length;
+
+    const entradas = manutencoes.filter(
+      (manutencao) => manutencao.tipoManutencao === "AJUSTE_ENTRADA",
+    ).length;
+
+    const saidas = manutencoes.filter((manutencao) =>
+      tipoEhSaida(manutencao.tipoManutencao),
+    ).length;
+
+    const lojasAjustadas = new Set(
+      manutencoes.map((manutencao) => manutencao.codigoLoja),
+    ).size;
+
+    const totalManutencoesEl = document.getElementById("totalManutencoes");
+    const entradasManuaisEl = document.getElementById("entradasManuais");
+    const saidasManuaisEl = document.getElementById("saidasManuais");
+    const lojasAjustadasEl = document.getElementById("lojasAjustadas");
+
+    if (totalManutencoesEl) {
+      totalManutencoesEl.textContent = totalManutencoes;
+    }
+
+    if (entradasManuaisEl) {
+      entradasManuaisEl.textContent = entradas;
+    }
+
+    if (saidasManuaisEl) {
+      saidasManuaisEl.textContent = saidas;
+    }
+
+    if (lojasAjustadasEl) {
+      lojasAjustadasEl.textContent = lojasAjustadas;
+    }
+  } catch (erro) {
+    console.error("Erro ao carregar cards de manutenção:", erro);
+    mostrarAlerta("Não foi possível carregar os indicadores de manutenção.");
+  }
 }
 
-function carregarCardsManutencao() {
-  const manutencoes = buscarManutencoesSalvas();
-  const totalManutencoes = manutencoes.length;
-
-  const entradas = manutencoes.filter(
-    (m) => normalizarTipoManutencao(m.tipo) === "entrada",
-  ).length;
-  const saidas = manutencoes.filter(function (m) {
-    const tipo = normalizarTipoManutencao(m.tipo);
-    return (
-      tipo === "saída" ||
-      tipo === "saida" ||
-      tipo === "perda" ||
-      tipo === "avaria" ||
-      tipo === "correção" ||
-      tipo === "correcao"
-    );
-  }).length;
-
-  const lojasAjustadas = new Set(manutencoes.map((m) => m.codigoLoja)).size;
-
-  document.getElementById("totalManutencoes").textContent = totalManutencoes;
-  document.getElementById("entradasManuais").textContent = entradas;
-  document.getElementById("saidasManuais").textContent = saidas;
-  document.getElementById("lojasAjustadas").textContent = lojasAjustadas;
-}
-
-function carregarTabelaManutencoes() {
+async function carregarTabelaManutencoes() {
   const tabela = document.getElementById("tabelaManutencoes");
+
   if (!tabela) return;
 
-  tabela.innerHTML = "";
-  const manutencoes = buscarManutencoesSalvas();
+  try {
+    tabela.innerHTML = "";
 
-  if (manutencoes.length === 0) {
-    tabela.innerHTML =
-      "<tr><td colspan='6'>Nenhuma manutenção registrada</td></tr>";
-    return;
+    const manutencoes = await buscarManutencoesApi();
+
+    manutencoesCarregadas = manutencoes;
+
+    if (manutencoes.length === 0) {
+      tabela.innerHTML =
+        "<tr><td colspan='6'>Nenhuma manutenção registrada</td></tr>";
+      return;
+    }
+
+    manutencoes.forEach(function (manutencao) {
+      const classeTipo = obterClasseTipoManutencao(manutencao.tipoManutencao);
+
+      tabela.innerHTML += `
+        <tr>
+          <td>${formatarDataHora(manutencao.criadoEm)}</td>
+          <td>${manutencao.codigoLoja} - ${manutencao.nomeLoja}</td>
+          <td>
+            <span class="badge-status ${classeTipo}">
+              ${formatarTipoManutencao(manutencao.tipoManutencao)}
+            </span>
+          </td>
+          <td>${manutencao.quantidade}</td>
+          <td>${manutencao.usuarioId || "Não informado"}</td>
+          <td>${manutencao.observacao || "-"}</td>
+        </tr>
+      `;
+    });
+
+    aplicarResponsividadeTabelas();
+  } catch (erro) {
+    console.error("Erro ao carregar tabela de manutenções:", erro);
+    mostrarAlerta("Não foi possível carregar as manutenções.");
   }
-
-  manutencoes.forEach(function (manutencao) {
-    const loja = buscarLojaPorCodigo(manutencao.codigoLoja);
-    const classeTipo = obterClasseTipoManutencao(manutencao.tipo);
-
-    tabela.innerHTML += `
-            <tr>
-                <td>${formatarDataHora(manutencao.dataHora)}</td>
-                <td>${loja ? loja.nome : "Loja desconhecida"}</td>
-                <td><span class="badge-status ${classeTipo}">${manutencao.tipo}</span></td>
-                <td>${manutencao.quantidade}</td>
-                <td>${manutencao.responsavel}</td>
-                <td>${manutencao.motivo}</td>
-            </tr>
-        `;
-  });
-
-  aplicarResponsividadeTabelas();
 }
 
-function abrirFormularioManutencao() {
+async function abrirFormularioManutencao() {
   document.getElementById("formManutencao").reset();
-  carregarLojasNoFormulario();
+
+  await carregarLojasNoFormulario();
+
   preencherResponsavelManutencao();
+
   document.getElementById("formManutencaoContainer").classList.remove("hidden");
   document.getElementById("formManutencaoOverlay").classList.remove("hidden");
 }
@@ -189,121 +243,103 @@ function fecharFormularioManutencao() {
   document.getElementById("formManutencaoOverlay").classList.add("hidden");
 }
 
-function calcularNovoEstoque(estoqueAtual, tipo, quantidade) {
-  const tipoNormalizado = normalizarTipoManutencao(tipo);
-
-  if (tipoNormalizado === "entrada") {
-    return estoqueAtual + quantidade;
-  }
-  if (
-    tipoNormalizado === "saída" ||
-    tipoNormalizado === "saida" ||
-    tipoNormalizado === "perda" ||
-    tipoNormalizado === "avaria"
-  ) {
-    return estoqueAtual - quantidade;
-  }
-  if (tipoNormalizado === "correção" || tipoNormalizado === "correcao") {
-    return quantidade;
-  }
-
-  return estoqueAtual;
-}
-
 const formManutencao = document.getElementById("formManutencao");
+
 if (formManutencao) {
-  formManutencao.addEventListener("submit", function (event) {
+  formManutencao.addEventListener("submit", async function (event) {
     event.preventDefault();
 
-    const codigoLoja = document.getElementById("lojaManutencao").value;
-    const tipo = document.getElementById("tipoManutencao").value;
+    const lojaId = Number(document.getElementById("lojaManutencao").value);
+
+    const tipoManutencao = document.getElementById("tipoManutencao").value;
+
     const quantidade = Number(
       document.getElementById("quantidadeManutencao").value,
     );
-    const motivo = document.getElementById("motivoManutencao").value;
-    const responsavel =
-      document.getElementById("responsavelManutencao").value ||
-      obterUsuarioLogado().nome;
-    const observacao = document.getElementById("observacaoManutencao").value;
 
-    if (!codigoLoja) {
+    const motivo = document.getElementById("motivoManutencao").value.trim();
+
+    const observacaoExtra = document
+      .getElementById("observacaoManutencao")
+      .value.trim();
+
+    if (!lojaId) {
       mostrarAlerta("Selecione uma loja.");
       return;
     }
-    if (!tipo) {
+
+    if (!tipoManutencao) {
       mostrarAlerta("Selecione o tipo de manutenção.");
       return;
     }
+
     if (quantidade <= 0) {
       mostrarAlerta("Informe uma quantidade válida.");
       return;
     }
+
     if (!motivo) {
       mostrarAlerta("Informe o motivo da manutenção.");
       return;
     }
 
-    const lojas = buscarTodasLojas();
-    const lojaSelecionada = lojas.find(
-      (loja) => String(loja.codigo) === String(codigoLoja),
-    );
-
-    if (!lojaSelecionada) {
-      mostrarAlerta("Loja não encontrada.");
+    if (tipoManutencao === "CORRECAO") {
+      mostrarAlerta("Correção será implementada em uma próxima etapa.");
       return;
     }
 
-    const estoqueAnterior = obterEstoqueAtualDaLoja(lojaSelecionada);
-    const estoqueAtualizado = calcularNovoEstoque(
-      estoqueAnterior,
-      tipo,
-      quantidade,
+    const estoqueSelecionado = estoquesCarregados.find(
+      (estoque) => Number(estoque.lojaId) === lojaId,
     );
 
-    if (estoqueAtualizado < 0) {
+    if (!estoqueSelecionado) {
+      mostrarAlerta("Estoque da loja não encontrado.");
+      return;
+    }
+
+    if (
+      tipoEhSaida(tipoManutencao) &&
+      quantidade > Number(estoqueSelecionado.estoqueAtual)
+    ) {
       mostrarAlerta("A manutenção deixaria o estoque negativo.");
       return;
     }
 
-    const manutencoes = buscarTodasManutencoes();
+    const observacao = observacaoExtra
+      ? `${motivo} - ${observacaoExtra}`
+      : motivo;
 
     const novaManutencao = {
-      id: Date.now(),
-      dataHora: new Date().toISOString(),
-      codigoLoja: codigoLoja,
-      tipo: tipo,
-      quantidade: quantidade,
-      motivo: motivo,
-      responsavel: responsavel,
-      estoqueAnterior: estoqueAnterior,
-      estoqueAtualizado: estoqueAtualizado,
-      observacao: observacao,
+      lojaId,
+      usuarioId: null,
+      tipoManutencao,
+      quantidade,
+      observacao,
     };
 
-    manutencoes.push(novaManutencao);
+    try {
+      await cadastrarManutencaoApi(novaManutencao);
 
-    const lojasAtualizadas = lojas.map(function (loja) {
-      if (String(loja.codigo) === String(codigoLoja)) {
-        return {
-          ...loja,
-          estoqueAtual: estoqueAtualizado,
-          quantidadeAtual: estoqueAtualizado,
-        };
-      }
-      return loja;
-    });
+      await carregarCardsManutencao();
+      await carregarTabelaManutencoes();
 
-    salvarManutencoes(manutencoes);
-    salvarLojas(lojasAtualizadas);
+      fecharFormularioManutencao();
 
-    carregarCardsManutencao();
-    carregarTabelaManutencoes();
-    fecharFormularioManutencao();
-    mostrarAlerta("Manutenção registrada e estoque atualizado com sucesso.");
+      mostrarAlerta("Manutenção registrada e estoque atualizado com sucesso.");
+    } catch (erro) {
+      console.error("Erro ao cadastrar manutenção:", erro);
+      mostrarAlerta(erro.message);
+    }
   });
 }
 
-carregarUsuarioLogado();
-carregarCardsManutencao();
-carregarTabelaManutencoes();
-aplicarPermissoesMenu();
+async function iniciarPaginaManutencao() {
+  carregarUsuarioLogado();
+
+  await carregarCardsManutencao();
+  await carregarTabelaManutencoes();
+
+  aplicarPermissoesMenu();
+}
+
+iniciarPaginaManutencao();
