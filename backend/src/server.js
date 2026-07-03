@@ -7,6 +7,7 @@ const { tratarRotasEnvios } = require("./routes/envios.routes");
 const { tratarRotasRecebimentos } = require("./routes/recebimentos.routes");
 const { tratarRotasEstoques } = require("./routes/estoques.routes");
 const { tratarRotasManutencoes } = require("./routes/manutencoes.routes");
+const { tratarRotasDashboard } = require("./routes/dashboard.routes");
 
 const PORT = process.env.PORT || 3000;
 
@@ -55,6 +56,12 @@ async function roteador(req, res) {
   const rotaManutencoesAtendida = await tratarRotasManutencoes(req, res, url);
 
   if (rotaManutencoesAtendida) {
+    return;
+  }
+
+  const rotasDashboardAtendida = await tratarRotasDashboard(req, res, url);
+
+  if (rotasDashboardAtendida) {
     return;
   }
 
