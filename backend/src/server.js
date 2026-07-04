@@ -1,88 +1,73 @@
-const http = require("http");
-const { query, pool } = require("./config/database");
+const express = require("express");
+const cors = require("cors");
 
-const { aplicarCors, enviarJson } = require("./utils/http");
-const { tratarRotasLojas } = require("./routes/lojas.routes");
+const { enviarJson } = require("./utils/http");
+
+const lojasRoutes = require("./routes/lojas.routes");
+
 const { tratarRotasEnvios } = require("./routes/envios.routes");
 const { tratarRotasRecebimentos } = require("./routes/recebimentos.routes");
 const { tratarRotasEstoques } = require("./routes/estoques.routes");
 const { tratarRotasManutencoes } = require("./routes/manutencoes.routes");
 const { tratarRotasDashboard } = require("./routes/dashboard.routes");
 
-const PORT = process.env.PORT || 3000;
+const app = express();
+const PORTA = process.env.PORT || 3000;
 
-// essa funcao é o caracao do back end, ela recebe as requisicoes e envia as respostas //
-async function roteador(req, res) {
-  aplicarCors(res);
+app.use(cors());
 
-  if (req.method === "OPTIONS") {
-    res.writeHead(204);
-    return res.end();
-  }
-
-  const url = new URL(req.url, `http://${req.headers.host}`);
-
-  if (req.method === "GET" && url.pathname === "/api/health") {
-    return enviarJson(res, 200, {
-      status: "ok",
-      mensagem: "Backend do Oferte e Ganhe rodando",
-    });
-  }
-
-  const rotaLojasAtendida = await tratarRotasLojas(req, res, url);
-
-  if (rotaLojasAtendida) {
-    return;
-  }
-
-  const rotaEnviosAtendida = await tratarRotasEnvios(req, res, url);
-
-  if (rotaEnviosAtendida) {
-    return;
-  }
-
-  const rotaRecebimentosAtendida = await tratarRotasRecebimentos(req, res, url);
-
-  if (rotaRecebimentosAtendida) {
-    return;
-  }
-
-  const rotaEstoquesAtendida = await tratarRotasEstoques(req, res, url);
-
-  if (rotaEstoquesAtendida) {
-    return;
-  }
-
-  const rotaManutencoesAtendida = await tratarRotasManutencoes(req, res, url);
-
-  if (rotaManutencoesAtendida) {
-    return;
-  }
-
-  const rotasDashboardAtendida = await tratarRotasDashboard(req, res, url);
-
-  if (rotasDashboardAtendida) {
-    return;
-  }
-
-  return enviarJson(res, 404, {
-    erro: "Rota não encontrada",
+app.get("/api/health", function (req, res) {
+  res.status(200).json({
+    status: "ok",
+    mensagem: "Servidor Express funcionando.",
   });
-}
-
-const server = http.createServer(async (req, res) => {
-  try {
-    await roteador(req, res);
-  } catch (erro) {
-    console.error("Erro no servidor:", erro);
-
-    enviarJson(res, 500, {
-      erro: "Erro interno no servidor",
-      detalhe: erro.message,
-    });
-  }
 });
 
-server.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
+app.use("/api/lojas", express.json(), lojasRoutes);
+
+async function rotasLegadas(req, res, next) {
+  try {
+    const url = new URL(req.originalUrl, `http://${req.headers.host}`);
+
+    const rotaEnviosAtendida = await tratarRotasEnvios(req, res, url);
+    if (rotaEnviosAtendida || res.headersSent) return;
+
+    const rotaRecebimentosAtendida = await tratarRotasRecebimentos(
+      req,
+      res,
+      url,
+    );
+    if (rotaRecebimentosAtendida || res.headersSent) return;
+
+    const rotaEstoquesAtendida = await tratarRotasEstoques(req, res, url);
+    if (rotaEstoquesAtendida || res.headersSent) return;
+
+    const rotaManutencoesAtendida = await tratarRotasManutencoes(req, res, url);
+    if (rotaManutencoesAtendida || res.headersSent) return;
+
+    const rotaDashboardAtendida = await tratarRotasDashboard(req, res, url);
+    if (rotaDashboardAtendida || res.headersSent) return;
+
+    next();
+  } catch (erro) {
+    console.error("Erro nas rotas legadas:", erro);
+
+    if (!res.headersSent) {
+      enviarJson(res, 500, {
+        mensagem: "Erro interno no servidor.",
+      });
+    }
+  }
+}
+
+app.use(rotasLegadas);
+
+app.use(function (req, res) {
+  res.status(404).json({
+    mensagem: "Rota não encontrada.",
+  });
+});
+
+app.listen(PORTA, function () {
+  console.log(`Servidor Express rodando em http://localhost:${PORTA}`);
 });
