@@ -4,10 +4,11 @@ const cors = require("cors");
 const { enviarJson } = require("./utils/http");
 
 const lojasRoutes = require("./routes/lojas.routes");
+const estoquesRoutes = require("./routes/estoques.routes");
 
 const { tratarRotasEnvios } = require("./routes/envios.routes");
 const { tratarRotasRecebimentos } = require("./routes/recebimentos.routes");
-const { tratarRotasEstoques } = require("./routes/estoques.routes");
+
 const { tratarRotasManutencoes } = require("./routes/manutencoes.routes");
 const { tratarRotasDashboard } = require("./routes/dashboard.routes");
 
@@ -25,6 +26,8 @@ app.get("/api/health", function (req, res) {
 
 app.use("/api/lojas", express.json(), lojasRoutes);
 
+app.use("/api", estoquesRoutes);
+
 async function rotasLegadas(req, res, next) {
   try {
     const url = new URL(req.originalUrl, `http://${req.headers.host}`);
@@ -38,9 +41,6 @@ async function rotasLegadas(req, res, next) {
       url,
     );
     if (rotaRecebimentosAtendida || res.headersSent) return;
-
-    const rotaEstoquesAtendida = await tratarRotasEstoques(req, res, url);
-    if (rotaEstoquesAtendida || res.headersSent) return;
 
     const rotaManutencoesAtendida = await tratarRotasManutencoes(req, res, url);
     if (rotaManutencoesAtendida || res.headersSent) return;

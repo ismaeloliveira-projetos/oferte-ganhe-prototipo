@@ -1099,7 +1099,7 @@ video {
   max-width: 720px;
   max-height: 85vh;
   overflow-y: auto;
-  overflow: hidden;
+  overflow: auto;
 
   background: #ffffff;
   border-radius: 12px;
