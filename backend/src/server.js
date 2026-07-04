@@ -7,8 +7,8 @@ const lojasRoutes = require("./routes/lojas.routes");
 const estoquesRoutes = require("./routes/estoques.routes");
 const enviosRoutes = require("./routes/envios.routes");
 const recebimentosRoutes = require("./routes/recebimentos.routes");
+const manutencoesRoutes = require("./routes/manutencoes.routes");
 
-const { tratarRotasManutencoes } = require("./routes/manutencoes.routes");
 const { tratarRotasDashboard } = require("./routes/dashboard.routes");
 
 const app = express();
@@ -28,13 +28,11 @@ app.use("/api/lojas", express.json(), lojasRoutes);
 app.use("/api", estoquesRoutes);
 app.use("/api/envios", express.json(), enviosRoutes);
 app.use("/api/recebimentos", express.json(), recebimentosRoutes);
+app.use("/api/manutencoes", express.json(), manutencoesRoutes);
 
 async function rotasLegadas(req, res, next) {
   try {
     const url = new URL(req.originalUrl, `http://${req.headers.host}`);
-
-    const rotaManutencoesAtendida = await tratarRotasManutencoes(req, res, url);
-    if (rotaManutencoesAtendida || res.headersSent) return;
 
     const rotaDashboardAtendida = await tratarRotasDashboard(req, res, url);
     if (rotaDashboardAtendida || res.headersSent) return;
