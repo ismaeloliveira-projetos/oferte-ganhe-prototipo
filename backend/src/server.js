@@ -7,6 +7,7 @@ const enviosRoutes = require("./routes/envios.routes");
 const recebimentosRoutes = require("./routes/recebimentos.routes");
 const manutencoesRoutes = require("./routes/manutencoes.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
+const usuariosRoutes = require("./routes/usuarios.routes");
 
 const app = express();
 const PORTA = process.env.PORT || 3000;
@@ -27,6 +28,7 @@ app.use("/api/envios", enviosRoutes);
 app.use("/api/recebimentos", recebimentosRoutes);
 app.use("/api/manutencoes", manutencoesRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/usuarios", usuariosRoutes);
 
 app.use(function (req, res) {
   res.status(404).json({
