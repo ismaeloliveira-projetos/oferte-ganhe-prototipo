@@ -60,4 +60,27 @@ router.patch("/:id/inativar", async function (req, res) {
   }
 });
 
+router.get("/:id/lojas", async function (req, res) {
+  try {
+    const resultado = await usuariosService.listarLojasUsuario(req.params.id);
+
+    return res.status(200).json(resultado);
+  } catch (erro) {
+    return responderErro(res, erro);
+  }
+});
+
+router.post("/:id/lojas", async function (req, res) {
+  try {
+    const resultado = await usuariosService.vincularLojaUsuario(
+      req.params.id,
+      req.body,
+    );
+
+    return res.status(200).json(resultado);
+  } catch (erro) {
+    return responderErro(res, erro);
+  }
+});
+
 module.exports = router;

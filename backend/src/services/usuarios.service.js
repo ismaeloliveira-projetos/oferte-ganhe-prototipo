@@ -6,6 +6,16 @@ function validarEmail(email) {
   return String(email).includes("@") && String(email).includes(".");
 }
 
+function validarIdNumerico(valor, nomeCampo) {
+  const id = Number(valor);
+
+  if (Number.isNaN(id) || id <= 0) {
+    throw new AppError(`${nomeCampo} deve ser um número válido.`, 400);
+  }
+
+  return id;
+}
+
 function mapearUsuarioResposta(usuario) {
   return {
     id: usuario.id,
@@ -84,7 +94,7 @@ async function cadastrarUsuario(dados) {
 }
 
 async function atualizarUsuario(idParametro, dados) {
-  const id = Number(idParametro);
+  const id = validarIdNumerico(idParametro, "ID do usuário");
 
   if (Number.isNaN(id)) {
     throw new AppError("ID do usuário deve ser um número.", 400);
@@ -142,7 +152,7 @@ async function atualizarUsuario(idParametro, dados) {
 }
 
 async function inativarUsuario(idParametro) {
-  const id = Number(idParametro);
+  const id = validarIdNumerico(idParametro, "ID do usuário");
 
   if (Number.isNaN(id)) {
     throw new AppError("ID do usuário deve ser um número.", 400);
@@ -160,9 +170,83 @@ async function inativarUsuario(idParametro) {
   };
 }
 
+async function vincularLojaUsuario(usuarioIdParametro, dados) {
+  const usuarioId = validarIdNumerico(usuarioIdParametro, "ID do usuário");
+
+  const lojaId = dados.lojaId ? Number(dados.lojaId) : null;
+
+  const usuario = await usuariosRepository.buscarUsuarioPorId(usuarioId);
+
+  if (!usuario || usuario.ativo === false) {
+    throw new AppError("Usuário não encontrado ou inativo.", 404);
+  }
+
+  await usuariosRepository.removerLojasDoUsuario(usuarioId);
+
+  if (!lojaId) {
+    return {
+      usuarioId,
+      lojaId: null,
+      escopo: "TODAS_AS_LOJAS",
+      mensagem: "Usuário configurado com acesso a todas as lojas.",
+    };
+  }
+
+  if (Number.isNaN(lojaId)) {
+    throw new AppError("ID da loja deve ser um número.", 400);
+  }
+
+  const loja = await usuariosRepository.buscarLojaAtivaPorId(lojaId);
+
+  if (!loja) {
+    throw new AppError("Loja não encontrada ou inativa.", 404);
+  }
+
+  const vinculo = await usuariosRepository.vincularLojaAoUsuario(
+    usuarioId,
+    lojaId,
+  );
+
+  return {
+    id: vinculo.id,
+    usuarioId: vinculo.usuario_id,
+    lojaId: vinculo.loja_id,
+    escopo: "LOJA_ESPECIFICA",
+    mensagem: "Loja vinculada ao usuário com sucesso.",
+  };
+}
+
+async function listarLojasUsuario(usuarioIdParametro) {
+  const usuarioId = validarIdNumerico(usuarioIdParametro, "ID do usuário");
+
+  const usuario = await usuariosRepository.buscarUsuarioPorId(usuarioId);
+
+  if (!usuario || usuario.ativo === false) {
+    throw new AppError("Usuário não encontrado ou inativo.", 404);
+  }
+
+  const lojas = await usuariosRepository.listarLojasDoUsuario(usuarioId);
+
+  if (lojas.length === 0) {
+    return {
+      usuarioId,
+      escopo: "TODAS_AS_LOJAS",
+      lojas: [],
+    };
+  }
+
+  return {
+    usuarioId,
+    escopo: "LOJAS_ESPECIFICAS",
+    lojas,
+  };
+}
+
 module.exports = {
   listarUsuarios,
   cadastrarUsuario,
   atualizarUsuario,
   inativarUsuario,
+  vincularLojaUsuario,
+  listarLojasUsuario,
 };

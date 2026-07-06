@@ -1,87 +1,109 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Dashboard | Oferte e Ganhe</title>
+    <title>Dashboard | Oferte e Ganhe</title>
 
-  <link rel="stylesheet" href="../css/style.css" />
-</head>
-<body>
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body>
+    <div class="app-layout">
+      <aside class="sidebar" id="sidebar">
+        <button
+          class="sidebar-close"
+          onclick="fecharMenuMobile()"
+          aria-label="Fechar menu"
+        >
+          X
+        </button>
 
-  <div class="app-layout">
+        <div class="sidebar-brand">
+          <img
+            src="../assets/logo.png"
+            alt="Logo Quero Quero"
+            class="sidebar-logo"
+          />
+          <h2>Oferte e Ganhe</h2>
+          <span>Gestão de Talões</span>
+        </div>
 
-  <aside class="sidebar" id="sidebar">
-  <button class="sidebar-close" onclick="fecharMenuMobile()" aria-label="Fechar menu">
-    X
-  </button>
+        <nav class="sidebar-menu">
+          <span class="sidebar-section-title">VISÃO GERAL</span>
 
-  <div class="sidebar-brand">
-  <img src="../assets/logo.png" alt="Logo Quero Quero" class="sidebar-logo" />
-  <h2>Oferte e Ganhe</h2>
-  <span>Gestão de Talões</span>
-</div>
+          <a
+            href="dashboard.html"
+            class="sidebar-link"
+            data-permissao="dashboard"
+          >
+            <span class="sidebar-icon">▣</span>
+            <span>Dashboard</span>
+          </a>
 
-  <nav class="sidebar-menu">
+          <span class="sidebar-section-title">TALÕES</span>
 
-    <span class="sidebar-section-title">VISÃO GERAL</span>
+          <a href="envios.html" class="sidebar-link" data-permissao="envios">
+            <span class="sidebar-icon">➤</span>
+            <span>Envios</span>
+          </a>
 
-    <a href="dashboard.html" class="sidebar-link" data-permissao="dashboard">
-      <span class="sidebar-icon">▣</span>
-      <span>Dashboard</span>
-    </a>
+          <a href="estoque.html" class="sidebar-link" data-permissao="estoque">
+            <span class="sidebar-icon">▦</span>
+            <span>Estoque</span>
+          </a>
 
-    <span class="sidebar-section-title">TALÕES</span>
+          <a
+            href="recebimentos.html"
+            class="sidebar-link"
+            data-permissao="recebimentos"
+          >
+            <span class="sidebar-icon">⇄</span>
+            <span>Recebimentos</span>
+          </a>
 
-    <a href="envios.html" class="sidebar-link" data-permissao="envios">
-      <span class="sidebar-icon">➤</span>
-      <span>Envios</span>
-    </a>
+          <a
+            href="manutencao.html"
+            class="sidebar-link"
+            data-permissao="manutencao"
+          >
+            <span class="sidebar-icon">✎</span>
+            <span>Manutenção</span>
+          </a>
 
-    <a href="estoque.html" class="sidebar-link" data-permissao="estoque">
-      <span class="sidebar-icon">▦</span>
-      <span>Estoque</span>
-    </a>
+          <span class="sidebar-section-title">CADASTROS</span>
 
-    <a href="recebimentos.html" class="sidebar-link" data-permissao="recebimentos">
-      <span class="sidebar-icon">⇄</span>
-      <span>Recebimentos</span>
-    </a>
+          <a href="lojas.html" class="sidebar-link" data-permissao="lojas">
+            <span class="sidebar-icon">⌂</span>
+            <span>Lojas</span>
+          </a>
 
-    <a href="manutencao.html" class="sidebar-link" data-permissao="manutencao">
-      <span class="sidebar-icon">✎</span>
-      <span>Manutenção</span>
-    </a>
+          <a
+            href="usuarios.html"
+            class="sidebar-link active"
+            data-permissao="usuarios"
+          >
+            <span class="sidebar-icon">☻</span>
+            <span>Usuários</span>
+          </a>
 
-    <span class="sidebar-section-title">CADASTROS</span>
-
-    <a href="lojas.html" class="sidebar-link" data-permissao="lojas">
-      <span class="sidebar-icon">⌂</span>
-      <span>Lojas</span>
-    </a>
-
-    <a href="usuarios.html" class="sidebar-link active" data-permissao="usuarios">
-      <span class="sidebar-icon">☻</span>
-      <span>Usuários</span>
-    </a>
-
-    
           <a href="perfis.html" class="sidebar-link" data-permissao="perfis">
             <span class="sidebar-icon">🔐</span>
             <span>Perfis</span>
           </a>
 
-  
+          <span class="sidebar-section-title">ANÁLISE</span>
 
-    <span class="sidebar-section-title">ANÁLISE</span>
+          <a
+            href="relatorios.html"
+            class="sidebar-link"
+            data-permissao="relatorios"
+          >
+            <span class="sidebar-icon">▤</span>
+            <span>Relatórios</span>
+          </a>
 
-    <a href="relatorios.html" class="sidebar-link" data-permissao="relatorios">
-      <span class="sidebar-icon">▤</span>
-      <span>Relatórios</span>
-    </a>
-
-     <a
+          <a
             href="insights.html"
             class="sidebar-link"
             data-permissao="insights"
@@ -89,219 +111,223 @@
             <span class="sidebar-icon">💡</span>
             <span>Insights</span>
           </a>
+        </nav>
+      </aside>
 
-       
+      <!-- Fundo escuro do menu mobile -->
+      <div
+        id="menuOverlay"
+        class="menu-overlay"
+        onclick="fecharMenuMobile()"
+      ></div>
 
-   
+      <!-- Conteúdo principal -->
+      <main class="main-content">
+        <header class="topbar">
+          <button
+            class="menu-toggle"
+            onclick="abrirMenuMobile()"
+            aria-label="Abrir menu"
+          >
+            ☰
+          </button>
 
-  </nav>
-</aside>
+          <div class="topbar-title">
+            <h1>Gestão de Usuários</h1>
+            <p>Cadastro, edição e controle dos usuários do sistema</p>
+          </div>
 
-    <!-- Fundo escuro do menu mobile -->
-    <div id="menuOverlay" class="menu-overlay" onclick="fecharMenuMobile()"></div>
+          <div class="user-info">
+            <button class="btn-primary" onclick="abrirFormularioUsuario()">
+              + Novo Usuário
+            </button>
 
-    <!-- Conteúdo principal -->
-    <main class="main-content">
+            <span id="nomeUsuario">Administrador</span>
 
-  <header class="topbar">
-    <button class="menu-toggle" onclick="abrirMenuMobile()" aria-label="Abrir menu">
-      ☰
-    </button>
+            <button class="btn-logout" onclick="logout()">Sair</button>
+          </div>
+        </header>
 
-    <div class="topbar-title">
-      <h1>Gestão de Usuários</h1>
-      <p>Cadastro, edição e controle dos usuários do sistema</p>
+        <div id="alertaSistema" class="alert-system hidden"></div>
+
+        <div
+          id="excluirUsuarioOverlay"
+          class="bottom-sheet-overlay hidden"
+          onclick="fecharConfirmacaoExclusaoUsuario()"
+        ></div>
+
+        <section
+          id="excluirUsuarioContainer"
+          class="bottom-sheet form-bottom-sheet confirm-delete-sheet hidden"
+        >
+          <div class="content-card-header">
+            <h2>Excluir Usuário</h2>
+            <span>Confirme antes de remover este usuário do sistema</span>
+          </div>
+
+          <div class="delete-warning">
+            <strong>Atenção</strong>
+
+            <p>Você está prestes a excluir o usuário:</p>
+
+            <div class="delete-target">
+              <strong id="nomeUsuarioExclusao">Usuário</strong>
+              <span id="emailUsuarioExclusao">email@exemplo.com</span>
+            </div>
+
+            <p>Essa ação removerá o usuário da lista do protótipo.</p>
+          </div>
+
+          <div class="form-actions">
+            <button
+              type="button"
+              class="btn-danger"
+              onclick="confirmarExclusaoUsuario()"
+            >
+              Sim, excluir
+            </button>
+
+            <button
+              type="button"
+              class="btn-secondary"
+              onclick="fecharConfirmacaoExclusaoUsuario()"
+            >
+              Cancelar
+            </button>
+          </div>
+        </section>
+
+        <div
+          id="formUsuarioOverlay"
+          class="bottom-sheet-overlay hidden"
+          onclick="fecharFormularioUsuario()"
+        ></div>
+
+        <section
+          id="formUsuarioContainer"
+          class="bottom-sheet form-bottom-sheet hidden"
+        >
+          <div class="content-card-header">
+            <h2>Novo Usuário</h2>
+            <span>Preencha os dados para cadastrar um novo usuário</span>
+          </div>
+
+          <form id="formUsuario">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="nomeUsuarioInput">Nome</label>
+                <input
+                  type="text"
+                  id="nomeUsuarioInput"
+                  class="form-input"
+                  placeholder="Digite o nome do usuário"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="matriculaUsuario">Matrícula</label>
+                <input
+                  type="text"
+                  id="matriculaUsuario"
+                  class="form-input"
+                  placeholder="Digite a matrícula"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="emailUsuario">E-mail</label>
+                <input
+                  type="email"
+                  id="emailUsuario"
+                  class="form-input"
+                  placeholder="Digite o e-mail"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="senhaUsuario">Senha</label>
+                <input
+                  type="password"
+                  id="senhaUsuario"
+                  class="form-input"
+                  placeholder="Digite a senha"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="perfilUsuario">Perfil de Acesso</label>
+
+                <select id="perfilUsuario" class="form-input" required>
+                  <option value="">Selecione um perfil</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="lojaUsuario">Loja Vinculada</label>
+
+                <select id="lojaUsuario" class="form-input">
+                  <option value="">Administrador Geral (Todas as lojas)</option>
+                </select>
+              </div>
+
+              <button type="submit" id="btnSalvarUsuario" class="btn-primary">
+                Salvar Usuário
+              </button>
+
+              <button
+                type="button"
+                class="btn-secondary"
+                onclick="fecharFormularioUsuario()"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section class="content-grid single-column">
+          <div class="content-card table-card">
+            <div class="content-card-header">
+              <h2>Usuários cadastrados</h2>
+              <span>Gerenciamento de acesso ao sistema</span>
+            </div>
+
+            <div class="toolbar">
+              <input
+                type="text"
+                id="buscaUsuario"
+                class="form-input"
+                placeholder="Buscar por nome, matrícula ou e-mail"
+                oninput="filtrarUsuarios()"
+              />
+            </div>
+
+            <div class="table-wrapper">
+              <table class="data-table responsive-table">
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Matrícula</th>
+                    <th>E-mail</th>
+                    <th>Perfil</th>
+                    <th>Loja</th>
+                    <th>Ação</th>
+                  </tr>
+                </thead>
+
+                <tbody id="tabelaUsuarios"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
 
-    <div class="user-info">
-      <button class="btn-primary" onclick="abrirFormularioUsuario()">
-        + Novo Usuário
-      </button>
-
-      <span id="nomeUsuario">Administrador</span>
-
-      <button class="btn-logout" onclick="logout()">
-        Sair
-      </button>
-    </div>
-  </header>
-
-  <div id="alertaSistema" class="alert-system hidden"></div>
-  
-  <div
-  id="excluirUsuarioOverlay"
-  class="bottom-sheet-overlay hidden"
-  onclick="fecharConfirmacaoExclusaoUsuario()">
-</div>
-
-<section id="excluirUsuarioContainer" class="bottom-sheet form-bottom-sheet confirm-delete-sheet hidden">
-  <div class="content-card-header">
-    <h2>Excluir Usuário</h2>
-    <span>Confirme antes de remover este usuário do sistema</span>
-  </div>
-
-  <div class="delete-warning">
-    <strong>Atenção</strong>
-
-    <p>Você está prestes a excluir o usuário:</p>
-
-    <div class="delete-target">
-      <strong id="nomeUsuarioExclusao">Usuário</strong>
-      <span id="emailUsuarioExclusao">email@exemplo.com</span>
-    </div>
-
-    <p>Essa ação removerá o usuário da lista do protótipo.</p>
-  </div>
-
-  <div class="form-actions">
-    <button type="button" class="btn-danger" onclick="confirmarExclusaoUsuario()">
-      Sim, excluir
-    </button>
-
-    <button type="button" class="btn-secondary" onclick="fecharConfirmacaoExclusaoUsuario()">
-      Cancelar
-    </button>
-  </div>
-</section>
-
-  <div
-  id="formUsuarioOverlay"
-  class="bottom-sheet-overlay hidden"
-  onclick="fecharFormularioUsuario()">
-</div>
-
-<section id="formUsuarioContainer" class="bottom-sheet form-bottom-sheet hidden">
-  <div class="content-card-header">
-    <h2>Novo Usuário</h2>
-    <span>Preencha os dados para cadastrar um novo usuário</span>
-  </div>
-
-  <form id="formUsuario">
-    <div class="form-grid">
-      <div class="form-group">
-        <label for="nomeUsuarioInput">Nome</label>
-        <input
-          type="text"
-          id="nomeUsuarioInput"
-          class="form-input"
-          placeholder="Digite o nome do usuário"
-          required
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="matriculaUsuario">Matrícula</label>
-        <input
-          type="text"
-          id="matriculaUsuario"
-          class="form-input"
-          placeholder="Digite a matrícula"
-          required
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="emailUsuario">E-mail</label>
-        <input
-          type="email"
-          id="emailUsuario"
-          class="form-input"
-          placeholder="Digite o e-mail"
-          required
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="senhaUsuario">Senha</label>
-        <input
-          type="password"
-          id="senhaUsuario"
-          class="form-input"
-          placeholder="Digite a senha"
-          required
-        />
-      </div>
-
-     <div class="form-group">
-  <label for="perfilUsuario">Perfil de Acesso</label>
-
-  <select id="perfilUsuario" class="form-input" required>
-  </select>
-</div>
-
-<div class="form-group">
-  <label for="lojaUsuario">Loja Vinculada</label>
-
-  <select id="lojaUsuario" class="form-input">
-    <option value="">
-      Administrador Geral (Todas as lojas)
-    </option>
-  </select>
-</div>
-
-  <div class="form-actions">
-  <button type="submit" class="btn-primary">
-    Salvar Usuário
-  </button>
-
-  <button
-    type="button"
-    class="btn-secondary"
-    onclick="fecharFormularioUsuario()"
-  >
-    Cancelar
-  </button>
-</div>
-    </div>
-  </form>
-</section>
-
-  <section class="content-grid single-column">
-    <div class="content-card table-card">
-      <div class="content-card-header">
-        <h2>Usuários cadastrados</h2>
-        <span>Gerenciamento de acesso ao sistema</span>
-      </div>
-
-      <div class="toolbar">
-        <input
-          type="text"
-          id="buscaUsuario"
-          class="form-input"
-          placeholder="Buscar por nome, matrícula ou e-mail"
-          oninput="filtrarUsuarios()"
-        />
-      </div>
-
-      <div class="table-wrapper">
-        <table class="data-table responsive-table">
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>Matrícula</th>
-              <th>E-mail</th>
-              <th>Perfil</th>
-              <th>Ação</th>
-            </tr>
-          </thead>
-
-          <tbody id="tabelaUsuarios">
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-</main>
-  </div>
-
-  
-
-    
-  </aside>
-
-   <script src="../js/mock-data.js"></script>
-   <script src="../js/ui.js"></script>
-  <script src="../js/usuarios.js"></script>
-</body>
+    <script src="../js/ui.js"></script>
+    <script src="../js/usuarios.js"></script>
+  </body>
 </html>

@@ -168,6 +168,78 @@ async function inativarUsuarioPorId(id) {
   return resultado.rows[0] || null;
 }
 
+async function removerLojasDoUsuario(usuarioId) {
+  await query(
+    `
+      DELETE FROM usuarios_lojas
+      WHERE usuario_id = $1
+    `,
+    [usuarioId],
+  );
+}
+
+async function vincularLojaAoUsuario(usuarioId, lojaId) {
+  const resultado = await query(
+    `
+      INSERT INTO usuarios_lojas (
+        id,
+        usuario_id,
+        loja_id,
+        criado_em
+      )
+      VALUES (
+        (SELECT COALESCE(MAX(id), 0) + 1 FROM usuarios_lojas),
+        $1,
+        $2,
+        NOW()
+      )
+      RETURNING
+        id,
+        usuario_id,
+        loja_id,
+        criado_em
+    `,
+    [usuarioId, lojaId],
+  );
+
+  return resultado.rows[0];
+}
+
+async function listarLojasDoUsuario(usuarioId) {
+  const resultado = await query(
+    `
+      SELECT
+        l.id,
+        l.codigo_loja AS "codigoLoja",
+        l.nome_loja AS "nomeLoja",
+        ul.criado_em AS "criadoEm"
+      FROM usuarios_lojas ul
+      JOIN lojas l
+        ON l.id = ul.loja_id
+      WHERE ul.usuario_id = $1
+        AND l.ativo = true
+      ORDER BY l.codigo_loja ASC
+    `,
+    [usuarioId],
+  );
+
+  return resultado.rows;
+}
+
+async function buscarLojaAtivaPorId(lojaId) {
+  const resultado = await query(
+    `
+      SELECT id
+      FROM lojas
+      WHERE id = $1
+        AND ativo = true
+    `,
+    [lojaId],
+  );
+
+  return resultado.rows[0] || null;
+}
+
 module.exports = {
   listarUsuariosAtivos,
   buscarUsuarioPorId,
@@ -178,4 +250,8 @@ module.exports = {
   criarUsuario,
   atualizarUsuarioPorId,
   inativarUsuarioPorId,
+  removerLojasDoUsuario,
+  vincularLojaAoUsuario,
+  listarLojasDoUsuario,
+  buscarLojaAtivaPorId,
 };
