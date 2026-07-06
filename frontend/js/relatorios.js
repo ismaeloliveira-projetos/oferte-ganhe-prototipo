@@ -1,70 +1,43 @@
-function buscarLojasSalvas() {
-  const banco = carregarBanco();
-  if (!banco.lojas) {
-    banco.lojas = [];
-    salvarBanco(banco);
-  }
-  return filtrarPorLoja(banco.lojas, buscarUsuarioLogado(), "codigo");
-}
+const API_BASE_URL = "http://localhost:3000/api";
 
-function buscarEnviosSalvos() {
-  const banco = carregarBanco();
-  if (!banco.envios) {
-    banco.envios = [];
-    salvarBanco(banco);
-  }
-  return filtrarPorLoja(banco.envios, buscarUsuarioLogado(), "codigoLoja");
-}
+let dadosRelatorios = {
+  estoques: [],
+  envios: [],
+  recebimentos: [],
+  manutencoes: [],
+  usuarios: [],
+  perfis: [],
+};
 
-function buscarRecebimentosSalvos() {
-  const banco = carregarBanco();
-  if (!banco.recebimentos) {
-    banco.recebimentos = [];
-    salvarBanco(banco);
-  }
-  return filtrarPorLoja(
-    banco.recebimentos,
-    buscarUsuarioLogado(),
-    "codigoLoja",
-  );
-}
-
-function buscarManutencoesSalvas() {
-  const banco = carregarBanco();
-  if (!banco.manutencoes) {
-    banco.manutencoes = [];
-    salvarBanco(banco);
-  }
-  return filtrarPorLoja(banco.manutencoes, buscarUsuarioLogado(), "codigoLoja");
-}
-
-function buscarRelatoriosExportados() {
-  const banco = carregarBanco();
-  if (!banco.relatoriosExportados) {
-    banco.relatoriosExportados = [];
-    salvarBanco(banco);
-  }
-  return banco.relatoriosExportados;
-}
-
-function salvarRelatoriosExportados(relatorios) {
-  const banco = carregarBanco();
-  banco.relatoriosExportados = relatorios;
-  salvarBanco(banco);
-}
+let historicoRelatorios = [];
 
 function mostrarAlerta(mensagem) {
   const alerta = document.getElementById("alertaSistema");
-  if (!alerta) return;
+
+  if (!alerta) {
+    alert(mensagem);
+    return;
+  }
+
   alerta.textContent = mensagem;
   alerta.classList.remove("hidden");
-  setTimeout(() => alerta.classList.add("hidden"), 3000);
+
+  setTimeout(function () {
+    alerta.classList.add("hidden");
+  }, 3000);
 }
 
 function obterUsuarioLogado() {
   const usuarioSalvo = localStorage.getItem("usuarioLogado");
-  if (!usuarioSalvo) return { nome: "Administrador" };
+
+  if (!usuarioSalvo) {
+    return {
+      nome: "Administrador",
+    };
+  }
+
   const usuario = JSON.parse(usuarioSalvo);
+
   return {
     nome:
       usuario.nome || usuario.nomeCompleto || usuario.email || "Administrador",
@@ -72,42 +45,17 @@ function obterUsuarioLogado() {
 }
 
 function formatarDataHora(dataHora) {
-  if (!dataHora) return "-";
+  if (!dataHora) {
+    return "-";
+  }
+
   const data = new Date(dataHora);
-  if (isNaN(data.getTime())) return dataHora;
+
+  if (isNaN(data.getTime())) {
+    return dataHora;
+  }
+
   return data.toLocaleString("pt-BR");
-}
-
-function buscarLojaPorCodigo(codigoLoja) {
-  const lojas = buscarLojasSalvas();
-  return lojas.find((loja) => String(loja.codigo) === String(codigoLoja));
-}
-
-function obterEstoqueAtual(loja) {
-  return Number(
-    loja.estoqueAtual ??
-      loja.quantidadeAtual ??
-      loja.recomendado ??
-      loja.estoqueRecomendado ??
-      0,
-  );
-}
-
-function obterEstoqueMinimo(loja) {
-  return Number(loja.estoqueMinimo ?? loja.minimo ?? 0);
-}
-
-function obterEstoqueRecomendado(loja) {
-  return Number(loja.estoqueRecomendado ?? loja.recomendado ?? 0);
-}
-
-function obterStatusEstoque(loja) {
-  const estoqueAtual = obterEstoqueAtual(loja);
-  const estoqueMinimo = obterEstoqueMinimo(loja);
-  const estoqueRecomendado = obterEstoqueRecomendado(loja);
-  if (estoqueAtual <= estoqueMinimo) return "Crítico";
-  if (estoqueAtual < estoqueRecomendado) return "Atenção";
-  return "Normal";
 }
 
 function limparValorCsv(valor) {
@@ -117,153 +65,278 @@ function limparValorCsv(valor) {
 }
 
 function montarLinhaCsv(valores) {
-  return valores.map((valor) => limparValorCsv(valor)).join(";");
+  return valores
+    .map(function (valor) {
+      return limparValorCsv(valor);
+    })
+    .join(";");
 }
 
 function baixarCsv(nomeArquivo, linhas) {
   const conteudo = "\uFEFF" + linhas.join("\n");
-  const blob = new Blob([conteudo], { type: "text/csv;charset=utf-8;" });
+
+  const blob = new Blob([conteudo], {
+    type: "text/csv;charset=utf-8;",
+  });
+
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
+
   link.href = url;
   link.download = nomeArquivo;
+
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+
   URL.revokeObjectURL(url);
 }
 
+async function buscarApi(caminho) {
+  const resposta = await fetch(`${API_BASE_URL}${caminho}`);
+
+  const corpo = await resposta.json();
+
+  if (!resposta.ok) {
+    throw new Error(corpo.erro || "Erro ao buscar dados da API.");
+  }
+
+  return corpo;
+}
+
+function obterStatusEstoque(item) {
+  if (item.status) {
+    return item.status;
+  }
+
+  const estoqueAtual = Number(item.estoqueAtual || item.quantidadeAtual || 0);
+  const estoqueMinimo = Number(
+    item.estoqueMinimo || item.quantidadeMinima || 0,
+  );
+  const estoqueRecomendado = Number(
+    item.estoqueRecomendado || item.quantidadeRecomendada || 0,
+  );
+
+  if (estoqueAtual <= estoqueMinimo) {
+    return "Crítico";
+  }
+
+  if (estoqueAtual < estoqueRecomendado) {
+    return "Atenção";
+  }
+
+  return "Normal";
+}
+
+function obterNomeLoja(item) {
+  return item.nomeLoja || item.lojaNome || item.nome || item.loja || "-";
+}
+
+function obterCodigoLoja(item) {
+  return item.codigoLoja || item.lojaCodigo || item.codigo || "-";
+}
+
+function obterEstoqueAtual(item) {
+  return Number(
+    item.estoqueAtual || item.quantidadeAtual || item.saldoAtual || 0,
+  );
+}
+
+function obterEstoqueMinimo(item) {
+  return Number(
+    item.estoqueMinimo || item.quantidadeMinima || item.minimo || 0,
+  );
+}
+
+function obterEstoqueRecomendado(item) {
+  return Number(
+    item.estoqueRecomendado ||
+      item.quantidadeRecomendada ||
+      item.recomendado ||
+      0,
+  );
+}
+
 function registrarHistoricoRelatorio(tipo, formato, filtros) {
-  const relatorios = buscarRelatoriosExportados();
   const usuario = obterUsuarioLogado();
 
-  relatorios.push({
+  historicoRelatorios.push({
     id: Date.now(),
     dataHora: new Date().toISOString(),
-    tipo: tipo,
-    formato: formato,
+    tipo,
+    formato,
     usuario: usuario.nome,
-    filtros: filtros,
+    filtros,
   });
-
-  salvarRelatoriosExportados(relatorios);
 }
 
 function carregarCardsRelatorios() {
-  const lojas = buscarLojasSalvas();
-  const envios = buscarEnviosSalvos();
-  const recebimentos = buscarRecebimentosSalvos();
-  const relatorios = buscarRelatoriosExportados();
-
-  const lojasCriticas = lojas.filter(
-    (loja) => obterStatusEstoque(loja) === "Crítico",
-  );
+  const lojasCriticas = dadosRelatorios.estoques.filter(function (estoque) {
+    return obterStatusEstoque(estoque) === "Crítico";
+  });
 
   document.getElementById("totalRelatoriosExportados").textContent =
-    relatorios.length;
+    historicoRelatorios.length;
+
   document.getElementById("lojasCriticasRelatorio").textContent =
     lojasCriticas.length;
-  document.getElementById("totalEnviosRelatorio").textContent = envios.length;
+
+  document.getElementById("totalEnviosRelatorio").textContent =
+    dadosRelatorios.envios.length;
+
   document.getElementById("totalRecebimentosRelatorio").textContent =
-    recebimentos.length;
+    dadosRelatorios.recebimentos.length;
 }
 
 function carregarTabelaHistoricoRelatorios() {
   const tabela = document.getElementById("tabelaRelatoriosExportados");
-  if (!tabela) return;
+
+  if (!tabela) {
+    return;
+  }
+
   tabela.innerHTML = "";
 
-  const relatorios = buscarRelatoriosExportados();
+  if (historicoRelatorios.length === 0) {
+    tabela.innerHTML = `
+      <tr>
+        <td colspan="5">Nenhum relatório exportado nesta sessão.</td>
+      </tr>
+    `;
+    return;
+  }
 
-  relatorios.forEach((relatorio) => {
-    tabela.innerHTML += `
-            <tr>
-                <td>${formatarDataHora(relatorio.dataHora)}</td>
-                <td>${relatorio.tipo}</td>
-                <td>${relatorio.formato}</td>
-                <td>${relatorio.usuario}</td>
-                <td>${relatorio.filtros}</td>
-            </tr>
-        `;
-  });
+  historicoRelatorios
+    .slice()
+    .reverse()
+    .forEach(function (relatorio) {
+      tabela.innerHTML += `
+        <tr>
+          <td>${formatarDataHora(relatorio.dataHora)}</td>
+          <td>${relatorio.tipo}</td>
+          <td>${relatorio.formato}</td>
+          <td>${relatorio.usuario}</td>
+          <td>${relatorio.filtros}</td>
+        </tr>
+      `;
+    });
 
-  aplicarResponsividadeTabelas();
+  if (typeof aplicarResponsividadeTabelas === "function") {
+    aplicarResponsividadeTabelas();
+  }
+}
+
+async function carregarDadosRelatorios() {
+  try {
+    const [estoques, envios, recebimentos, manutencoes, usuarios, perfis] =
+      await Promise.all([
+        buscarApi("/estoques"),
+        buscarApi("/envios"),
+        buscarApi("/recebimentos"),
+        buscarApi("/manutencoes"),
+        buscarApi("/usuarios"),
+        buscarApi("/perfis"),
+      ]);
+
+    dadosRelatorios = {
+      estoques,
+      envios,
+      recebimentos,
+      manutencoes,
+      usuarios,
+      perfis,
+    };
+
+    carregarCardsRelatorios();
+    carregarTabelaHistoricoRelatorios();
+  } catch (erro) {
+    console.error(erro);
+    mostrarAlerta("Erro ao carregar dados dos relatórios.");
+  }
 }
 
 function exportarRelatorioEstoqueGeral() {
-  const lojas = buscarLojasSalvas();
-  if (lojas.length === 0) {
-    mostrarAlerta("Nenhuma loja cadastrada para exportar.");
+  const estoques = dadosRelatorios.estoques;
+
+  if (estoques.length === 0) {
+    mostrarAlerta("Nenhum estoque encontrado para exportar.");
     return;
   }
 
   const cabecalho = montarLinhaCsv([
     "Código",
-    "Nome",
+    "Loja",
     "Estoque Atual",
     "Estoque Mínimo",
     "Estoque Recomendado",
     "Status",
   ]);
-  const linhas = lojas.map((loja) =>
-    montarLinhaCsv([
-      loja.codigo,
-      loja.nome,
-      obterEstoqueAtual(loja),
-      obterEstoqueMinimo(loja),
-      obterEstoqueRecomendado(loja),
-      obterStatusEstoque(loja),
-    ]),
-  );
+
+  const linhas = estoques.map(function (estoque) {
+    return montarLinhaCsv([
+      obterCodigoLoja(estoque),
+      obterNomeLoja(estoque),
+      obterEstoqueAtual(estoque),
+      obterEstoqueMinimo(estoque),
+      obterEstoqueRecomendado(estoque),
+      obterStatusEstoque(estoque),
+    ]);
+  });
 
   baixarCsv("relatorio-estoque-geral.csv", [cabecalho, ...linhas]);
+
   registrarHistoricoRelatorio("Estoque Geral", "CSV", "Todas as lojas");
   carregarCardsRelatorios();
   carregarTabelaHistoricoRelatorios();
+
   mostrarAlerta("Relatório de estoque geral exportado com sucesso.");
 }
 
 function exportarRelatorioEstoqueCritico() {
-  const lojas = buscarLojasSalvas();
-  const lojasCriticas = lojas.filter(
-    (loja) => obterStatusEstoque(loja) === "Crítico",
-  );
+  const estoquesCriticos = dadosRelatorios.estoques.filter(function (estoque) {
+    return obterStatusEstoque(estoque) === "Crítico";
+  });
 
-  if (lojasCriticas.length === 0) {
+  if (estoquesCriticos.length === 0) {
     mostrarAlerta("Nenhuma loja crítica encontrada.");
     return;
   }
 
   const cabecalho = montarLinhaCsv([
     "Código",
-    "Nome",
+    "Loja",
     "Estoque Atual",
     "Estoque Mínimo",
     "Status",
   ]);
-  const linhas = lojasCriticas.map((loja) =>
-    montarLinhaCsv([
-      loja.codigo,
-      loja.nome,
-      obterEstoqueAtual(loja),
-      obterEstoqueMinimo(loja),
-      obterStatusEstoque(loja),
-    ]),
-  );
+
+  const linhas = estoquesCriticos.map(function (estoque) {
+    return montarLinhaCsv([
+      obterCodigoLoja(estoque),
+      obterNomeLoja(estoque),
+      obterEstoqueAtual(estoque),
+      obterEstoqueMinimo(estoque),
+      obterStatusEstoque(estoque),
+    ]);
+  });
 
   baixarCsv("relatorio-estoque-critico.csv", [cabecalho, ...linhas]);
+
   registrarHistoricoRelatorio(
     "Estoque Crítico",
     "CSV",
     "Lojas com estoque atual menor ou igual ao mínimo",
   );
+
   carregarCardsRelatorios();
   carregarTabelaHistoricoRelatorios();
+
   mostrarAlerta("Relatório de estoque crítico exportado com sucesso.");
 }
 
 function exportarRelatorioEnvios() {
-  const envios = buscarEnviosSalvos();
+  const envios = dadosRelatorios.envios;
+
   if (envios.length === 0) {
     mostrarAlerta("Nenhum envio registrado para exportar.");
     return;
@@ -277,28 +350,30 @@ function exportarRelatorioEnvios() {
     "Responsável",
     "Status",
   ]);
-  const linhas = envios.map((envio) => {
-    const codigoLoja = envio.codigoLoja || envio.lojaCodigo || "";
-    const loja = buscarLojaPorCodigo(codigoLoja);
+
+  const linhas = envios.map(function (envio) {
     return montarLinhaCsv([
-      formatarDataHora(envio.dataHora),
-      loja ? loja.nome : "Loja desconhecida",
+      formatarDataHora(envio.dataHora || envio.criadoEm || envio.dataEnvio),
+      obterNomeLoja(envio),
       envio.quantidade || envio.quantidadeEnviada || 0,
       envio.remessa || envio.codigoRemessa || "-",
-      envio.responsavel || "-",
+      envio.responsavel || envio.usuarioResponsavel || "-",
       envio.status || "-",
     ]);
   });
 
   baixarCsv("relatorio-envios.csv", [cabecalho, ...linhas]);
+
   registrarHistoricoRelatorio("Envios", "CSV", "Todos os envios registrados");
   carregarCardsRelatorios();
   carregarTabelaHistoricoRelatorios();
+
   mostrarAlerta("Relatório de envios exportado com sucesso.");
 }
 
 function exportarRelatorioRecebimentos() {
-  const recebimentos = buscarRecebimentosSalvos();
+  const recebimentos = dadosRelatorios.recebimentos;
+
   if (recebimentos.length === 0) {
     mostrarAlerta("Nenhum recebimento registrado para exportar.");
     return;
@@ -312,32 +387,39 @@ function exportarRelatorioRecebimentos() {
     "Status",
     "Observação",
   ]);
-  const linhas = recebimentos.map((recebimento) => {
-    const codigoLoja = recebimento.codigoLoja || recebimento.lojaCodigo || "";
-    const loja = buscarLojaPorCodigo(codigoLoja);
+
+  const linhas = recebimentos.map(function (recebimento) {
     return montarLinhaCsv([
-      formatarDataHora(recebimento.dataHora),
-      loja ? loja.nome : "Loja desconhecida",
+      formatarDataHora(
+        recebimento.dataHora ||
+          recebimento.criadoEm ||
+          recebimento.dataRecebimento,
+      ),
+      obterNomeLoja(recebimento),
       recebimento.quantidadeRecebida || recebimento.quantidade || 0,
-      recebimento.responsavel || "-",
+      recebimento.responsavel || recebimento.usuarioResponsavel || "-",
       recebimento.status || "Recebido",
       recebimento.observacao || "-",
     ]);
   });
 
   baixarCsv("relatorio-recebimentos.csv", [cabecalho, ...linhas]);
+
   registrarHistoricoRelatorio(
     "Recebimentos",
     "CSV",
     "Todos os recebimentos confirmados",
   );
+
   carregarCardsRelatorios();
   carregarTabelaHistoricoRelatorios();
+
   mostrarAlerta("Relatório de recebimentos exportado com sucesso.");
 }
 
 function exportarRelatorioManutencoes() {
-  const manutencoes = buscarManutencoesSalvas();
+  const manutencoes = dadosRelatorios.manutencoes;
+
   if (manutencoes.length === 0) {
     mostrarAlerta("Nenhuma manutenção registrada para exportar.");
     return;
@@ -354,65 +436,79 @@ function exportarRelatorioManutencoes() {
     "Motivo",
     "Observação",
   ]);
-  const linhas = manutencoes.map((manutencao) => {
-    const loja = buscarLojaPorCodigo(manutencao.codigoLoja);
+
+  const linhas = manutencoes.map(function (manutencao) {
     return montarLinhaCsv([
-      formatarDataHora(manutencao.dataHora),
-      loja ? loja.nome : "Loja desconhecida",
-      manutencao.tipo,
-      manutencao.quantidade,
-      manutencao.estoqueAnterior,
-      manutencao.estoqueAtualizado,
-      manutencao.responsavel,
-      manutencao.motivo,
+      formatarDataHora(
+        manutencao.dataHora || manutencao.criadoEm || manutencao.dataManutencao,
+      ),
+      obterNomeLoja(manutencao),
+      manutencao.tipo || manutencao.tipoManutencao || "-",
+      manutencao.quantidade || 0,
+      manutencao.estoqueAnterior || manutencao.saldoAnterior || "-",
+      manutencao.estoqueAtualizado || manutencao.saldoPosterior || "-",
+      manutencao.responsavel || manutencao.usuarioResponsavel || "-",
+      manutencao.motivo || "-",
       manutencao.observacao || "-",
     ]);
   });
 
   baixarCsv("relatorio-manutencoes.csv", [cabecalho, ...linhas]);
+
   registrarHistoricoRelatorio(
     "Manutenções",
     "CSV",
     "Todas as manutenções de estoque",
   );
+
   carregarCardsRelatorios();
   carregarTabelaHistoricoRelatorios();
+
   mostrarAlerta("Relatório de manutenções exportado com sucesso.");
 }
 
 function exportarRelatorioUsuarios() {
-  const banco = carregarBanco();
-  const usuarios = banco.usuarios || [];
+  const usuarios = dadosRelatorios.usuarios;
 
   if (usuarios.length === 0) {
     mostrarAlerta("Nenhum usuário cadastrado para exportar.");
     return;
   }
 
-  const cabecalho = montarLinhaCsv(["Nome", "Matrícula", "E-mail", "Perfil"]);
-  const linhas = usuarios.map((usuario) =>
-    montarLinhaCsv([
+  const cabecalho = montarLinhaCsv([
+    "Nome",
+    "Matrícula",
+    "E-mail",
+    "Ativo",
+    "Criado em",
+  ]);
+
+  const linhas = usuarios.map(function (usuario) {
+    return montarLinhaCsv([
       usuario.nome || "-",
       usuario.matricula || "-",
       usuario.email || "-",
-      usuario.perfilId || "-",
-    ]),
-  );
+      usuario.ativo === false ? "Não" : "Sim",
+      formatarDataHora(usuario.criadoEm || usuario.criado_em),
+    ]);
+  });
 
   baixarCsv("relatorio-usuarios.csv", [cabecalho, ...linhas]);
+
   registrarHistoricoRelatorio(
     "Usuários",
     "CSV",
     "Todos os usuários cadastrados",
   );
+
   carregarCardsRelatorios();
   carregarTabelaHistoricoRelatorios();
+
   mostrarAlerta("Relatório de usuários exportado com sucesso.");
 }
 
 function exportarRelatorioPerfis() {
-  const banco = carregarBanco();
-  const perfis = banco.perfis || [];
+  const perfis = dadosRelatorios.perfis;
 
   if (perfis.length === 0) {
     mostrarAlerta("Nenhum perfil cadastrado para exportar.");
@@ -425,24 +521,29 @@ function exportarRelatorioPerfis() {
     "Permissões",
     "Total de Permissões",
   ]);
-  const linhas = perfis.map((perfil) =>
-    montarLinhaCsv([
-      perfil.nome || "-",
+
+  const linhas = perfis.map(function (perfil) {
+    const permissoes = perfil.permissoes || [];
+
+    return montarLinhaCsv([
+      perfil.nomePerfil || "-",
       perfil.nivel || "-",
-      (perfil.permissoes || []).join(", "),
-      (perfil.permissoes || []).length,
-    ]),
-  );
+      permissoes.join(", "),
+      permissoes.length,
+    ]);
+  });
 
   baixarCsv("relatorio-perfis.csv", [cabecalho, ...linhas]);
+
   registrarHistoricoRelatorio("Perfis", "CSV", "Todos os perfis de acesso");
+
   carregarCardsRelatorios();
   carregarTabelaHistoricoRelatorios();
+
   mostrarAlerta("Relatório de perfis exportado com sucesso.");
 }
 
 document.addEventListener("DOMContentLoaded", function () {
   carregarUsuarioLogado();
-  carregarCardsRelatorios();
-  carregarTabelaHistoricoRelatorios();
+  carregarDadosRelatorios();
 });
