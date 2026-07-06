@@ -166,7 +166,7 @@ async function carregarTabelaLojas() {
                 Editar
               </button>
 
-              <button class="btn-table-action btn-sm" onclick="window.excluirLoja('${loja.codigo}')">
+              <button class="btntable-action btn-sm" onclick="window.excluirLoja('${loja.codigo}')">
                 Excluir
               </button>
 

@@ -150,7 +150,7 @@ async function carregarTabelaPerfis() {
               Editar
             </button>
 
-            <button class="btn-table-action btn-sm" onclick="excluirPerfil(${perfil.id})">
+            <button class="btn-tableaction btn-sm" onclick="excluirPerfil(${perfil.id})">
               Inativar
             </button>
           </td>

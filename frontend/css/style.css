@@ -532,6 +532,35 @@ video {
   background-color: var(--qq-green-dark);
 }
 
+.btn-tableaction {
+  background-color: red;
+  color: var(--qq-white);
+  border: none;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-tableaction:hover {
+  background-color: darkred;
+}
+
+.btntable-action {
+  background-color: red;
+  color: var(--qq-white);
+  border: none;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btntable-action:hover {
+  background-color: darkred;
+}
+
 .table-actions {
   display: flex;
   gap: 8px;
