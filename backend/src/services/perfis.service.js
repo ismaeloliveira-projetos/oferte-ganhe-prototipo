@@ -1,3 +1,4 @@
+const { pool } = require("../database/conexao");
 const perfisRepository = require("../repositories/perfis.repository");
 const AppError = require("../utils/AppError");
 
@@ -6,8 +7,10 @@ function mapearPerfilResposta(perfil) {
     id: perfil.id,
     nomePerfil: perfil.nome_perfil || perfil.nomePerfil,
     descricao: perfil.descricao,
+    nivel: Number(perfil.nivel),
     ativo: perfil.ativo,
     criadoEm: perfil.criado_em || perfil.criadoEm,
+    permissoes: perfil.permissoes || [],
   };
 }
 
@@ -21,6 +24,50 @@ function validarIdNumerico(valor, nomeCampo) {
   return id;
 }
 
+function validarDadosPerfil(dados) {
+  const nomePerfil = String(dados.nomePerfil || "").trim();
+  const descricao = dados.descricao ? String(dados.descricao).trim() : null;
+  const nivel = Number(dados.nivel);
+  const permissoes = Array.isArray(dados.permissoes) ? dados.permissoes : [];
+
+  if (!nomePerfil) {
+    throw new AppError("Nome do perfil é obrigatório.", 400);
+  }
+
+  if (Number.isNaN(nivel) || nivel < 1 || nivel > 4) {
+    throw new AppError("O nível deve estar entre 1 e 4.", 400);
+  }
+
+  if (permissoes.length === 0) {
+    throw new AppError("Selecione pelo menos uma permissão.", 400);
+  }
+
+  const permissoesNormalizadas = permissoes.map(function (permissao) {
+    return String(permissao).trim();
+  });
+
+  return {
+    nomePerfil,
+    descricao,
+    nivel,
+    permissoes: permissoesNormalizadas,
+  };
+}
+
+async function validarPermissoes(permissoesChaves) {
+  const permissoesEncontradas =
+    await perfisRepository.buscarPermissoesAtivasPorChaves(permissoesChaves);
+
+  if (permissoesEncontradas.length !== permissoesChaves.length) {
+    throw new AppError(
+      "Uma ou mais permissões selecionadas não existem ou estão inativas.",
+      400,
+    );
+  }
+
+  return permissoesEncontradas;
+}
+
 async function listarPerfis() {
   const perfis = await perfisRepository.listarPerfisAtivos();
 
@@ -28,37 +75,56 @@ async function listarPerfis() {
 }
 
 async function cadastrarPerfil(dados) {
-  const nomePerfil = String(dados.nomePerfil || "").trim();
-  const descricao = dados.descricao ? String(dados.descricao).trim() : null;
+  const dadosValidados = validarDadosPerfil(dados);
 
-  if (!nomePerfil) {
-    throw new AppError("Nome do perfil é obrigatório.", 400);
-  }
-
-  const perfilExistente =
-    await perfisRepository.buscarPerfilPorNome(nomePerfil);
+  const perfilExistente = await perfisRepository.buscarPerfilPorNome(
+    dadosValidados.nomePerfil,
+  );
 
   if (perfilExistente) {
     throw new AppError("Já existe um perfil cadastrado com esse nome.", 409);
   }
 
-  const perfilCriado = await perfisRepository.criarPerfil({
-    nomePerfil,
-    descricao,
-  });
+  const permissoesEncontradas = await validarPermissoes(
+    dadosValidados.permissoes,
+  );
 
-  return mapearPerfilResposta(perfilCriado);
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const perfilCriado = await perfisRepository.criarPerfil(client, {
+      nomePerfil: dadosValidados.nomePerfil,
+      descricao: dadosValidados.descricao,
+      nivel: dadosValidados.nivel,
+    });
+
+    await perfisRepository.vincularPermissoesAoPerfil(
+      client,
+      perfilCriado.id,
+      permissoesEncontradas.map(function (permissao) {
+        return permissao.id;
+      }),
+    );
+
+    await client.query("COMMIT");
+
+    return {
+      ...mapearPerfilResposta(perfilCriado),
+      permissoes: dadosValidados.permissoes,
+    };
+  } catch (erro) {
+    await client.query("ROLLBACK");
+    throw erro;
+  } finally {
+    client.release();
+  }
 }
 
 async function atualizarPerfil(idParametro, dados) {
   const id = validarIdNumerico(idParametro, "ID do perfil");
-
-  const nomePerfil = String(dados.nomePerfil || "").trim();
-  const descricao = dados.descricao ? String(dados.descricao).trim() : null;
-
-  if (!nomePerfil) {
-    throw new AppError("Nome do perfil é obrigatório.", 400);
-  }
+  const dadosValidados = validarDadosPerfil(dados);
 
   const perfilExistente = await perfisRepository.buscarPerfilPorId(id);
 
@@ -67,18 +133,56 @@ async function atualizarPerfil(idParametro, dados) {
   }
 
   const outroPerfilComMesmoNome =
-    await perfisRepository.buscarOutroPerfilPorNome(nomePerfil, id);
+    await perfisRepository.buscarOutroPerfilPorNome(
+      dadosValidados.nomePerfil,
+      id,
+    );
 
   if (outroPerfilComMesmoNome) {
     throw new AppError("Já existe outro perfil com esse nome.", 409);
   }
 
-  const perfilAtualizado = await perfisRepository.atualizarPerfilPorId(id, {
-    nomePerfil,
-    descricao,
-  });
+  const permissoesEncontradas = await validarPermissoes(
+    dadosValidados.permissoes,
+  );
 
-  return mapearPerfilResposta(perfilAtualizado);
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const perfilAtualizado = await perfisRepository.atualizarPerfilPorId(
+      client,
+      id,
+      {
+        nomePerfil: dadosValidados.nomePerfil,
+        descricao: dadosValidados.descricao,
+        nivel: dadosValidados.nivel,
+      },
+    );
+
+    await perfisRepository.removerPermissoesDoPerfil(client, id);
+
+    await perfisRepository.vincularPermissoesAoPerfil(
+      client,
+      id,
+      permissoesEncontradas.map(function (permissao) {
+        return permissao.id;
+      }),
+    );
+
+    await client.query("COMMIT");
+
+    return {
+      ...mapearPerfilResposta(perfilAtualizado),
+      permissoes: dadosValidados.permissoes,
+    };
+  } catch (erro) {
+    await client.query("ROLLBACK");
+    throw erro;
+  } finally {
+    client.release();
+  }
 }
 
 async function inativarPerfil(idParametro) {
