@@ -31,7 +31,7 @@ function montarUsuarioLogado(usuario, perfis, permissoes, lojas) {
   };
 }
 
-async function login(dados) {
+async function login(dados = {}) {
   const email = String(dados.email || "")
     .trim()
     .toLowerCase();

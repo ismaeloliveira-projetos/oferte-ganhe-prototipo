@@ -1,22 +1,30 @@
 const { query } = require("../database/conexao");
 
-async function listarLojasAtivas() {
-  const resultado = await query(`
-    SELECT
-      l.id AS id,
-      l.codigo_loja AS codigo,
-      l.nome_loja AS nome,
-      COALESCE(e.estoque_atual, 0) AS "estoqueAtual",
-      l.quantidade_minima AS "estoqueMinimo",
-      l.quantidade_recomendada AS "estoqueRecomendado",
-      l.ativo AS ativo,
-      l.criado_em AS "criadoEm"
-    FROM lojas l
-    LEFT JOIN estoques_lojas e
-      ON e.loja_id = l.id
-    WHERE l.ativo = true
-    ORDER BY l.id ASC
-  `);
+async function listarLojasAtivas(contextoUsuario) {
+  const parametros = [];
+  const filtros = ["l.ativo = true"];
+
+  if (contextoUsuario && !contextoUsuario.acessoGlobal) {
+    parametros.push(contextoUsuario.lojasIds);
+    filtros.push(`l.id = ANY($${parametros.length}::int[])`);
+  }
+
+  const resultado = await query(
+    `
+      SELECT
+        l.id,
+        l.codigo_loja AS "codigoLoja",
+        l.nome_loja AS "nomeLoja",
+        l.quantidade_minima AS "estoqueMinimo",
+        l.quantidade_recomendada AS "estoqueRecomendado",
+        l.ativo,
+        l.criado_em AS "criadoEm"
+      FROM lojas l
+      WHERE ${filtros.join(" AND ")}
+      ORDER BY l.codigo_loja ASC
+    `,
+    parametros,
+  );
 
   return resultado.rows;
 }

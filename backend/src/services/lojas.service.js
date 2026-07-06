@@ -27,8 +27,10 @@ function mapearLojaResposta(loja, estoqueAtual = 0) {
   };
 }
 
-async function listarLojas() {
-  return await lojasRepository.listarLojasAtivas();
+async function listarLojas(contextoUsuario) {
+  const lojas = await lojasRepository.listarLojasAtivas(contextoUsuario);
+
+  return lojas.map(mapearLojaResposta);
 }
 
 async function cadastrarLoja(dados) {

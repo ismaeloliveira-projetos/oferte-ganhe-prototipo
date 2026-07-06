@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const contextoUsuarioMiddleware = require("./middlewares/contexto-usuario.middleware");
 
 const lojasRoutes = require("./routes/lojas.routes");
 const estoquesRoutes = require("./routes/estoques.routes");
@@ -24,14 +25,14 @@ app.get("/api/health", function (req, res) {
   });
 });
 
-app.use("/api/lojas", lojasRoutes);
-app.use("/api", estoquesRoutes);
-app.use("/api/envios", enviosRoutes);
-app.use("/api/recebimentos", recebimentosRoutes);
-app.use("/api/manutencoes", manutencoesRoutes);
-app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/usuarios", usuariosRoutes);
-app.use("/api/perfis", perfisRoutes);
+app.use("/api/lojas", contextoUsuarioMiddleware, lojasRoutes);
+app.use("/api/estoques", contextoUsuarioMiddleware, estoquesRoutes);
+app.use("/api/envios", contextoUsuarioMiddleware, enviosRoutes);
+app.use("/api/recebimentos", contextoUsuarioMiddleware, recebimentosRoutes);
+app.use("/api/manutencoes", contextoUsuarioMiddleware, manutencoesRoutes);
+app.use("/api/dashboard", contextoUsuarioMiddleware, dashboardRoutes);
+app.use("/api/usuarios", contextoUsuarioMiddleware, usuariosRoutes);
+app.use("/api/perfis", contextoUsuarioMiddleware, perfisRoutes);
 app.use("/api/auth", authRoutes);
 
 app.use(function (req, res) {

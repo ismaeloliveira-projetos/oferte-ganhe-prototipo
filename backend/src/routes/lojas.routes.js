@@ -17,7 +17,7 @@ function responderErro(res, erro) {
 
 router.get("/", async function (req, res) {
   try {
-    const lojas = await lojasService.listarLojas();
+    const lojas = await lojasService.listarLojas(req.usuarioContexto);
 
     return res.status(200).json(lojas);
   } catch (erro) {
