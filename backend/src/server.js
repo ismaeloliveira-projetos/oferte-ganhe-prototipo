@@ -9,6 +9,7 @@ const manutencoesRoutes = require("./routes/manutencoes.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const usuariosRoutes = require("./routes/usuarios.routes");
 const perfisRoutes = require("./routes/perfis.routes");
+const authRoutes = require("./routes/auth.routes");
 
 const app = express();
 const PORTA = process.env.PORT || 3000;
@@ -31,6 +32,7 @@ app.use("/api/manutencoes", manutencoesRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/usuarios", usuariosRoutes);
 app.use("/api/perfis", perfisRoutes);
+app.use("/api/auth", authRoutes);
 
 app.use(function (req, res) {
   res.status(404).json({
