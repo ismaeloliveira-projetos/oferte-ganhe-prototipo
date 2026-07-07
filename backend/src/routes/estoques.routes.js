@@ -15,9 +15,9 @@ function responderErro(res, erro) {
   });
 }
 
-router.get("/estoques", async function (req, res) {
+router.get("/", async function (req, res) {
   try {
-    const estoques = await estoquesService.listarEstoques();
+    const estoques = await estoquesService.listarEstoques(req.usuarioContexto);
 
     return res.status(200).json(estoques);
   } catch (erro) {
@@ -27,9 +27,12 @@ router.get("/estoques", async function (req, res) {
 
 router.get("/movimentacoes-estoque", async function (req, res) {
   try {
-    const movimentacoes = await estoquesService.listarMovimentacoes({
-      lojaId: req.query.lojaId,
-    });
+    const movimentacoes = await estoquesService.listarMovimentacoes(
+      {
+        lojaId: req.query.lojaId,
+      },
+      req.usuarioContexto,
+    );
 
     return res.status(200).json(movimentacoes);
   } catch (erro) {

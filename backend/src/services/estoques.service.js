@@ -17,18 +17,16 @@ function calcularStatusEstoque(estoque) {
   return "Normal";
 }
 
-async function listarEstoques() {
-  const estoques = await estoquesRepository.listarEstoquesAtuais();
+async function listarEstoques(contextoUsuario) {
+  const estoques = await estoquesRepository.listarEstoques(contextoUsuario);
 
-  return estoques.map(function (estoque) {
-    return {
-      ...estoque,
-      estoqueAtual: Number(estoque.estoqueAtual),
-      estoqueMinimo: Number(estoque.estoqueMinimo),
-      estoqueRecomendado: Number(estoque.estoqueRecomendado),
-      statusEstoque: calcularStatusEstoque(estoque),
-    };
-  });
+  return estoques;
+}
+
+async function listarEstoques(contextoUsuario) {
+  const estoques = await estoquesRepository.listarEstoques(contextoUsuario);
+
+  return estoques;
 }
 
 async function listarMovimentacoes(filtros = {}) {

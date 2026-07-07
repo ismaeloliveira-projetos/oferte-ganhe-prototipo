@@ -1,59 +1,67 @@
 const { query } = require("../database/conexao");
 
-async function listarEstoquesAtuais() {
-  const resultado = await query(`
-    SELECT
-      l.id AS "lojaId",
-      l.codigo_loja AS "codigoLoja",
-      l.nome_loja AS "nomeLoja",
-      COALESCE(e.estoque_atual, 0) AS "estoqueAtual",
-      l.quantidade_minima AS "estoqueMinimo",
-      l.quantidade_recomendada AS "estoqueRecomendado",
-      e.atualizado_em AS "atualizadoEm"
-    FROM lojas l
-    LEFT JOIN estoques_lojas e
-      ON e.loja_id = l.id
-    WHERE l.ativo = true
-    ORDER BY l.codigo_loja ASC
-  `);
-
-  return resultado.rows;
-}
-
-async function listarMovimentacoesEstoque(lojaId) {
+async function listarEstoques(contextoUsuario) {
   const parametros = [];
-  let filtroLoja = "";
+  const filtros = ["l.ativo = true"];
 
-  if (lojaId !== undefined && lojaId !== null) {
-    filtroLoja = "WHERE m.loja_id = $1";
-    parametros.push(lojaId);
+  if (contextoUsuario && !contextoUsuario.acessoGlobal) {
+    parametros.push(contextoUsuario.lojasIds);
+    filtros.push(`l.id = ANY($${parametros.length}::int[])`);
   }
 
   const resultado = await query(
     `
       SELECT
-        m.id AS id,
+        l.id AS "lojaId",
+        l.codigo_loja AS "codigoLoja",
+        l.nome_loja AS "nomeLoja",
+        e.estoque_atual AS "estoqueAtual",
+        l.quantidade_minima AS "estoqueMinimo",
+        l.quantidade_recomendada AS "estoqueRecomendado",
+        e.atualizado_em AS "atualizadoEm"
+      FROM estoques_lojas e
+      INNER JOIN lojas l ON l.id = e.loja_id
+      WHERE ${filtros.join(" AND ")}
+      ORDER BY l.codigo_loja ASC
+    `,
+    parametros,
+  );
+
+  return resultado.rows;
+}
+
+async function listarMovimentacoesEstoque(lojaId, contextoUsuario) {
+  const parametros = [];
+  const filtros = [];
+
+  if (lojaId) {
+    parametros.push(lojaId);
+    filtros.push(`m.loja_id = $${parametros.length}`);
+  }
+
+  if (contextoUsuario && !contextoUsuario.acessoGlobal) {
+    parametros.push(contextoUsuario.lojasIds);
+    filtros.push(`m.loja_id = ANY($${parametros.length}::int[])`);
+  }
+
+  const where = filtros.length > 0 ? `WHERE ${filtros.join(" AND ")}` : "";
+
+  const resultado = await query(
+    `
+      SELECT
+        m.id,
         m.loja_id AS "lojaId",
         l.codigo_loja AS "codigoLoja",
         l.nome_loja AS "nomeLoja",
-        m.usuario_id AS "usuarioId",
-        m.recebimento_id AS "recebimentoId",
-        m.manutencao_id AS "manutencaoId",
         m.tipo_movimentacao AS "tipoMovimentacao",
-        m.quantidade AS quantidade,
+        m.quantidade,
         m.saldo_anterior AS "saldoAnterior",
         m.saldo_posterior AS "saldoPosterior",
-        m.observacao AS observacao,
-        m.criado_em AS "criadoEm",
-        e.codigo_remessa AS "codigoRemessa"
+        m.observacao,
+        m.criado_em AS "criadoEm"
       FROM movimentacoes_estoque m
-      JOIN lojas l
-        ON l.id = m.loja_id
-      LEFT JOIN recebimentos_taloes r
-        ON r.id = m.recebimento_id
-      LEFT JOIN envios_taloes e
-        ON e.id = r.envio_id
-      ${filtroLoja}
+      INNER JOIN lojas l ON l.id = m.loja_id
+      ${where}
       ORDER BY m.criado_em DESC
     `,
     parametros,
@@ -63,6 +71,6 @@ async function listarMovimentacoesEstoque(lojaId) {
 }
 
 module.exports = {
-  listarEstoquesAtuais,
+  listarEstoques,
   listarMovimentacoesEstoque,
 };
