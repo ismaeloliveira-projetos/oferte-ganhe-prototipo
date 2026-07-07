@@ -2,126 +2,160 @@ let codigoLojaEditando = null;
 let codigoLojaExcluindo = null;
 let lojasCarregadas = [];
 
+async function buscarLojasApi() {
+  return await apiFetch("/api/lojas");
+}
+
+async function buscarEstoquesApi() {
+  return await apiFetch("/api/estoques");
+}
+
+async function buscarLojasComEstoqueApi() {
+  const lojas = await buscarLojasApi();
+  const estoques = await buscarEstoquesApi();
+
+  console.log("LOJAS API:", lojas);
+  console.log("ESTOQUES API:", estoques);
+
+  return lojas.map(function (loja) {
+    const lojaId = loja.id ?? loja.lojaId ?? loja.idLoja;
+
+    const estoqueEncontrado = estoques.find(function (estoque) {
+      return Number(estoque.lojaId) === Number(lojaId);
+    });
+
+    const codigoLoja =
+      loja.codigoLoja ??
+      loja.codigo_loja ??
+      loja.codigo ??
+      estoqueEncontrado?.codigoLoja ??
+      estoqueEncontrado?.codigo_loja ??
+      "-";
+
+    const nomeLoja =
+      loja.nomeLoja ??
+      loja.nome_loja ??
+      loja.nome ??
+      estoqueEncontrado?.nomeLoja ??
+      estoqueEncontrado?.nome_loja ??
+      "-";
+
+    return {
+      id: lojaId,
+      codigoLoja,
+      nomeLoja,
+
+      estoqueAtual: Number(
+        estoqueEncontrado?.estoqueAtual ??
+          estoqueEncontrado?.estoque_atual ??
+          loja.estoqueAtual ??
+          loja.estoque_atual ??
+          0,
+      ),
+
+      estoqueMinimo: Number(
+        loja.estoqueMinimo ??
+          loja.quantidadeMinima ??
+          loja.quantidade_minima ??
+          estoqueEncontrado?.estoqueMinimo ??
+          estoqueEncontrado?.quantidadeMinima ??
+          estoqueEncontrado?.quantidade_minima ??
+          0,
+      ),
+
+      estoqueRecomendado: Number(
+        loja.estoqueRecomendado ??
+          loja.quantidadeRecomendada ??
+          loja.quantidade_recomendada ??
+          estoqueEncontrado?.estoqueRecomendado ??
+          estoqueEncontrado?.quantidadeRecomendada ??
+          estoqueEncontrado?.quantidade_recomendada ??
+          0,
+      ),
+
+      ativo: loja.ativo,
+      criadoEm: loja.criadoEm ?? loja.criado_em,
+    };
+  });
+}
+
+async function cadastrarLojaApi(novaLoja) {
+  return await apiFetch("/api/lojas", {
+    method: "POST",
+    body: JSON.stringify(novaLoja),
+  });
+}
+
+async function atualizarLojaApi(codigoOriginal, lojaAtualizada) {
+  return await apiFetch(`/api/lojas/${codigoOriginal}`, {
+    method: "PUT",
+    body: JSON.stringify(lojaAtualizada),
+  });
+}
+
+async function inativarLojaApi(codigo) {
+  return await apiFetch(`/api/lojas/${codigo}/inativar`, {
+    method: "PATCH",
+  });
+}
+
 function obterStatusEstoque(loja) {
-  if (loja.estoqueAtual <= loja.estoqueMinimo) return "Crítico";
-  if (loja.estoqueAtual < loja.estoqueRecomendado) return "Atenção";
+  const estoqueAtual = Number(loja.estoqueAtual || 0);
+  const estoqueMinimo = Number(loja.estoqueMinimo || 0);
+  const estoqueRecomendado = Number(loja.estoqueRecomendado || 0);
+
+  if (estoqueAtual <= estoqueMinimo) return "Crítico";
+  if (estoqueAtual < estoqueRecomendado) return "Atenção";
+
   return "Normal";
 }
 
 function obterClassesStatus(status) {
   if (status === "Crítico") return "badge-critico";
   if (status === "Atenção") return "badge-atencao";
+
   return "badge-normal";
 }
 
-function buscarTodasLojas() {
-  const banco = carregarBanco();
-  if (!banco.lojas) {
-    banco.lojas = [];
-    salvarBanco(banco);
-  }
-  return banco.lojas;
-}
-
-async function buscarLojasApi() {
-  const resposta = await fetch("http://localhost:3000/api/lojas");
-
-  if (!resposta.ok) {
-    throw new Error("Erro ao buscar lojas no backend");
-  }
-
-  const lojas = await resposta.json();
-
-  return lojas;
-}
-
-async function cadastrarLojaApi(novaLoja) {
-  const resposta = await fetch("http://localhost:3000/api/lojas", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(novaLoja),
-  });
-
-  const dados = await resposta.json();
-
-  if (!resposta.ok) {
-    throw new Error(dados.erro || "Erro ao cadastrar loja.");
-  }
-
-  return dados;
-}
-
-async function atualizarLojaApi(codigoOriginal, lojaAtualizada) {
-  const resposta = await fetch(
-    `http://localhost:3000/api/lojas/${codigoOriginal}`,
-    {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(lojaAtualizada),
-    },
-  );
-
-  const dados = await resposta.json();
-
-  if (!resposta.ok) {
-    throw new Error(dados.erro || "Erro ao atualizar loja.");
-  }
-
-  return dados;
-}
-
-async function inativarLojaApi(codigo) {
-  const resposta = await fetch(
-    `http://localhost:3000/api/lojas/${codigo}/inativar`,
-    {
-      method: "PATCH",
-    },
-  );
-
-  const dados = await resposta.json();
-
-  if (!resposta.ok) {
-    throw new Error(dados.erro || "Erro ao inativar loja.");
-  }
-
-  return dados;
-}
-
-function salvarLojas(lojas) {
-  const banco = carregarBanco();
-  banco.lojas = lojas;
-  salvarBanco(banco);
-}
-
-function mostrarAlerta(mensagem) {
+function mostrarAlerta(mensagem, erro = false) {
   const alerta = document.getElementById("alertaSistema");
+
   if (!alerta) {
+    if (typeof mostrarToast === "function") {
+      mostrarToast(mensagem, erro);
+      return;
+    }
+
     alert(mensagem);
     return;
   }
+
   alerta.textContent = mensagem;
   alerta.classList.remove("hidden");
-  setTimeout(() => alerta.classList.add("hidden"), 3000);
+
+  setTimeout(function () {
+    alerta.classList.add("hidden");
+  }, 3000);
 }
 
 async function carregarCardsLojas() {
   try {
-    const lojas = await buscarLojasApi();
+    const lojas = await buscarLojasComEstoqueApi();
+    lojasCarregadas = lojas;
 
     const totalLojas = lojas.length;
-    const lojasAtivas = lojas.filter((loja) => loja.ativo === true).length;
 
-    const lojasCriticas = lojas.filter(
-      (loja) => obterStatusEstoque(loja) === "Crítico",
-    ).length;
+    const lojasAtivas = lojas.filter(function (loja) {
+      return loja.ativo !== false;
+    }).length;
 
-    const lojasAtencao = lojas.filter(
-      (loja) => obterStatusEstoque(loja) === "Atenção",
-    ).length;
+    const lojasCriticas = lojas.filter(function (loja) {
+      return obterStatusEstoque(loja) === "Crítico";
+    }).length;
+
+    const lojasAtencao = lojas.filter(function (loja) {
+      return obterStatusEstoque(loja) === "Atenção";
+    }).length;
 
     const el1 = document.getElementById("totalLojas");
     const el2 = document.getElementById("lojasAtivas");
@@ -134,43 +168,70 @@ async function carregarCardsLojas() {
     if (el4) el4.textContent = lojasAtencao;
   } catch (erro) {
     console.error("Erro ao carregar cards de lojas:", erro);
-    alert("Não foi possível carregar os dados das lojas.");
+    mostrarAlerta("Não foi possível carregar os dados das lojas.", true);
   }
 }
 
 async function carregarTabelaLojas() {
   const tabela = document.getElementById("tabelaLojas");
-  if (!tabela) return;
+
+  if (!tabela) {
+    return;
+  }
 
   try {
     tabela.innerHTML = "";
 
-    const lojas = await buscarLojasApi();
+    const lojas = await buscarLojasComEstoqueApi();
     lojasCarregadas = lojas;
 
-    lojas.forEach((loja) => {
+    if (lojas.length === 0) {
+      tabela.innerHTML = `
+        <tr>
+          <td colspan="7" class="empty-state">
+            Nenhuma loja encontrada para o seu usuário.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    lojas.forEach(function (loja) {
       const status = obterStatusEstoque(loja);
       const classesStatus = obterClassesStatus(status);
 
       tabela.innerHTML += `
         <tr>
-          <td>${loja.codigo}</td>
-          <td>${loja.nome}</td>
-          <td>${loja.estoqueAtual}</td>
-          <td>${loja.estoqueMinimo}</td>
-          <td>${loja.estoqueRecomendado}</td>
-          <td><span class="badge ${classesStatus}">${status}</span></td>
+          <td>${loja.codigoLoja || "-"}</td>
+          <td>${loja.nomeLoja || "-"}</td>
+          <td>${loja.estoqueAtual ?? 0}</td>
+          <td>${loja.estoqueMinimo ?? 0}</td>
+          <td>${loja.estoqueRecomendado ?? 0}</td>
+          <td>
+            <span class="badge-status ${classesStatus}">
+              ${status}
+            </span>
+          </td>
           <td>
             <div class="table-actions">
-              <button class="btn-table-action btn-sm" onclick="window.editarLoja('${loja.codigo}')">
+              <button
+                class="btn-table-action btn-sm"
+                onclick="editarLoja('${loja.codigoLoja}')"
+              >
                 Editar
               </button>
 
-              <button class="btntable-action btn-sm" onclick="window.excluirLoja('${loja.codigo}')">
+              <button
+                class="btntable-action btn-sm"
+                onclick="excluirLoja('${loja.codigoLoja}')"
+              >
                 Excluir
               </button>
 
-              <button class="btn-table-action btn-sm" onclick="window.verDetalhesLoja('${loja.codigo}')">
+              <button
+                class="btn-table-action btn-sm"
+                onclick="verDetalhesLoja('${loja.codigoLoja}')"
+              >
                 Ver detalhes
               </button>
             </div>
@@ -179,41 +240,57 @@ async function carregarTabelaLojas() {
       `;
     });
 
-    aplicarResponsividadeTabelas();
+    if (typeof aplicarResponsividadeTabelas === "function") {
+      aplicarResponsividadeTabelas();
+    }
   } catch (erro) {
     console.error("Erro ao carregar tabela de lojas:", erro);
-    mostrarAlerta("Não foi possível carregar as lojas cadastradas.");
+    mostrarAlerta("Não foi possível carregar as lojas cadastradas.", true);
   }
-}
-
-function fecharDetalhesLoja() {
-  const container = document.getElementById("detalhesLojaContainer");
-  const overlay = document.getElementById("detalhesLojaOverlay");
-  if (container) container.classList.add("hidden");
-  if (overlay) overlay.classList.add("hidden");
 }
 
 function abrirFormularioLoja() {
   const form = document.getElementById("formLoja");
-  if (form) form.reset();
+
+  if (form) {
+    form.reset();
+  }
+
   codigoLojaEditando = null;
 
+  const inputCodigo = document.getElementById("codigoLoja");
+  const inputEstoque = document.getElementById("estoqueAtual");
   const estoqueMin = document.getElementById("estoqueMinimo");
   const estoqueRec = document.getElementById("estoqueRecomendado");
+
+  if (inputCodigo) {
+    inputCodigo.readOnly = false;
+  }
+
+  if (inputEstoque) {
+    inputEstoque.value = 0;
+    inputEstoque.readOnly = false;
+  }
+
   if (estoqueMin) {
     estoqueMin.value = 200;
-    estoqueMin.readOnly = true;
+    estoqueMin.readOnly = false;
   }
+
   if (estoqueRec) {
     estoqueRec.value = 300;
-    estoqueRec.readOnly = true;
+    estoqueRec.readOnly = false;
   }
 
   const btnSalvar = document.getElementById("btnSalvarLoja");
-  if (btnSalvar) btnSalvar.textContent = "Salvar Loja";
+
+  if (btnSalvar) {
+    btnSalvar.textContent = "Salvar Loja";
+  }
 
   const container = document.getElementById("formLojaContainer");
   const overlay = document.getElementById("formLojaOverlay");
+
   if (container) container.classList.remove("hidden");
   if (overlay) overlay.classList.remove("hidden");
 }
@@ -221,15 +298,26 @@ function abrirFormularioLoja() {
 function fecharFormularioLoja() {
   const container = document.getElementById("formLojaContainer");
   const overlay = document.getElementById("formLojaOverlay");
+
   if (container) container.classList.add("hidden");
   if (overlay) overlay.classList.add("hidden");
 }
 
-window.verDetalhesLoja = function (codigo) {
-  const loja = lojasCarregadas.find((l) => l.codigo === codigo);
+function fecharDetalhesLoja() {
+  const container = document.getElementById("detalhesLojaContainer");
+  const overlay = document.getElementById("detalhesLojaOverlay");
+
+  if (container) container.classList.add("hidden");
+  if (overlay) overlay.classList.add("hidden");
+}
+
+function verDetalhesLoja(codigo) {
+  const loja = lojasCarregadas.find(function (item) {
+    return String(item.codigoLoja) === String(codigo);
+  });
 
   if (!loja) {
-    mostrarAlerta("Loja não encontrada.");
+    mostrarAlerta("Loja não encontrada.", true);
     return;
   }
 
@@ -237,112 +325,180 @@ window.verDetalhesLoja = function (codigo) {
   const classeStatus = obterClassesStatus(status);
   const conteudo = document.getElementById("detalhesLojaConteudo");
 
-  if (!conteudo) return;
+  if (!conteudo) {
+    return;
+  }
 
-  const faltaParaMinimo = Math.max(loja.estoqueMinimo - loja.estoqueAtual, 0);
+  const faltaParaMinimo = Math.max(
+    Number(loja.estoqueMinimo) - Number(loja.estoqueAtual),
+    0,
+  );
+
   const faltaParaRecomendado = Math.max(
-    loja.estoqueRecomendado - loja.estoqueAtual,
+    Number(loja.estoqueRecomendado) - Number(loja.estoqueAtual),
     0,
   );
 
   let mensagemStatus = "A loja está com estoque dentro do nível esperado.";
-  if (status === "Crítico")
+
+  if (status === "Crítico") {
     mensagemStatus = "Esta loja está em situação crítica.";
-  if (status === "Atenção") mensagemStatus = "Esta loja precisa de atenção.";
+  }
+
+  if (status === "Atenção") {
+    mensagemStatus = "Esta loja precisa de atenção.";
+  }
 
   conteudo.innerHTML = `
-    <div class="detail-row"><strong>Código</strong><span>${loja.codigo}</span></div>
-    <div class="detail-row"><strong>Nome</strong><span>${loja.nome}</span></div>
-    <div class="detail-row"><strong>Estoque atual</strong><span>${loja.estoqueAtual} talões</span></div>
-    <div class="detail-row"><strong>Estoque mínimo</strong><span>${loja.estoqueMinimo} talões</span></div>
-    <div class="detail-row"><strong>Estoque recomendado</strong><span>${loja.estoqueRecomendado} talões</span></div>
-    <div class="detail-row"><strong>Status</strong><span class="badge ${classeStatus}">${status}</span></div>
-    <div class="detail-row"><strong>Falta para mínimo</strong><span>${faltaParaMinimo} talões</span></div>
-    <div class="detail-row"><strong>Falta para recomendado</strong><span>${faltaParaRecomendado} talões</span></div>
-    <div class="detail-insight"><strong>Análise:</strong> ${mensagemStatus}</div>
+    <div class="detail-row">
+      <strong>Código</strong>
+      <span>${loja.codigoLoja}</span>
+    </div>
+
+    <div class="detail-row">
+      <strong>Nome</strong>
+      <span>${loja.nomeLoja}</span>
+    </div>
+
+    <div class="detail-row">
+      <strong>Estoque atual</strong>
+      <span>${loja.estoqueAtual} talões</span>
+    </div>
+
+    <div class="detail-row">
+      <strong>Estoque mínimo</strong>
+      <span>${loja.estoqueMinimo} talões</span>
+    </div>
+
+    <div class="detail-row">
+      <strong>Estoque recomendado</strong>
+      <span>${loja.estoqueRecomendado} talões</span>
+    </div>
+
+    <div class="detail-row">
+      <strong>Status</strong>
+      <span class="badge-status ${classeStatus}">${status}</span>
+    </div>
+
+    <div class="detail-row">
+      <strong>Falta para mínimo</strong>
+      <span>${faltaParaMinimo} talões</span>
+    </div>
+
+    <div class="detail-row">
+      <strong>Falta para recomendado</strong>
+      <span>${faltaParaRecomendado} talões</span>
+    </div>
+
+    <div class="detail-insight">
+      <strong>Análise:</strong> ${mensagemStatus}
+    </div>
   `;
 
   const container = document.getElementById("detalhesLojaContainer");
   const overlay = document.getElementById("detalhesLojaOverlay");
+
   if (container) container.classList.remove("hidden");
   if (overlay) overlay.classList.remove("hidden");
-};
+}
 
-window.editarLoja = function (codigo) {
-  const lojaEncontrada = lojasCarregadas.find((l) => l.codigo === codigo);
+function editarLoja(codigo) {
+  const lojaEncontrada = lojasCarregadas.find(function (item) {
+    return String(item.codigoLoja) === String(codigo);
+  });
 
   if (!lojaEncontrada) {
-    mostrarAlerta("Loja não encontrada.");
+    mostrarAlerta("Loja não encontrada.", true);
     return;
   }
 
   codigoLojaEditando = codigo;
+
   const inputCodigo = document.getElementById("codigoLoja");
   const inputNome = document.getElementById("nomeLoja");
   const inputEstoque = document.getElementById("estoqueAtual");
-
-  if (inputEstoque) {
-    inputEstoque.value = 0;
-    inputEstoque.readOnly = false;
-  }
   const inputMin = document.getElementById("estoqueMinimo");
   const inputRec = document.getElementById("estoqueRecomendado");
   const btnSalvar = document.getElementById("btnSalvarLoja");
 
-  if (inputCodigo) inputCodigo.value = lojaEncontrada.codigo;
-  if (inputNome) inputNome.value = lojaEncontrada.nome;
+  if (inputCodigo) {
+    inputCodigo.value = lojaEncontrada.codigoLoja;
+    inputCodigo.readOnly = true;
+  }
+
+  if (inputNome) {
+    inputNome.value = lojaEncontrada.nomeLoja;
+  }
+
   if (inputEstoque) {
     inputEstoque.value = lojaEncontrada.estoqueAtual;
     inputEstoque.readOnly = true;
   }
+
   if (inputMin) {
     inputMin.value = lojaEncontrada.estoqueMinimo;
     inputMin.readOnly = false;
   }
+
   if (inputRec) {
     inputRec.value = lojaEncontrada.estoqueRecomendado;
     inputRec.readOnly = false;
   }
-  if (btnSalvar) btnSalvar.textContent = "Atualizar Loja";
+
+  if (btnSalvar) {
+    btnSalvar.textContent = "Atualizar Loja";
+  }
 
   const container = document.getElementById("formLojaContainer");
   const overlay = document.getElementById("formLojaOverlay");
+
   if (container) container.classList.remove("hidden");
   if (overlay) overlay.classList.remove("hidden");
-};
+}
 
-window.excluirLoja = function (codigo) {
-  const lojaEncontrada = lojasCarregadas.find((l) => l.codigo === codigo);
+function excluirLoja(codigo) {
+  const lojaEncontrada = lojasCarregadas.find(function (item) {
+    return String(item.codigoLoja) === String(codigo);
+  });
 
   if (!lojaEncontrada) {
-    mostrarAlerta("Loja não encontrada.");
+    mostrarAlerta("Loja não encontrada.", true);
     return;
   }
 
   codigoLojaExcluindo = codigo;
+
   const nome = document.getElementById("nomeLojaExclusao");
   const cod = document.getElementById("codigoLojaExclusao");
 
-  if (nome) nome.textContent = lojaEncontrada.nome;
-  if (cod) cod.textContent = "Código: " + lojaEncontrada.codigo;
+  if (nome) {
+    nome.textContent = lojaEncontrada.nomeLoja;
+  }
+
+  if (cod) {
+    cod.textContent = "Código: " + lojaEncontrada.codigoLoja;
+  }
 
   const container = document.getElementById("excluirLojaContainer");
   const overlay = document.getElementById("excluirLojaOverlay");
+
   if (container) container.classList.remove("hidden");
   if (overlay) overlay.classList.remove("hidden");
-};
+}
 
 function fecharConfirmacaoExclusaoLoja() {
   codigoLojaExcluindo = null;
+
   const container = document.getElementById("excluirLojaContainer");
   const overlay = document.getElementById("excluirLojaOverlay");
+
   if (container) container.classList.add("hidden");
   if (overlay) overlay.classList.add("hidden");
 }
 
 async function confirmarExclusaoLoja() {
   if (codigoLojaExcluindo === null) {
-    mostrarAlerta("Nenhuma loja selecionada.");
+    mostrarAlerta("Nenhuma loja selecionada.", true);
     return;
   }
 
@@ -357,88 +513,128 @@ async function confirmarExclusaoLoja() {
     mostrarAlerta("Loja inativada com sucesso.");
   } catch (erro) {
     console.error("Erro ao inativar loja:", erro);
-    mostrarAlerta(erro.message);
+    mostrarAlerta(erro.message, true);
   }
 }
 
-const formLoja = document.getElementById("formLoja");
+async function salvarLoja(event) {
+  event.preventDefault();
 
-if (formLoja) {
-  formLoja.addEventListener("submit", async function (event) {
-    event.preventDefault();
+  const botaoSalvar = document.getElementById("btnSalvarLoja");
 
-    const botaoSalvar = document.getElementById("btnSalvarLoja");
+  if (botaoSalvar) {
+    botaoSalvar.textContent = "Salvando...";
+    botaoSalvar.disabled = true;
+  }
 
-    if (botaoSalvar) {
-      botaoSalvar.textContent = "Salvando...";
-      botaoSalvar.disabled = true;
+  try {
+    const codigo = document.getElementById("codigoLoja").value.trim();
+    const nome = document.getElementById("nomeLoja").value.trim();
+
+    const estoqueAtual = Number(document.getElementById("estoqueAtual").value);
+
+    const estoqueMinimo = Number(
+      document.getElementById("estoqueMinimo").value,
+    );
+
+    const estoqueRecomendado = Number(
+      document.getElementById("estoqueRecomendado").value,
+    );
+
+    if (!codigo) {
+      throw new Error("Informe o código da loja.");
     }
 
-    try {
-      const codigo = document.getElementById("codigoLoja").value;
-      const nome = document.getElementById("nomeLoja").value;
+    if (!nome) {
+      throw new Error("Informe o nome da loja.");
+    }
 
-      const estoqueAtual = Number(
-        document.getElementById("estoqueAtual").value,
-      );
+    if (Number.isNaN(estoqueMinimo) || estoqueMinimo < 0) {
+      throw new Error("Informe um estoque mínimo válido.");
+    }
 
-      const estoqueMinimo = Number(
-        document.getElementById("estoqueMinimo").value,
-      );
+    if (Number.isNaN(estoqueRecomendado) || estoqueRecomendado < 0) {
+      throw new Error("Informe um estoque recomendado válido.");
+    }
 
-      const estoqueRecomendado = Number(
-        document.getElementById("estoqueRecomendado").value,
-      );
-
-      if (codigoLojaEditando === null) {
-        const novaLoja = {
-          codigo,
-          nome,
-          estoqueAtual,
-          estoqueMinimo,
-          estoqueRecomendado,
-        };
-
-        console.log("Cadastrando loja na API:", novaLoja);
-
-        await cadastrarLojaApi(novaLoja);
-
-        mostrarAlerta("Loja cadastrada com sucesso no banco de dados.");
-      } else {
-        const lojaAtualizada = {
-          codigo,
-          nome,
-          estoqueMinimo,
-          estoqueRecomendado,
-        };
-
-        console.log("Atualizando loja na API:", lojaAtualizada);
-
-        await atualizarLojaApi(codigoLojaEditando, lojaAtualizada);
-
-        mostrarAlerta("Loja atualizada com sucesso no banco de dados.");
+    if (codigoLojaEditando === null) {
+      if (Number.isNaN(estoqueAtual) || estoqueAtual < 0) {
+        throw new Error("Informe um estoque atual válido.");
       }
 
-      await carregarCardsLojas();
-      await carregarTabelaLojas();
+      const novaLoja = {
+        codigo,
+        codigoLoja: codigo,
+        nome,
+        nomeLoja: nome,
+        estoqueAtual,
+        estoqueMinimo,
+        estoqueRecomendado,
+      };
 
+      await cadastrarLojaApi(novaLoja);
+
+      mostrarAlerta("Loja cadastrada com sucesso no banco de dados.");
+    } else {
+      const lojaAtualizada = {
+        codigo,
+        codigoLoja: codigo,
+        nome,
+        nomeLoja: nome,
+        estoqueMinimo,
+        estoqueRecomendado,
+      };
+
+      await atualizarLojaApi(codigoLojaEditando, lojaAtualizada);
+
+      mostrarAlerta("Loja atualizada com sucesso no banco de dados.");
+    }
+
+    await carregarCardsLojas();
+    await carregarTabelaLojas();
+
+    const formLoja = document.getElementById("formLoja");
+
+    if (formLoja) {
       formLoja.reset();
-      fecharFormularioLoja();
-
-      codigoLojaEditando = null;
-    } catch (erro) {
-      console.error("Erro ao salvar loja:", erro);
-      mostrarAlerta(erro.message);
-    } finally {
-      if (botaoSalvar) {
-        botaoSalvar.textContent = "Salvar Loja";
-        botaoSalvar.disabled = false;
-      }
     }
-  });
+
+    fecharFormularioLoja();
+
+    codigoLojaEditando = null;
+  } catch (erro) {
+    console.error("Erro ao salvar loja:", erro);
+    mostrarAlerta(erro.message, true);
+  } finally {
+    if (botaoSalvar) {
+      botaoSalvar.textContent =
+        codigoLojaEditando === null ? "Salvar Loja" : "Atualizar Loja";
+      botaoSalvar.disabled = false;
+    }
+  }
 }
 
-carregarUsuarioLogado();
-carregarCardsLojas();
-carregarTabelaLojas();
-aplicarPermissoesMenu();
+async function iniciarPaginaLojas() {
+  const usuario = carregarUsuarioLogado();
+
+  if (!usuario) {
+    return;
+  }
+
+  const formLoja = document.getElementById("formLoja");
+
+  if (formLoja) {
+    formLoja.addEventListener("submit", salvarLoja);
+  }
+
+  await carregarCardsLojas();
+  await carregarTabelaLojas();
+
+  if (typeof aplicarPermissoesMenu === "function") {
+    aplicarPermissoesMenu();
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  iniciarPaginaLojas();
+});

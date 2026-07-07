@@ -68,13 +68,13 @@ async function fazerLogin(email, senha) {
     }),
   });
 
-  const corpo = await resposta.json();
+  const resultado = await resposta.json();
 
   if (!resposta.ok) {
-    throw new Error(corpo.erro || "Erro ao fazer login.");
+    throw new Error(resultado.erro || "Erro ao fazer login.");
   }
 
-  return corpo;
+  return resultado;
 }
 
 const loginForm = document.getElementById("loginForm");
@@ -103,7 +103,7 @@ if (loginForm) {
       window.location.href = "dashboard.html";
     } catch (erro) {
       console.error(erro);
-      mostrarErroLogin(erro.message);
+      mostrarErroLogin(erro.message || "Erro ao fazer login.");
     } finally {
       desativarLoadingLogin();
     }

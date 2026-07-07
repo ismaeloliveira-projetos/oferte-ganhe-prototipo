@@ -1,5 +1,3 @@
-const API_URL = "http://localhost:3000/api/dashboard/resumo";
-
 function obterClasseStatus(status) {
   if (status === "Crítico") {
     return "badge-critico";
@@ -13,20 +11,250 @@ function obterClasseStatus(status) {
 }
 
 async function buscarResumoDashboard() {
-  const resposta = await fetch(API_URL);
+  return await apiFetch("/api/dashboard/resumo");
+}
 
-  if (!resposta.ok) {
-    throw new Error("Erro ao buscar dados do dashboard.");
+function normalizarNumero(valor) {
+  if (valor === null || valor === undefined || valor === "") {
+    return 0;
   }
 
-  return await resposta.json();
+  const numero = Number(valor);
+
+  if (Number.isNaN(numero)) {
+    return 0;
+  }
+
+  return numero;
+}
+
+function calcularStatusEstoque(
+  estoqueAtual,
+  estoqueMinimo,
+  estoqueRecomendado,
+) {
+  if (estoqueAtual <= estoqueMinimo) {
+    return "Crítico";
+  }
+
+  if (estoqueAtual < estoqueRecomendado) {
+    return "Atenção";
+  }
+
+  return "Normal";
+}
+
+function normalizarLojaDashboard(loja) {
+  const estoqueAtual = normalizarNumero(
+    loja.estoqueAtual ??
+      loja.estoque_atual ??
+      loja.quantidadeAtual ??
+      loja.quantidade_atual ??
+      loja.saldoAtual,
+  );
+
+  const estoqueMinimo = normalizarNumero(
+    loja.estoqueMinimo ??
+      loja.estoque_minimo ??
+      loja.quantidadeMinima ??
+      loja.quantidade_minima ??
+      loja.minimo,
+  );
+
+  const estoqueRecomendado = normalizarNumero(
+    loja.estoqueRecomendado ??
+      loja.estoque_recomendado ??
+      loja.quantidadeRecomendada ??
+      loja.quantidade_recomendada ??
+      loja.recomendado,
+  );
+
+  const statusEstoque =
+    loja.statusEstoque ??
+    loja.status_estoque ??
+    loja.status ??
+    calcularStatusEstoque(estoqueAtual, estoqueMinimo, estoqueRecomendado);
+
+  return {
+    lojaId:
+      loja.lojaId ?? loja.loja_id ?? loja.idLoja ?? loja.id_loja ?? loja.id,
+
+    codigoLoja:
+      loja.codigoLoja ??
+      loja.codigo_loja ??
+      loja.codigo ??
+      loja.lojaCodigo ??
+      loja.loja_codigo ??
+      "-",
+
+    nomeLoja:
+      loja.nomeLoja ??
+      loja.nome_loja ??
+      loja.nome ??
+      loja.lojaNome ??
+      loja.loja_nome ??
+      "Loja sem nome",
+
+    estoqueAtual,
+    estoqueMinimo,
+    estoqueRecomendado,
+    statusEstoque,
+  };
+}
+
+function normalizarHistoricoEnvio(item) {
+  return {
+    mes: item.mes ?? item.periodo ?? item.mesAno ?? item.mes_ano ?? "-",
+
+    totalEnviado: normalizarNumero(
+      item.totalEnviado ?? item.total_enviado ?? item.quantidade ?? item.total,
+    ),
+  };
+}
+
+function normalizarInsight(insight) {
+  if (typeof insight === "string") {
+    return {
+      titulo: "Insight",
+      descricao: insight,
+    };
+  }
+
+  return {
+    titulo: insight.titulo ?? insight.title ?? "Insight",
+    descricao: insight.descricao ?? insight.description ?? "",
+  };
+}
+
+function normalizarDashboard(dados, estoquesCompletos = []) {
+  const statusLojasOriginal = dados.statusLojas ?? dados.status_lojas ?? {};
+
+  const lojasAtencaoOriginais =
+    dados.lojasAtencao ??
+    dados.lojas_atencao ??
+    dados.lojasComAtencao ??
+    dados.lojas_com_atencao ??
+    dados.lojasCriticasLista ??
+    dados.lojas_criticas_lista ??
+    [];
+
+  const lojasAtencao = Array.isArray(lojasAtencaoOriginais)
+    ? lojasAtencaoOriginais.map(normalizarLojaDashboard)
+    : [];
+
+  const estoquesNormalizados = Array.isArray(estoquesCompletos)
+    ? estoquesCompletos.map(normalizarLojaDashboard)
+    : [];
+
+  const historicoEnviosOriginais =
+    dados.historicoEnvios ?? dados.historico_envios ?? [];
+
+  const historicoEnvios = Array.isArray(historicoEnviosOriginais)
+    ? historicoEnviosOriginais.map(normalizarHistoricoEnvio)
+    : [];
+
+  const totalCritico = normalizarNumero(
+    statusLojasOriginal.critico ??
+      statusLojasOriginal.crítico ??
+      statusLojasOriginal.criticos ??
+      dados.lojasCriticas ??
+      dados.lojas_criticas ??
+      lojasAtencao.filter(function (loja) {
+        return loja.statusEstoque === "Crítico";
+      }).length,
+  );
+
+  const totalAtencao = normalizarNumero(
+    statusLojasOriginal.atencao ??
+      statusLojasOriginal.atenção ??
+      statusLojasOriginal.atencoes ??
+      dados.lojasAtencaoTotal ??
+      dados.lojas_atencao_total ??
+      lojasAtencao.filter(function (loja) {
+        return loja.statusEstoque === "Atenção";
+      }).length,
+  );
+
+  const totalNormal = normalizarNumero(statusLojasOriginal.normal);
+
+  const totalLojasPorStatus = totalCritico + totalAtencao + totalNormal;
+
+  const totalLojas =
+    dados.totalLojas !== null && dados.totalLojas !== undefined
+      ? normalizarNumero(dados.totalLojas)
+      : dados.total_lojas !== null && dados.total_lojas !== undefined
+        ? normalizarNumero(dados.total_lojas)
+        : totalLojasPorStatus > 0
+          ? totalLojasPorStatus
+          : estoquesNormalizados.length;
+
+  const totalEstoqueCalculado = estoquesNormalizados.reduce(function (
+    total,
+    estoque,
+  ) {
+    return total + normalizarNumero(estoque.estoqueAtual);
+  }, 0);
+
+  const totalEstoqueFallback = lojasAtencao.reduce(function (total, loja) {
+    return total + normalizarNumero(loja.estoqueAtual);
+  }, 0);
+
+  const totalEstoque =
+    dados.totalEstoque !== null && dados.totalEstoque !== undefined
+      ? normalizarNumero(dados.totalEstoque)
+      : dados.total_estoque !== null && dados.total_estoque !== undefined
+        ? normalizarNumero(dados.total_estoque)
+        : totalEstoqueCalculado > 0
+          ? totalEstoqueCalculado
+          : totalEstoqueFallback;
+
+  const ultimoHistorico = historicoEnvios[historicoEnvios.length - 1];
+
+  const enviosMes =
+    dados.enviosMes !== null && dados.enviosMes !== undefined
+      ? normalizarNumero(dados.enviosMes)
+      : dados.envios_mes !== null && dados.envios_mes !== undefined
+        ? normalizarNumero(dados.envios_mes)
+        : dados.totalEnviosMes !== null && dados.totalEnviosMes !== undefined
+          ? normalizarNumero(dados.totalEnviosMes)
+          : dados.total_envios_mes !== null &&
+              dados.total_envios_mes !== undefined
+            ? normalizarNumero(dados.total_envios_mes)
+            : normalizarNumero(ultimoHistorico?.totalEnviado);
+
+  const insights = Array.isArray(dados.insights)
+    ? dados.insights.map(normalizarInsight)
+    : [];
+
+  return {
+    totalLojas,
+    totalEstoque,
+    lojasCriticas: totalCritico,
+    enviosMes,
+    lojasAtencao,
+    insights,
+    statusLojas: {
+      critico: totalCritico,
+      atencao: totalAtencao,
+      normal: totalNormal,
+    },
+    historicoEnvios,
+  };
+}
+
+function preencherTexto(id, valor) {
+  const elemento = document.getElementById(id);
+
+  if (elemento) {
+    elemento.textContent = valor;
+  }
 }
 
 function carregarCardsDashboard(dados) {
-  document.getElementById("totalLojas").textContent = dados.totalLojas;
-  document.getElementById("totalEstoque").textContent = dados.totalEstoque;
-  document.getElementById("lojasCriticas").textContent = dados.lojasCriticas;
-  document.getElementById("enviosMes").textContent = dados.enviosMes;
+  preencherTexto("totalLojas", dados.totalLojas);
+  preencherTexto("totalEstoque", dados.totalEstoque);
+  preencherTexto("lojasCriticas", dados.lojasCriticas);
+  preencherTexto("enviosMes", dados.enviosMes);
 }
 
 function carregarTabelaLojasCriticas(dados) {
@@ -52,8 +280,8 @@ function carregarTabelaLojasCriticas(dados) {
 
     tabela.innerHTML += `
       <tr>
-        <td>${loja.codigoLoja || "-"}</td>
-        <td>${loja.nomeLoja || "Loja sem nome"}</td>
+        <td>${loja.codigoLoja}</td>
+        <td>${loja.nomeLoja}</td>
         <td>${loja.estoqueAtual}</td>
         <td>${loja.estoqueMinimo}</td>
         <td>${loja.estoqueRecomendado}</td>
@@ -107,10 +335,10 @@ function carregarResumoStatusLojas(dados) {
     return;
   }
 
-  const totalLojas = dados.totalLojas;
-  const totalCritico = dados.statusLojas.critico;
-  const totalAtencao = dados.statusLojas.atencao;
-  const totalNormal = dados.statusLojas.normal;
+  const totalLojas = normalizarNumero(dados.totalLojas);
+  const totalCritico = normalizarNumero(dados.statusLojas.critico);
+  const totalAtencao = normalizarNumero(dados.statusLojas.atencao);
+  const totalNormal = normalizarNumero(dados.statusLojas.normal);
 
   if (totalLojas === 0) {
     container.innerHTML = `
@@ -203,7 +431,7 @@ function carregarHistoricoEnvios(dados) {
   }
 
   const valores = historico.map(function (item) {
-    return item.totalEnviado;
+    return normalizarNumero(item.totalEnviado);
   });
 
   const maximo = Math.max.apply(null, valores);
@@ -261,8 +489,9 @@ function carregarHistoricoEnvios(dados) {
 
   historicoEl.innerHTML = historico
     .map(function (item) {
+      const totalEnviado = normalizarNumero(item.totalEnviado);
       const largura =
-        maximo > 0 ? Math.round((item.totalEnviado / maximo) * 100) : 0;
+        maximo > 0 ? Math.round((totalEnviado / maximo) * 100) : 0;
 
       return `
         <div class="historico-linha">
@@ -270,7 +499,7 @@ function carregarHistoricoEnvios(dados) {
           <div class="historico-barra-wrap">
             <div class="historico-barra" style="width: ${largura}%"></div>
           </div>
-          <span class="historico-valor">${item.totalEnviado}</span>
+          <span class="historico-valor">${totalEnviado}</span>
         </div>
       `;
     })
@@ -291,18 +520,44 @@ function exibirErroDashboard() {
 }
 
 async function inicializarDashboard() {
+  const usuario = carregarUsuarioLogado();
+
+  if (!usuario) {
+    return;
+  }
+
   try {
-    const dados = await buscarResumoDashboard();
+    const resposta = await buscarResumoDashboard();
+
+    let estoquesCompletos = [];
+
+    try {
+      estoquesCompletos = await apiFetch("/api/estoques");
+    } catch (erroEstoque) {
+      console.warn("Não foi possível buscar estoques completos:", erroEstoque);
+    }
+
+    const dados = normalizarDashboard(resposta, estoquesCompletos);
+
+    console.log("DASHBOARD API:", resposta);
+    console.log("ESTOQUES DASHBOARD:", estoquesCompletos);
+    console.log("DASHBOARD NORMALIZADO:", dados);
 
     carregarCardsDashboard(dados);
     carregarTabelaLojasCriticas(dados);
     carregarInsights(dados);
     carregarHistoricoEnvios(dados);
     carregarResumoStatusLojas(dados);
+
+    if (typeof aplicarPermissoesMenu === "function") {
+      aplicarPermissoesMenu();
+    }
   } catch (erro) {
-    console.error(erro);
+    console.error("Erro ao carregar dashboard:", erro);
     exibirErroDashboard();
   }
 }
 
-document.addEventListener("DOMContentLoaded", inicializarDashboard);
+document.addEventListener("DOMContentLoaded", function () {
+  inicializarDashboard();
+});

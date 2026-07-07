@@ -1,5 +1,3 @@
-const API_BASE_URL = "http://localhost:3000/api";
-
 let dadosRelatorios = {
   estoques: [],
   envios: [],
@@ -11,10 +9,15 @@ let dadosRelatorios = {
 
 let historicoRelatorios = [];
 
-function mostrarAlerta(mensagem) {
+function mostrarAlerta(mensagem, erro = false) {
   const alerta = document.getElementById("alertaSistema");
 
   if (!alerta) {
+    if (typeof mostrarToast === "function") {
+      mostrarToast(mensagem, erro);
+      return;
+    }
+
     alert(mensagem);
     return;
   }
@@ -27,21 +30,18 @@ function mostrarAlerta(mensagem) {
   }, 3000);
 }
 
-function obterUsuarioLogado() {
+function obterUsuarioAtualRelatorio() {
+  if (typeof buscarUsuarioLogado === "function") {
+    return buscarUsuarioLogado();
+  }
+
   const usuarioSalvo = localStorage.getItem("usuarioLogado");
 
   if (!usuarioSalvo) {
-    return {
-      nome: "Administrador",
-    };
+    return null;
   }
 
-  const usuario = JSON.parse(usuarioSalvo);
-
-  return {
-    nome:
-      usuario.nome || usuario.nomeCompleto || usuario.email || "Administrador",
-  };
+  return JSON.parse(usuarioSalvo);
 }
 
 function formatarDataHora(dataHora) {
@@ -51,7 +51,7 @@ function formatarDataHora(dataHora) {
 
   const data = new Date(dataHora);
 
-  if (isNaN(data.getTime())) {
+  if (Number.isNaN(data.getTime())) {
     return dataHora;
   }
 
@@ -93,29 +93,21 @@ function baixarCsv(nomeArquivo, linhas) {
 }
 
 async function buscarApi(caminho) {
-  const resposta = await fetch(`${API_BASE_URL}${caminho}`);
-
-  const corpo = await resposta.json();
-
-  if (!resposta.ok) {
-    throw new Error(corpo.erro || "Erro ao buscar dados da API.");
-  }
-
-  return corpo;
+  return await apiFetch(caminho);
 }
 
 function obterStatusEstoque(item) {
+  if (item.statusEstoque) {
+    return item.statusEstoque;
+  }
+
   if (item.status) {
     return item.status;
   }
 
-  const estoqueAtual = Number(item.estoqueAtual || item.quantidadeAtual || 0);
-  const estoqueMinimo = Number(
-    item.estoqueMinimo || item.quantidadeMinima || 0,
-  );
-  const estoqueRecomendado = Number(
-    item.estoqueRecomendado || item.quantidadeRecomendada || 0,
-  );
+  const estoqueAtual = obterEstoqueAtual(item);
+  const estoqueMinimo = obterEstoqueMinimo(item);
+  const estoqueRecomendado = obterEstoqueRecomendado(item);
 
   if (estoqueAtual <= estoqueMinimo) {
     return "Crítico";
@@ -129,43 +121,92 @@ function obterStatusEstoque(item) {
 }
 
 function obterNomeLoja(item) {
-  return item.nomeLoja || item.lojaNome || item.nome || item.loja || "-";
+  return (
+    item.nomeLoja ||
+    item.nome_loja ||
+    item.lojaNome ||
+    item.nome ||
+    item.loja ||
+    "-"
+  );
 }
 
 function obterCodigoLoja(item) {
-  return item.codigoLoja || item.lojaCodigo || item.codigo || "-";
+  return (
+    item.codigoLoja || item.codigo_loja || item.lojaCodigo || item.codigo || "-"
+  );
 }
 
 function obterEstoqueAtual(item) {
   return Number(
-    item.estoqueAtual || item.quantidadeAtual || item.saldoAtual || 0,
+    item.estoqueAtual ??
+      item.estoque_atual ??
+      item.quantidadeAtual ??
+      item.saldoAtual ??
+      0,
   );
 }
 
 function obterEstoqueMinimo(item) {
   return Number(
-    item.estoqueMinimo || item.quantidadeMinima || item.minimo || 0,
+    item.estoqueMinimo ??
+      item.estoque_minimo ??
+      item.quantidadeMinima ??
+      item.minimo ??
+      0,
   );
 }
 
 function obterEstoqueRecomendado(item) {
   return Number(
-    item.estoqueRecomendado ||
-      item.quantidadeRecomendada ||
-      item.recomendado ||
+    item.estoqueRecomendado ??
+      item.estoque_recomendado ??
+      item.quantidadeRecomendada ??
+      item.recomendado ??
       0,
   );
 }
 
+function obterQuantidadeEnvio(envio) {
+  return Number(
+    envio.quantidadeEnviada ??
+      envio.quantidade_enviada ??
+      envio.quantidade ??
+      0,
+  );
+}
+
+function obterQuantidadeRecebida(recebimento) {
+  return Number(
+    recebimento.quantidadeRecebida ??
+      recebimento.quantidade_recebida ??
+      recebimento.quantidade ??
+      0,
+  );
+}
+
+function obterNomeUsuario(item) {
+  return (
+    item.usuarioNome ||
+    item.usuario_nome ||
+    item.usuarioResponsavel ||
+    item.usuarioResponsavelNome ||
+    item.responsavel ||
+    item.usuarioId ||
+    item.usuario_id ||
+    "-"
+  );
+}
+
 function registrarHistoricoRelatorio(tipo, formato, filtros) {
-  const usuario = obterUsuarioLogado();
+  const usuario = obterUsuarioAtualRelatorio();
 
   historicoRelatorios.push({
     id: Date.now(),
     dataHora: new Date().toISOString(),
     tipo,
     formato,
-    usuario: usuario.nome,
+    usuario: usuario?.nome || "Usuário",
     filtros,
   });
 }
@@ -175,17 +216,35 @@ function carregarCardsRelatorios() {
     return obterStatusEstoque(estoque) === "Crítico";
   });
 
-  document.getElementById("totalRelatoriosExportados").textContent =
-    historicoRelatorios.length;
+  const totalRelatoriosExportados = document.getElementById(
+    "totalRelatoriosExportados",
+  );
 
-  document.getElementById("lojasCriticasRelatorio").textContent =
-    lojasCriticas.length;
+  const lojasCriticasRelatorio = document.getElementById(
+    "lojasCriticasRelatorio",
+  );
 
-  document.getElementById("totalEnviosRelatorio").textContent =
-    dadosRelatorios.envios.length;
+  const totalEnviosRelatorio = document.getElementById("totalEnviosRelatorio");
+  const totalRecebimentosRelatorio = document.getElementById(
+    "totalRecebimentosRelatorio",
+  );
 
-  document.getElementById("totalRecebimentosRelatorio").textContent =
-    dadosRelatorios.recebimentos.length;
+  if (totalRelatoriosExportados) {
+    totalRelatoriosExportados.textContent = historicoRelatorios.length;
+  }
+
+  if (lojasCriticasRelatorio) {
+    lojasCriticasRelatorio.textContent = lojasCriticas.length;
+  }
+
+  if (totalEnviosRelatorio) {
+    totalEnviosRelatorio.textContent = dadosRelatorios.envios.length;
+  }
+
+  if (totalRecebimentosRelatorio) {
+    totalRecebimentosRelatorio.textContent =
+      dadosRelatorios.recebimentos.length;
+  }
 }
 
 function carregarTabelaHistoricoRelatorios() {
@@ -230,28 +289,28 @@ async function carregarDadosRelatorios() {
   try {
     const [estoques, envios, recebimentos, manutencoes, usuarios, perfis] =
       await Promise.all([
-        buscarApi("/estoques"),
-        buscarApi("/envios"),
-        buscarApi("/recebimentos"),
-        buscarApi("/manutencoes"),
-        buscarApi("/usuarios"),
-        buscarApi("/perfis"),
+        buscarApi("/api/estoques"),
+        buscarApi("/api/envios"),
+        buscarApi("/api/recebimentos"),
+        buscarApi("/api/manutencoes"),
+        buscarApi("/api/usuarios"),
+        buscarApi("/api/perfis"),
       ]);
 
     dadosRelatorios = {
-      estoques,
-      envios,
-      recebimentos,
-      manutencoes,
-      usuarios,
-      perfis,
+      estoques: Array.isArray(estoques) ? estoques : [],
+      envios: Array.isArray(envios) ? envios : [],
+      recebimentos: Array.isArray(recebimentos) ? recebimentos : [],
+      manutencoes: Array.isArray(manutencoes) ? manutencoes : [],
+      usuarios: Array.isArray(usuarios) ? usuarios : [],
+      perfis: Array.isArray(perfis) ? perfis : [],
     };
 
     carregarCardsRelatorios();
     carregarTabelaHistoricoRelatorios();
   } catch (erro) {
-    console.error(erro);
-    mostrarAlerta("Erro ao carregar dados dos relatórios.");
+    console.error("Erro ao carregar dados dos relatórios:", erro);
+    mostrarAlerta("Erro ao carregar dados dos relatórios.", true);
   }
 }
 
@@ -344,6 +403,7 @@ function exportarRelatorioEnvios() {
 
   const cabecalho = montarLinhaCsv([
     "Data/Hora",
+    "Código da Loja",
     "Loja",
     "Quantidade",
     "Remessa",
@@ -354,10 +414,11 @@ function exportarRelatorioEnvios() {
   const linhas = envios.map(function (envio) {
     return montarLinhaCsv([
       formatarDataHora(envio.dataHora || envio.criadoEm || envio.dataEnvio),
+      obterCodigoLoja(envio),
       obterNomeLoja(envio),
-      envio.quantidade || envio.quantidadeEnviada || 0,
-      envio.remessa || envio.codigoRemessa || "-",
-      envio.responsavel || envio.usuarioResponsavel || "-",
+      obterQuantidadeEnvio(envio),
+      envio.remessa || envio.codigoRemessa || envio.codigo_remessa || "-",
+      obterNomeUsuario(envio),
       envio.status || "-",
     ]);
   });
@@ -381,6 +442,7 @@ function exportarRelatorioRecebimentos() {
 
   const cabecalho = montarLinhaCsv([
     "Data/Hora",
+    "Código da Loja",
     "Loja",
     "Quantidade Recebida",
     "Responsável",
@@ -395,9 +457,10 @@ function exportarRelatorioRecebimentos() {
           recebimento.criadoEm ||
           recebimento.dataRecebimento,
       ),
+      obterCodigoLoja(recebimento),
       obterNomeLoja(recebimento),
-      recebimento.quantidadeRecebida || recebimento.quantidade || 0,
-      recebimento.responsavel || recebimento.usuarioResponsavel || "-",
+      obterQuantidadeRecebida(recebimento),
+      obterNomeUsuario(recebimento),
       recebimento.status || "Recebido",
       recebimento.observacao || "-",
     ]);
@@ -427,13 +490,11 @@ function exportarRelatorioManutencoes() {
 
   const cabecalho = montarLinhaCsv([
     "Data/Hora",
+    "Código da Loja",
     "Loja",
     "Tipo",
     "Quantidade",
-    "Estoque Anterior",
-    "Estoque Atualizado",
     "Responsável",
-    "Motivo",
     "Observação",
   ]);
 
@@ -442,13 +503,11 @@ function exportarRelatorioManutencoes() {
       formatarDataHora(
         manutencao.dataHora || manutencao.criadoEm || manutencao.dataManutencao,
       ),
+      obterCodigoLoja(manutencao),
       obterNomeLoja(manutencao),
       manutencao.tipo || manutencao.tipoManutencao || "-",
       manutencao.quantidade || 0,
-      manutencao.estoqueAnterior || manutencao.saldoAnterior || "-",
-      manutencao.estoqueAtualizado || manutencao.saldoPosterior || "-",
-      manutencao.responsavel || manutencao.usuarioResponsavel || "-",
-      manutencao.motivo || "-",
+      obterNomeUsuario(manutencao),
       manutencao.observacao || "-",
     ]);
   });
@@ -526,10 +585,10 @@ function exportarRelatorioPerfis() {
     const permissoes = perfil.permissoes || [];
 
     return montarLinhaCsv([
-      perfil.nomePerfil || "-",
+      perfil.nomePerfil || perfil.nome_perfil || perfil.nome || "-",
       perfil.nivel || "-",
-      permissoes.join(", "),
-      permissoes.length,
+      Array.isArray(permissoes) ? permissoes.join(", ") : "-",
+      Array.isArray(permissoes) ? permissoes.length : 0,
     ]);
   });
 
@@ -543,7 +602,20 @@ function exportarRelatorioPerfis() {
   mostrarAlerta("Relatório de perfis exportado com sucesso.");
 }
 
+async function iniciarPaginaRelatorios() {
+  const usuario = carregarUsuarioLogado();
+
+  if (!usuario) {
+    return;
+  }
+
+  await carregarDadosRelatorios();
+
+  if (typeof aplicarPermissoesMenu === "function") {
+    aplicarPermissoesMenu();
+  }
+}
+
 document.addEventListener("DOMContentLoaded", function () {
-  carregarUsuarioLogado();
-  carregarDadosRelatorios();
+  iniciarPaginaRelatorios();
 });

@@ -1,26 +1,175 @@
 let estoquesCarregados = [];
 
 async function buscarEstoquesApi() {
-  const resposta = await fetch("http://localhost:3000/api/estoques");
+  const estoques = await apiFetch("/api/estoques");
 
-  if (!resposta.ok) {
-    throw new Error("Erro ao buscar estoques no backend.");
+  if (!Array.isArray(estoques)) {
+    return [];
   }
 
-  return await resposta.json();
+  return estoques.map(normalizarEstoque);
 }
 
-// Função para buscar o histórico de movimentações de estoque de uma loja específica
 async function buscarMovimentacoesEstoqueApi(lojaId) {
-  const resposta = await fetch(
-    `http://localhost:3000/api/movimentacoes-estoque?lojaId=${lojaId}`,
+  const parametroLoja = lojaId ? `?lojaId=${lojaId}` : "";
+
+  const movimentacoes = await apiFetch(
+    `/api/estoques/movimentacoes-estoque${parametroLoja}`,
   );
 
-  if (!resposta.ok) {
-    throw new Error("Erro ao buscar histórico de movimentações.");
+  if (!Array.isArray(movimentacoes)) {
+    return [];
   }
 
-  return await resposta.json();
+  return movimentacoes.map(normalizarMovimentacaoEstoque);
+}
+
+function normalizarEstoque(estoque) {
+  const lojaId =
+    estoque.lojaId ??
+    estoque.loja_id ??
+    estoque.idLoja ??
+    estoque.id_loja ??
+    estoque.id;
+
+  const estoqueAtual = Number(
+    estoque.estoqueAtual ??
+      estoque.estoque_atual ??
+      estoque.quantidadeAtual ??
+      estoque.quantidade_atual ??
+      estoque.saldoAtual ??
+      0,
+  );
+
+  const estoqueMinimo = Number(
+    estoque.estoqueMinimo ??
+      estoque.estoque_minimo ??
+      estoque.quantidadeMinima ??
+      estoque.quantidade_minima ??
+      estoque.minimo ??
+      0,
+  );
+
+  const estoqueRecomendado = Number(
+    estoque.estoqueRecomendado ??
+      estoque.estoque_recomendado ??
+      estoque.quantidadeRecomendada ??
+      estoque.quantidade_recomendada ??
+      estoque.recomendado ??
+      0,
+  );
+
+  const codigoLoja =
+    estoque.codigoLoja ??
+    estoque.codigo_loja ??
+    estoque.codigo ??
+    estoque.lojaCodigo ??
+    estoque.loja_codigo ??
+    "-";
+
+  const nomeLoja =
+    estoque.nomeLoja ??
+    estoque.nome_loja ??
+    estoque.nome ??
+    estoque.lojaNome ??
+    estoque.loja_nome ??
+    "-";
+
+  const statusEstoque =
+    estoque.statusEstoque ??
+    estoque.status_estoque ??
+    estoque.status ??
+    calcularStatusEstoque(estoqueAtual, estoqueMinimo, estoqueRecomendado);
+
+  return {
+    lojaId,
+    codigoLoja,
+    nomeLoja,
+    estoqueAtual,
+    estoqueMinimo,
+    estoqueRecomendado,
+    statusEstoque,
+    atualizadoEm:
+      estoque.atualizadoEm ??
+      estoque.atualizado_em ??
+      estoque.criadoEm ??
+      estoque.criado_em ??
+      null,
+  };
+}
+
+function normalizarMovimentacaoEstoque(movimentacao) {
+  return {
+    id: movimentacao.id,
+    lojaId:
+      movimentacao.lojaId ??
+      movimentacao.loja_id ??
+      movimentacao.idLoja ??
+      movimentacao.id_loja,
+    criadoEm:
+      movimentacao.criadoEm ??
+      movimentacao.criado_em ??
+      movimentacao.dataHora ??
+      movimentacao.data_hora,
+    tipoMovimentacao:
+      movimentacao.tipoMovimentacao ??
+      movimentacao.tipo_movimentacao ??
+      movimentacao.tipo,
+    quantidade: movimentacao.quantidade ?? 0,
+    saldoAnterior:
+      movimentacao.saldoAnterior ??
+      movimentacao.saldo_anterior ??
+      movimentacao.estoqueAnterior ??
+      "-",
+    saldoPosterior:
+      movimentacao.saldoPosterior ??
+      movimentacao.saldo_posterior ??
+      movimentacao.estoquePosterior ??
+      movimentacao.estoqueAtualizado ??
+      "-",
+    codigoRemessa:
+      movimentacao.codigoRemessa ??
+      movimentacao.codigo_remessa ??
+      movimentacao.remessa ??
+      "-",
+    observacao: movimentacao.observacao ?? "-",
+  };
+}
+
+function calcularStatusEstoque(
+  estoqueAtual,
+  estoqueMinimo,
+  estoqueRecomendado,
+) {
+  if (estoqueAtual <= estoqueMinimo) {
+    return "Crítico";
+  }
+
+  if (estoqueAtual < estoqueRecomendado) {
+    return "Atenção";
+  }
+
+  return "Normal";
+}
+
+function carregarUsuarioPaginaEstoque() {
+  const usuarioLogado =
+    typeof buscarUsuarioLogado === "function"
+      ? buscarUsuarioLogado()
+      : obterUsuarioLogado();
+
+  if (!usuarioLogado || !usuarioLogado.id) {
+    window.location.href = "login.html";
+    return null;
+  }
+
+  const nomeUsuario = document.getElementById("nomeUsuario");
+
+  if (nomeUsuario) {
+    nomeUsuario.textContent = usuarioLogado.nome || "Usuário";
+  }
+
+  return usuarioLogado;
 }
 
 function formatarTipoMovimentacao(tipo) {
@@ -30,13 +179,15 @@ function formatarTipoMovimentacao(tipo) {
   if (tipo === "AVARIA") return "Avaria";
   if (tipo === "EXTRAVIO") return "Extravio";
   if (tipo === "CORRECAO") return "Correção";
+  if (tipo === "AJUSTE_ENTRADA") return "Ajuste de Entrada";
+  if (tipo === "AJUSTE_SAIDA") return "Ajuste de Saída";
 
-  return tipo;
+  return tipo || "-";
 }
 
 function obterReposicaoSugerida(estoque) {
-  const estoqueAtual = Number(estoque.estoqueAtual);
-  const estoqueRecomendado = Number(estoque.estoqueRecomendado);
+  const estoqueAtual = Number(estoque.estoqueAtual || 0);
+  const estoqueRecomendado = Number(estoque.estoqueRecomendado || 0);
 
   if (estoqueAtual >= estoqueRecomendado) {
     return 0;
@@ -48,6 +199,7 @@ function obterReposicaoSugerida(estoque) {
 function obterClasseStatusEstoque(status) {
   if (status === "Crítico") return "badge-critico";
   if (status === "Atenção") return "badge-atencao";
+
   return "badge-normal";
 }
 
@@ -66,16 +218,16 @@ function formatarDataHora(dataHora) {
 
   const data = new Date(dataHora);
 
-  if (isNaN(data.getTime())) {
+  if (Number.isNaN(data.getTime())) {
     return dataHora;
   }
 
   return data.toLocaleString("pt-BR");
 }
 
-function mostrarMensagem(mensagem) {
+function mostrarMensagem(mensagem, erro = false) {
   if (typeof mostrarToast === "function") {
-    mostrarToast(mensagem);
+    mostrarToast(mensagem, erro);
     return;
   }
 
@@ -87,23 +239,21 @@ async function carregarCardsEstoque() {
     const estoques = await buscarEstoquesApi();
     estoquesCarregados = estoques;
 
-    const totalEstoque = estoques.reduce(
-      (total, estoque) => total + Number(estoque.estoqueAtual),
-      0,
-    );
+    const totalEstoque = estoques.reduce(function (total, estoque) {
+      return total + Number(estoque.estoqueAtual || 0);
+    }, 0);
 
-    const lojasCriticas = estoques.filter(
-      (estoque) => estoque.statusEstoque === "Crítico",
-    ).length;
+    const lojasCriticas = estoques.filter(function (estoque) {
+      return estoque.statusEstoque === "Crítico";
+    }).length;
 
-    const lojasAtencao = estoques.filter(
-      (estoque) => estoque.statusEstoque === "Atenção",
-    ).length;
+    const lojasAtencao = estoques.filter(function (estoque) {
+      return estoque.statusEstoque === "Atenção";
+    }).length;
 
-    const reposicaoSugerida = estoques.reduce(
-      (total, estoque) => total + obterReposicaoSugerida(estoque),
-      0,
-    );
+    const reposicaoSugerida = estoques.reduce(function (total, estoque) {
+      return total + obterReposicaoSugerida(estoque);
+    }, 0);
 
     atualizarTexto(
       ["totalEstoque", "totalTaloesEstoque", "estoqueTotal"],
@@ -123,7 +273,10 @@ async function carregarCardsEstoque() {
     atualizarTexto(["reposicaoSugerida"], reposicaoSugerida);
   } catch (erro) {
     console.error("Erro ao carregar cards de estoque:", erro);
-    mostrarMensagem("Não foi possível carregar os indicadores de estoque.");
+    mostrarMensagem(
+      "Não foi possível carregar os indicadores de estoque.",
+      true,
+    );
   }
 }
 
@@ -140,6 +293,17 @@ async function carregarTabelaEstoque() {
 
     const estoques = await buscarEstoquesApi();
     estoquesCarregados = estoques;
+
+    if (estoques.length === 0) {
+      tabela.innerHTML = `
+        <tr>
+          <td colspan="9" class="empty-state">
+            Nenhum estoque encontrado para o seu usuário.
+          </td>
+        </tr>
+      `;
+      return;
+    }
 
     estoques.forEach(function (estoque) {
       const reposicaoSugerida = obterReposicaoSugerida(estoque);
@@ -159,42 +323,44 @@ async function carregarTabelaEstoque() {
             </span>
           </td>
           <td>${formatarDataHora(estoque.atualizadoEm)}</td>
-    <td>
-  <div class="table-actions estoque-actions">
-    <button
-      class="btn-primary btn-solicitar"
-      onclick="solicitarTalao(${estoque.lojaId}, ${reposicaoSugerida}, this)"
-      ${reposicaoSugerida === 0 ? "disabled" : ""}
-    >
-      Solicitar
-    </button>
+          <td>
+            <div class="table-actions estoque-actions">
+              <button
+                class="btn-primary btn-solicitar"
+                onclick="solicitarTalao(${estoque.lojaId}, ${reposicaoSugerida}, this)"
+                ${reposicaoSugerida === 0 ? "disabled" : ""}
+              >
+                Solicitar
+              </button>
 
-    <button
-      class="btn-table-action btn-sm"
-      onclick="verHistoricoEstoque(${estoque.lojaId})"
-    >
-      Histórico
-    </button>
-  </div>
-</td>
+              <button
+                class="btn-table-action btn-sm"
+                onclick="verHistoricoEstoque(${estoque.lojaId})"
+              >
+                Histórico
+              </button>
+            </div>
+          </td>
         </tr>
       `;
     });
 
-    aplicarResponsividadeTabelas();
+    if (typeof aplicarResponsividadeTabelas === "function") {
+      aplicarResponsividadeTabelas();
+    }
   } catch (erro) {
     console.error("Erro ao carregar tabela de estoque:", erro);
-    mostrarMensagem("Não foi possível carregar a tabela de estoque.");
+    mostrarMensagem("Não foi possível carregar a tabela de estoque.", true);
   }
 }
 
 function solicitarTalao(lojaId, quantidade, botao) {
-  const estoque = estoquesCarregados.find(
-    (item) => Number(item.lojaId) === Number(lojaId),
-  );
+  const estoque = estoquesCarregados.find(function (item) {
+    return Number(item.lojaId) === Number(lojaId);
+  });
 
   if (!estoque) {
-    mostrarMensagem("Loja não encontrada.");
+    mostrarMensagem("Loja não encontrada.", true);
     return;
   }
 
@@ -207,8 +373,10 @@ function solicitarTalao(lojaId, quantidade, botao) {
     `Reposição sugerida de ${quantidade} talões para a loja ${estoque.codigoLoja} - ${estoque.nomeLoja}.`,
   );
 
-  botao.disabled = true;
-  botao.textContent = "Sugerido";
+  if (botao) {
+    botao.disabled = true;
+    botao.textContent = "Sugerido";
+  }
 }
 
 async function exibirRanqueamentoPrioridade() {
@@ -223,11 +391,17 @@ async function exibirRanqueamentoPrioridade() {
     const banner = document.getElementById("alertaRanqueamento");
     const mensagem = document.getElementById("mensagemRanqueamento");
 
-    if (!banner || !mensagem) return;
+    if (!banner || !mensagem) {
+      return;
+    }
 
     const criticas = estoques
-      .filter((estoque) => estoque.statusEstoque === "Crítico")
-      .sort((a, b) => obterReposicaoSugerida(b) - obterReposicaoSugerida(a));
+      .filter(function (estoque) {
+        return estoque.statusEstoque === "Crítico";
+      })
+      .sort(function (a, b) {
+        return obterReposicaoSugerida(b) - obterReposicaoSugerida(a);
+      });
 
     if (criticas.length === 0) {
       banner.classList.add("hidden");
@@ -235,7 +409,9 @@ async function exibirRanqueamentoPrioridade() {
     }
 
     const nomes = criticas
-      .map((estoque) => `${estoque.codigoLoja} - ${estoque.nomeLoja}`)
+      .map(function (estoque) {
+        return `${estoque.codigoLoja} - ${estoque.nomeLoja}`;
+      })
       .join(", ");
 
     mensagem.textContent = `Prioridade de envio sugerida: ${nomes}. Lojas com maior necessidade de reposição.`;
@@ -246,21 +422,11 @@ async function exibirRanqueamentoPrioridade() {
   }
 }
 
-async function iniciarPaginaEstoque() {
-  carregarUsuarioLogado();
-
-  await carregarCardsEstoque();
-  await carregarTabelaEstoque();
-  await exibirRanqueamentoPrioridade();
-
-  aplicarPermissoesMenu();
-}
-
 async function verHistoricoEstoque(lojaId) {
   const conteudo = document.getElementById("historicoEstoqueConteudo");
 
   if (!conteudo) {
-    mostrarMensagem("Área de histórico não encontrada no HTML.");
+    mostrarMensagem("Área de histórico não encontrada no HTML.", true);
     return;
   }
 
@@ -276,7 +442,7 @@ async function verHistoricoEstoque(lojaId) {
     } else {
       conteudo.innerHTML = "";
 
-      movimentacoes.forEach((movimentacao) => {
+      movimentacoes.forEach(function (movimentacao) {
         conteudo.innerHTML += `
           <div class="detail-card">
             <div class="detail-row">
@@ -306,35 +472,63 @@ async function verHistoricoEstoque(lojaId) {
 
             <div class="detail-row">
               <strong>Remessa</strong>
-              <span>${movimentacao.codigoRemessa || "-"}</span>
+              <span>${movimentacao.codigoRemessa}</span>
             </div>
 
             <div class="detail-row">
               <strong>Observação</strong>
-              <span>${movimentacao.observacao || "-"}</span>
+              <span>${movimentacao.observacao}</span>
             </div>
           </div>
         `;
       });
     }
 
-    document
-      .getElementById("historicoEstoqueContainer")
-      .classList.remove("hidden");
+    const container = document.getElementById("historicoEstoqueContainer");
+    const overlay = document.getElementById("historicoEstoqueOverlay");
 
-    document
-      .getElementById("historicoEstoqueOverlay")
-      .classList.remove("hidden");
+    if (container) {
+      container.classList.remove("hidden");
+    }
+
+    if (overlay) {
+      overlay.classList.remove("hidden");
+    }
   } catch (erro) {
     console.error("Erro ao carregar histórico:", erro);
-    mostrarMensagem("Não foi possível carregar o histórico de estoque.");
+    mostrarMensagem("Não foi possível carregar o histórico de estoque.", true);
   }
 }
 
 function fecharHistoricoEstoque() {
-  document.getElementById("historicoEstoqueContainer").classList.add("hidden");
+  const container = document.getElementById("historicoEstoqueContainer");
+  const overlay = document.getElementById("historicoEstoqueOverlay");
 
-  document.getElementById("historicoEstoqueOverlay").classList.add("hidden");
+  if (container) {
+    container.classList.add("hidden");
+  }
+
+  if (overlay) {
+    overlay.classList.add("hidden");
+  }
 }
 
-iniciarPaginaEstoque();
+async function iniciarPaginaEstoque() {
+  const usuarioLogado = carregarUsuarioPaginaEstoque();
+
+  if (!usuarioLogado) {
+    return;
+  }
+
+  await carregarCardsEstoque();
+  await carregarTabelaEstoque();
+  await exibirRanqueamentoPrioridade();
+
+  if (typeof aplicarPermissoesMenu === "function") {
+    aplicarPermissoesMenu();
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  iniciarPaginaEstoque();
+});

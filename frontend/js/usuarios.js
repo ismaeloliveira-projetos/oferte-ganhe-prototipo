@@ -1,6 +1,6 @@
-const API_USUARIOS_URL = "http://localhost:3000/api/usuarios";
-const API_PERFIS_URL = "http://localhost:3000/api/perfis";
-const API_LOJAS_URL = "http://localhost:3000/api/lojas";
+const API_USUARIOS_URL = "/api/usuarios";
+const API_PERFIS_URL = "/api/perfis";
+const API_LOJAS_URL = "/api/lojas";
 
 let usuarioEditandoId = null;
 let usuarioExcluindoId = null;
@@ -11,10 +11,15 @@ let lojasDisponiveis = [];
 let perfisPorUsuario = {};
 let lojasPorUsuario = {};
 
-function mostrarAlerta(mensagem) {
+function mostrarAlerta(mensagem, erro = false) {
   const alerta = document.getElementById("alertaSistema");
 
   if (!alerta) {
+    if (typeof mostrarToast === "function") {
+      mostrarToast(mensagem, erro);
+      return;
+    }
+
     alert(mensagem);
     return;
   }
@@ -27,33 +32,53 @@ function mostrarAlerta(mensagem) {
   }, 3000);
 }
 
-async function buscarApi(url) {
-  const resposta = await fetch(url);
-  const corpo = await resposta.json();
-
-  if (!resposta.ok) {
-    throw new Error(corpo.erro || "Erro ao buscar dados.");
-  }
-
-  return corpo;
+async function buscarApi(caminho, opcoes = {}) {
+  return await apiFetch(caminho, opcoes);
 }
 
-async function enviarApi(url, metodo, dados) {
-  const resposta = await fetch(url, {
+async function enviarApi(caminho, metodo, dados = null) {
+  const opcoes = {
     method: metodo,
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(dados),
-  });
+  };
 
-  const corpo = await resposta.json();
-
-  if (!resposta.ok) {
-    throw new Error(corpo.erro || "Erro ao salvar dados.");
+  if (dados !== null) {
+    opcoes.body = JSON.stringify(dados);
   }
 
-  return corpo;
+  return await apiFetch(caminho, opcoes);
+}
+
+function normalizarUsuario(usuario) {
+  return {
+    id: usuario.id ?? usuario.idUsuario ?? usuario.id_usuario,
+    nome: usuario.nome ?? usuario.nomeUsuario ?? usuario.nome_usuario ?? "-",
+    matricula: usuario.matricula ?? "-",
+    email: usuario.email ?? "-",
+    ativo: usuario.ativo,
+  };
+}
+
+function normalizarPerfil(perfil) {
+  return {
+    id: perfil.id ?? perfil.perfilId ?? perfil.idPerfil ?? perfil.id_perfil,
+    perfilId:
+      perfil.perfilId ?? perfil.id ?? perfil.idPerfil ?? perfil.id_perfil,
+    nomePerfil:
+      perfil.nomePerfil ??
+      perfil.nome_perfil ??
+      perfil.nome ??
+      perfil.descricao ??
+      "Perfil",
+  };
+}
+
+function normalizarLoja(loja) {
+  return {
+    id: loja.id ?? loja.lojaId ?? loja.idLoja ?? loja.id_loja,
+    codigoLoja:
+      loja.codigoLoja ?? loja.codigo_loja ?? loja.codigo ?? loja.codigoLoja,
+    nomeLoja: loja.nomeLoja ?? loja.nome_loja ?? loja.nome ?? loja.nomeLoja,
+  };
 }
 
 async function criarUsuarioApi(dados) {
@@ -65,28 +90,22 @@ async function atualizarUsuarioApi(id, dados) {
 }
 
 async function inativarUsuarioApi(id) {
-  const resposta = await fetch(`${API_USUARIOS_URL}/${id}/inativar`, {
-    method: "PATCH",
-  });
-
-  const corpo = await resposta.json();
-
-  if (!resposta.ok) {
-    throw new Error(corpo.erro || "Erro ao inativar usuário.");
-  }
-
-  return corpo;
+  return await enviarApi(`${API_USUARIOS_URL}/${id}/inativar`, "PATCH");
 }
 
 async function buscarPerfisDoUsuario(usuarioId) {
-  const resposta = await fetch(`${API_PERFIS_URL}/usuarios/${usuarioId}`);
-  const corpo = await resposta.json();
+  try {
+    const resposta = await buscarApi(`${API_PERFIS_URL}/usuarios/${usuarioId}`);
 
-  if (!resposta.ok) {
+    if (!Array.isArray(resposta)) {
+      return [];
+    }
+
+    return resposta.map(normalizarPerfil);
+  } catch (erro) {
+    console.warn("Perfil do usuário não encontrado:", usuarioId, erro.message);
     return [];
   }
-
-  return corpo;
 }
 
 async function vincularPerfilAoUsuario(usuarioId, perfilId) {
@@ -96,20 +115,10 @@ async function vincularPerfilAoUsuario(usuarioId, perfilId) {
 }
 
 async function removerPerfilDoUsuario(usuarioId, perfilId) {
-  const resposta = await fetch(
+  return await enviarApi(
     `${API_PERFIS_URL}/usuarios/${usuarioId}/${perfilId}`,
-    {
-      method: "DELETE",
-    },
+    "DELETE",
   );
-
-  const corpo = await resposta.json();
-
-  if (!resposta.ok) {
-    throw new Error(corpo.erro || "Erro ao remover perfil do usuário.");
-  }
-
-  return corpo;
 }
 
 async function atualizarPerfilDoUsuario(usuarioId, novoPerfilId) {
@@ -123,38 +132,41 @@ async function atualizarPerfilDoUsuario(usuarioId, novoPerfilId) {
 }
 
 async function buscarLojasDoUsuario(usuarioId) {
-  const resposta = await fetch(`${API_USUARIOS_URL}/${usuarioId}/lojas`);
-  const corpo = await resposta.json();
+  try {
+    const resposta = await buscarApi(`${API_USUARIOS_URL}/${usuarioId}/lojas`);
 
-  if (!resposta.ok) {
+    return {
+      usuarioId,
+      escopo: resposta.escopo || "LOJAS_ESPECIFICAS",
+      lojas: Array.isArray(resposta.lojas)
+        ? resposta.lojas.map(normalizarLoja)
+        : [],
+    };
+  } catch (erro) {
+    console.warn("Lojas do usuário não encontradas:", usuarioId, erro.message);
+
     return {
       usuarioId,
       escopo: "TODAS_AS_LOJAS",
       lojas: [],
     };
   }
-
-  return corpo;
 }
 
 async function vincularLojaAoUsuario(usuarioId, lojaId) {
-  const resposta = await fetch(`${API_USUARIOS_URL}/${usuarioId}/lojas`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      lojaId: lojaId ? Number(lojaId) : null,
-    }),
+  return await enviarApi(`${API_USUARIOS_URL}/${usuarioId}/lojas`, "POST", {
+    lojaId: lojaId ? Number(lojaId) : null,
   });
+}
 
-  const corpo = await resposta.json();
-
-  if (!resposta.ok) {
-    throw new Error(corpo.erro || "Erro ao vincular loja ao usuário.");
-  }
-
-  return corpo;
+function obterIdUsuarioCriado(resposta) {
+  return (
+    resposta.id ??
+    resposta.usuario?.id ??
+    resposta.usuarioId ??
+    resposta.idUsuario ??
+    resposta.id_usuario
+  );
 }
 
 async function carregarLojasDosUsuarios(usuarios) {
@@ -164,6 +176,17 @@ async function carregarLojasDosUsuarios(usuarios) {
     usuarios.map(async function (usuario) {
       const resultado = await buscarLojasDoUsuario(usuario.id);
       lojasPorUsuario[usuario.id] = resultado;
+    }),
+  );
+}
+
+async function carregarPerfisDosUsuarios(usuarios) {
+  perfisPorUsuario = {};
+
+  await Promise.all(
+    usuarios.map(async function (usuario) {
+      const perfis = await buscarPerfisDoUsuario(usuario.id);
+      perfisPorUsuario[usuario.id] = perfis;
     }),
   );
 }
@@ -205,7 +228,7 @@ function obterNomeLojaUsuario(usuarioId) {
 
   return resultado.lojas
     .map(function (loja) {
-      return loja.codigoLoja + " - " + loja.nomeLoja;
+      return `${loja.codigoLoja || "-"} - ${loja.nomeLoja || "-"}`;
     })
     .join(", ");
 }
@@ -228,7 +251,11 @@ async function carregarPerfisNoFormulario() {
   }
 
   try {
-    perfisDisponiveis = await buscarApi(API_PERFIS_URL);
+    const perfis = await buscarApi(API_PERFIS_URL);
+
+    perfisDisponiveis = Array.isArray(perfis)
+      ? perfis.map(normalizarPerfil)
+      : [];
 
     selectPerfil.innerHTML = `
       <option value="">Selecione um perfil</option>
@@ -242,8 +269,8 @@ async function carregarPerfisNoFormulario() {
       `;
     });
   } catch (erro) {
-    console.error(erro);
-    mostrarAlerta("Erro ao carregar perfis.");
+    console.error("Erro ao carregar perfis:", erro);
+    mostrarAlerta("Erro ao carregar perfis.", true);
   }
 }
 
@@ -255,38 +282,25 @@ async function carregarLojasNoFormulario() {
   }
 
   try {
-    lojasDisponiveis = await buscarApi(API_LOJAS_URL);
+    const lojas = await buscarApi(API_LOJAS_URL);
+
+    lojasDisponiveis = Array.isArray(lojas) ? lojas.map(normalizarLoja) : [];
 
     selectLoja.innerHTML = `
       <option value="">Administrador Geral (Todas as lojas)</option>
     `;
 
     lojasDisponiveis.forEach(function (loja) {
-      const id = loja.id;
-      const codigo = loja.codigoLoja || loja.codigo;
-      const nome = loja.nomeLoja || loja.nome;
-
       selectLoja.innerHTML += `
-        <option value="${id}">
-          ${codigo} - ${nome}
+        <option value="${loja.id}">
+          ${loja.codigoLoja || "-"} - ${loja.nomeLoja || "-"}
         </option>
       `;
     });
   } catch (erro) {
-    console.error(erro);
-    mostrarAlerta("Erro ao carregar lojas.");
+    console.error("Erro ao carregar lojas:", erro);
+    mostrarAlerta("Erro ao carregar lojas.", true);
   }
-}
-
-async function carregarPerfisDosUsuarios(usuarios) {
-  perfisPorUsuario = {};
-
-  await Promise.all(
-    usuarios.map(async function (usuario) {
-      const perfis = await buscarPerfisDoUsuario(usuario.id);
-      perfisPorUsuario[usuario.id] = perfis;
-    }),
-  );
 }
 
 function renderizarTabelaUsuarios(listaUsuarios) {
@@ -301,7 +315,9 @@ function renderizarTabelaUsuarios(listaUsuarios) {
   if (listaUsuarios.length === 0) {
     tabela.innerHTML = `
       <tr>
-        <td colspan="6">Nenhum usuário cadastrado.</td>
+        <td colspan="6" class="empty-state">
+          Nenhum usuário cadastrado.
+        </td>
       </tr>
     `;
     return;
@@ -316,16 +332,28 @@ function renderizarTabelaUsuarios(listaUsuarios) {
         <td>${usuario.nome}</td>
         <td>${usuario.matricula}</td>
         <td>${usuario.email}</td>
-        <td><span class="badge badge-normal">${nomePerfil}</span></td>
+        <td>
+          <span class="badge-status badge-normal">
+            ${nomePerfil}
+          </span>
+        </td>
         <td>${nomeLoja}</td>
         <td>
-          <button class="btn-table-action btn-sm" onclick="editarUsuario(${usuario.id})">
-            Editar
-          </button>
+          <div class="table-actions">
+            <button
+              class="btn-table-action btn-sm"
+              onclick="editarUsuario(${usuario.id})"
+            >
+              Editar
+            </button>
 
-          <button class="btn-tableaction btn-sm" onclick="excluirUsuario(${usuario.id})">
-            Inativar
-          </button>
+            <button
+              class="btn-tableaction btn-sm"
+              onclick="excluirUsuario(${usuario.id})"
+            >
+              Inativar
+            </button>
+          </div>
         </td>
       </tr>
     `;
@@ -351,7 +379,11 @@ async function carregarTabelaUsuarios(listaUsuarios) {
 
   try {
     if (!listaUsuarios) {
-      usuariosCarregados = await buscarApi(API_USUARIOS_URL);
+      const resposta = await buscarApi(API_USUARIOS_URL);
+
+      usuariosCarregados = Array.isArray(resposta)
+        ? resposta.map(normalizarUsuario)
+        : [];
 
       await carregarPerfisDosUsuarios(usuariosCarregados);
       await carregarLojasDosUsuarios(usuariosCarregados);
@@ -362,7 +394,7 @@ async function carregarTabelaUsuarios(listaUsuarios) {
 
     renderizarTabelaUsuarios(listaUsuarios);
   } catch (erro) {
-    console.error(erro);
+    console.error("Erro ao carregar usuários:", erro);
 
     tabela.innerHTML = `
       <tr>
@@ -370,7 +402,7 @@ async function carregarTabelaUsuarios(listaUsuarios) {
       </tr>
     `;
 
-    mostrarAlerta("Erro ao carregar usuários.");
+    mostrarAlerta("Erro ao carregar usuários.", true);
   }
 }
 
@@ -402,6 +434,7 @@ async function abrirFormularioUsuario() {
   const titulo = document.querySelector(
     "#formUsuarioContainer .content-card-header h2",
   );
+
   const subtitulo = document.querySelector(
     "#formUsuarioContainer .content-card-header span",
   );
@@ -427,11 +460,11 @@ function fecharFormularioUsuario() {
 
 async function editarUsuario(id) {
   const usuarioEncontrado = usuariosCarregados.find(function (usuario) {
-    return usuario.id === id;
+    return Number(usuario.id) === Number(id);
   });
 
   if (!usuarioEncontrado) {
-    mostrarAlerta("Usuário não encontrado.");
+    mostrarAlerta("Usuário não encontrado.", true);
     return;
   }
 
@@ -453,9 +486,11 @@ async function editarUsuario(id) {
     inputSenha.placeholder = "Deixe em branco para manter a senha atual";
   }
 
-  document.getElementById("perfilUsuario").value = obterPrimeiroPerfilIdUsuario(
-    usuarioEncontrado.id,
-  );
+  const selectPerfil = document.getElementById("perfilUsuario");
+
+  if (selectPerfil) {
+    selectPerfil.value = obterPrimeiroPerfilIdUsuario(usuarioEncontrado.id);
+  }
 
   const selectLoja = document.getElementById("lojaUsuario");
 
@@ -491,11 +526,11 @@ async function editarUsuario(id) {
 
 function excluirUsuario(id) {
   const usuarioEncontrado = usuariosCarregados.find(function (usuario) {
-    return usuario.id === id;
+    return Number(usuario.id) === Number(id);
   });
 
   if (!usuarioEncontrado) {
-    mostrarAlerta("Usuário não encontrado.");
+    mostrarAlerta("Usuário não encontrado.", true);
     return;
   }
 
@@ -520,7 +555,7 @@ function fecharConfirmacaoExclusaoUsuario() {
 
 async function confirmarExclusaoUsuario() {
   if (usuarioExcluindoId === null) {
-    mostrarAlerta("Nenhum usuário selecionado para inativação.");
+    mostrarAlerta("Nenhum usuário selecionado para inativação.", true);
     return;
   }
 
@@ -533,8 +568,8 @@ async function confirmarExclusaoUsuario() {
 
     mostrarAlerta("Usuário inativado com sucesso.");
   } catch (erro) {
-    console.error(erro);
-    mostrarAlerta(erro.message);
+    console.error("Erro ao inativar usuário:", erro);
+    mostrarAlerta(erro.message, true);
   }
 }
 
@@ -552,7 +587,7 @@ function filtrarUsuarios() {
 
     return (
       usuario.nome.toLowerCase().includes(termoBusca) ||
-      usuario.matricula.toLowerCase().includes(termoBusca) ||
+      String(usuario.matricula).toLowerCase().includes(termoBusca) ||
       usuario.email.toLowerCase().includes(termoBusca) ||
       nomePerfil.includes(termoBusca)
     );
@@ -561,96 +596,113 @@ function filtrarUsuarios() {
   renderizarTabelaUsuarios(usuariosFiltrados);
 }
 
-const formUsuario = document.getElementById("formUsuario");
+async function salvarUsuario(event) {
+  event.preventDefault();
 
-if (formUsuario) {
-  formUsuario.addEventListener("submit", async function (event) {
-    event.preventDefault();
+  const nome = document.getElementById("nomeUsuarioInput").value.trim();
+  const matricula = document.getElementById("matriculaUsuario").value.trim();
+  const email = document.getElementById("emailUsuario").value.trim();
+  const senha = document.getElementById("senhaUsuario").value;
+  const perfilId = document.getElementById("perfilUsuario").value;
+  const lojaId = document.getElementById("lojaUsuario").value || null;
 
-    const nome = document.getElementById("nomeUsuarioInput").value.trim();
-    const matricula = document.getElementById("matriculaUsuario").value.trim();
-    const email = document.getElementById("emailUsuario").value.trim();
-    const senha = document.getElementById("senhaUsuario").value;
-    const perfilId = document.getElementById("perfilUsuario").value;
-    const lojaId = document.getElementById("lojaUsuario").value || null;
+  if (!nome) {
+    mostrarAlerta("Informe o nome do usuário.");
+    return;
+  }
 
-    if (!nome) {
-      mostrarAlerta("Informe o nome do usuário.");
-      return;
-    }
+  if (!matricula) {
+    mostrarAlerta("Informe a matrícula do usuário.");
+    return;
+  }
 
-    if (!matricula) {
-      mostrarAlerta("Informe a matrícula do usuário.");
-      return;
-    }
+  if (!email) {
+    mostrarAlerta("Informe o e-mail do usuário.");
+    return;
+  }
 
-    if (!email) {
-      mostrarAlerta("Informe o e-mail do usuário.");
-      return;
-    }
+  if (!perfilId) {
+    mostrarAlerta("Selecione um perfil de acesso.");
+    return;
+  }
 
-    if (!perfilId) {
-      mostrarAlerta("Selecione um perfil de acesso.");
-      return;
-    }
+  if (usuarioEditandoId === null && !senha) {
+    mostrarAlerta("Informe a senha do usuário.");
+    return;
+  }
 
-    if (usuarioEditandoId === null && !senha) {
-      mostrarAlerta("Informe a senha do usuário.");
-      return;
-    }
+  const botaoSalvar = document.getElementById("btnSalvarUsuario");
+  const textoOriginal = botaoSalvar ? botaoSalvar.textContent : "Salvar";
 
-    const botaoSalvar = document.getElementById("btnSalvarUsuario");
-    const textoOriginal = botaoSalvar.textContent;
-
+  if (botaoSalvar) {
     botaoSalvar.disabled = true;
     botaoSalvar.textContent = "Salvando...";
+  }
 
-    try {
-      if (usuarioEditandoId === null) {
-        const usuarioCriado = await criarUsuarioApi({
-          nome,
-          matricula,
-          email,
-          senha,
-        });
+  try {
+    if (usuarioEditandoId === null) {
+      const usuarioCriado = await criarUsuarioApi({
+        nome,
+        matricula,
+        email,
+        senha,
+      });
 
-        await vincularPerfilAoUsuario(usuarioCriado.id, perfilId);
-        await vincularLojaAoUsuario(usuarioCriado.id, lojaId);
+      const usuarioCriadoId = obterIdUsuarioCriado(usuarioCriado);
 
-        mostrarAlerta(
-          "Usuário cadastrado com perfil e loja vinculados com sucesso.",
-        );
-      } else {
-        await atualizarUsuarioApi(usuarioEditandoId, {
-          nome,
-          matricula,
-          email,
-        });
-
-        await atualizarPerfilDoUsuario(usuarioEditandoId, perfilId);
-        await vincularLojaAoUsuario(usuarioEditandoId, lojaId);
-
-        mostrarAlerta(
-          "Usuário atualizado com perfil e loja vinculados com sucesso.",
-        );
+      if (!usuarioCriadoId) {
+        throw new Error("Usuário criado, mas o backend não retornou o ID.");
       }
 
-      await carregarTabelaUsuarios();
+      await vincularPerfilAoUsuario(usuarioCriadoId, perfilId);
+      await vincularLojaAoUsuario(usuarioCriadoId, lojaId);
 
-      fecharFormularioUsuario();
-    } catch (erro) {
-      console.error(erro);
-      mostrarAlerta(erro.message);
-    } finally {
+      mostrarAlerta(
+        "Usuário cadastrado com perfil e loja vinculados com sucesso.",
+      );
+    } else {
+      await atualizarUsuarioApi(usuarioEditandoId, {
+        nome,
+        matricula,
+        email,
+      });
+
+      await atualizarPerfilDoUsuario(usuarioEditandoId, perfilId);
+      await vincularLojaAoUsuario(usuarioEditandoId, lojaId);
+
+      mostrarAlerta(
+        "Usuário atualizado com perfil e loja vinculados com sucesso.",
+      );
+    }
+
+    await carregarTabelaUsuarios();
+
+    fecharFormularioUsuario();
+  } catch (erro) {
+    console.error("Erro ao salvar usuário:", erro);
+    mostrarAlerta(erro.message, true);
+  } finally {
+    if (botaoSalvar) {
       botaoSalvar.disabled = false;
       botaoSalvar.textContent = textoOriginal;
-      usuarioEditandoId = null;
     }
-  });
+
+    usuarioEditandoId = null;
+  }
 }
 
-document.addEventListener("DOMContentLoaded", async function () {
-  carregarUsuarioLogado();
+async function iniciarPaginaUsuarios() {
+  const usuario = carregarUsuarioLogado();
+
+  if (!usuario) {
+    return;
+  }
+
+  const formUsuario = document.getElementById("formUsuario");
+
+  if (formUsuario) {
+    formUsuario.addEventListener("submit", salvarUsuario);
+  }
 
   await carregarPerfisNoFormulario();
   await carregarLojasNoFormulario();
@@ -659,4 +711,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   if (typeof aplicarPermissoesMenu === "function") {
     aplicarPermissoesMenu();
   }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  iniciarPaginaUsuarios();
 });

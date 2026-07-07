@@ -21,31 +21,14 @@ function mostrarAlerta(mensagem) {
 }
 
 async function buscarPerfisApi() {
-  const resposta = await fetch(API_PERFIS_URL);
-
-  if (!resposta.ok) {
-    throw new Error("Erro ao buscar perfis.");
-  }
-
-  return await resposta.json();
+  return await apiFetch("/api/perfis");
 }
 
-async function criarPerfilApi(dados) {
-  const resposta = await fetch(API_PERFIS_URL, {
+async function cadastrarPerfilApi(dadosPerfil) {
+  return await apiFetch("/api/perfis", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(dados),
+    body: JSON.stringify(dadosPerfil),
   });
-
-  const corpo = await resposta.json();
-
-  if (!resposta.ok) {
-    throw new Error(corpo.erro || "Erro ao cadastrar perfil.");
-  }
-
-  return corpo;
 }
 
 async function atualizarPerfilApi(id, dados) {
