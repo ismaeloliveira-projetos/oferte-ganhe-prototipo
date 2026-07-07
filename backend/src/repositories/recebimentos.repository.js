@@ -1,27 +1,39 @@
 const { query } = require("../database/conexao");
 
-async function listarRecebimentos() {
-  const resultado = await query(`
-    SELECT
-      r.id AS id,
-      r.envio_id AS "envioId",
-      r.loja_id AS "lojaId",
-      l.codigo_loja AS "codigoLoja",
-      l.nome_loja AS "nomeLoja",
-      e.codigo_remessa AS "codigoRemessa",
-      e.quantidade_enviada AS "quantidadeEnviada",
-      r.quantidade_recebida AS "quantidadeRecebida",
-      r.usuario_recebimento_id AS "usuarioRecebimentoId",
-      r.data_recebimento AS "dataRecebimento",
-      r.observacao AS observacao,
-      r.criado_em AS "criadoEm"
-    FROM recebimentos_taloes r
-    JOIN envios_taloes e
-      ON e.id = r.envio_id
-    JOIN lojas l
-      ON l.id = r.loja_id
-    ORDER BY r.data_recebimento DESC
-  `);
+async function listarRecebimentos(contextoUsuario) {
+  const parametros = [];
+  const filtros = [];
+
+  if (contextoUsuario && !contextoUsuario.acessoGlobal) {
+    parametros.push(contextoUsuario.lojasIds);
+    filtros.push(`r.loja_id = ANY($${parametros.length}::int[])`);
+  }
+
+  const where = filtros.length > 0 ? `WHERE ${filtros.join(" AND ")}` : "";
+
+  const resultado = await query(
+    `
+      SELECT
+        r.id,
+        r.envio_id AS "envioId",
+        r.loja_id AS "lojaId",
+        l.codigo_loja AS "codigoLoja",
+        l.nome_loja AS "nomeLoja",
+        e.codigo_remessa AS "codigoRemessa",
+        r.usuario_recebimento_id AS "usuarioRecebimentoId",
+        u.nome AS "usuarioRecebimentoNome",
+        r.quantidade_recebida AS "quantidadeRecebida",
+        r.data_recebimento AS "dataRecebimento",
+        r.criado_em AS "criadoEm"
+      FROM recebimentos_taloes r
+      INNER JOIN envios_taloes e ON e.id = r.envio_id
+      INNER JOIN lojas l ON l.id = r.loja_id
+      LEFT JOIN usuarios u ON u.id = r.usuario_recebimento_id
+      ${where}
+      ORDER BY r.criado_em DESC
+    `,
+    parametros,
+  );
 
   return resultado.rows;
 }
@@ -30,12 +42,12 @@ async function buscarEnvioParaRecebimento(client, envioId) {
   const resultado = await client.query(
     `
       SELECT
-        id,
-        loja_id,
-        quantidade_enviada,
-        status
-      FROM envios_taloes
-      WHERE id = $1
+        e.id,
+        e.loja_id AS "lojaId",
+        e.quantidade_enviada AS "quantidadeEnviada",
+        e.status
+      FROM envios_taloes e
+      WHERE e.id = $1
       FOR UPDATE
     `,
     [envioId],

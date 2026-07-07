@@ -17,7 +17,9 @@ function responderErro(res, erro) {
 
 router.get("/", async function (req, res) {
   try {
-    const recebimentos = await recebimentosService.listarRecebimentos();
+    const recebimentos = await recebimentosService.listarRecebimentos(
+      req.usuarioContexto,
+    );
 
     return res.status(200).json(recebimentos);
   } catch (erro) {
@@ -27,11 +29,12 @@ router.get("/", async function (req, res) {
 
 router.post("/", async function (req, res) {
   try {
-    const recebimentoCriado = await recebimentosService.confirmarRecebimento(
+    const recebimento = await recebimentosService.confirmarRecebimento(
       req.body,
+      req.usuarioContexto,
     );
 
-    return res.status(201).json(recebimentoCriado);
+    return res.status(201).json(recebimento);
   } catch (erro) {
     return responderErro(res, erro);
   }

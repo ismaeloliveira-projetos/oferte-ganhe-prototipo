@@ -16,6 +16,20 @@ function normalizarUsuarioId(usuarioId) {
   return usuarioIdNumerico;
 }
 
+function validarAcessoLoja(contextoUsuario, lojaId) {
+  if (!contextoUsuario) {
+    throw new AppError("Contexto do usuário não encontrado.", 401);
+  }
+
+  if (contextoUsuario.acessoGlobal) {
+    return;
+  }
+
+  if (!contextoUsuario.lojasIds.includes(lojaId)) {
+    throw new AppError("Você não tem permissão para acessar esta loja.", 403);
+  }
+}
+
 function mapearRecebimentoLista(recebimento) {
   return {
     ...recebimento,
@@ -24,13 +38,19 @@ function mapearRecebimentoLista(recebimento) {
   };
 }
 
-async function listarRecebimentos() {
-  const recebimentos = await recebimentosRepository.listarRecebimentos();
+async function listarRecebimentos(contextoUsuario) {
+  const recebimentos =
+    await recebimentosRepository.listarRecebimentos(contextoUsuario);
 
-  return recebimentos.map(mapearRecebimentoLista);
+  return recebimentos.map(function (recebimento) {
+    return {
+      ...recebimento,
+      quantidadeRecebida: Number(recebimento.quantidadeRecebida),
+    };
+  });
 }
 
-async function confirmarRecebimento(dados) {
+async function confirmarRecebimento(dados, contextoUsuario) {
   const envioId = Number(dados.envioId);
   const usuarioRecebimentoId = normalizarUsuarioId(dados.usuarioRecebimentoId);
 
@@ -56,6 +76,8 @@ async function confirmarRecebimento(dados) {
       throw new AppError("Envio não encontrado.", 404);
     }
 
+    validarAcessoLoja(contextoUsuario, Number(envio.lojaId));
+
     if (envio.status !== "PENDENTE") {
       throw new AppError(
         "Esse envio não está pendente e não pode ser recebido.",
@@ -63,15 +85,17 @@ async function confirmarRecebimento(dados) {
       );
     }
 
+    const quantidadeEnviada = Number(envio.quantidadeEnviada);
+
     const quantidadeRecebida = Number(
-      dados.quantidadeRecebida ?? envio.quantidade_enviada,
+      dados.quantidadeRecebida ?? quantidadeEnviada,
     );
 
     if (Number.isNaN(quantidadeRecebida) || quantidadeRecebida <= 0) {
       throw new AppError("A quantidade recebida deve ser maior que zero.", 400);
     }
 
-    if (quantidadeRecebida !== Number(envio.quantidade_enviada)) {
+    if (quantidadeRecebida !== quantidadeEnviada) {
       throw new AppError(
         "Por enquanto, o recebimento precisa ser total, igual à quantidade enviada.",
         400,
@@ -80,7 +104,7 @@ async function confirmarRecebimento(dados) {
 
     const estoque = await recebimentosRepository.buscarEstoqueLojaParaAtualizar(
       client,
-      envio.loja_id,
+      envio.lojaId,
     );
 
     if (!estoque) {
@@ -94,7 +118,7 @@ async function confirmarRecebimento(dados) {
       client,
       {
         envioId: envio.id,
-        lojaId: envio.loja_id,
+        lojaId: envio.lojaId,
         usuarioRecebimentoId,
         quantidadeRecebida,
         observacao,
@@ -103,12 +127,12 @@ async function confirmarRecebimento(dados) {
 
     await recebimentosRepository.atualizarEstoqueLoja(
       client,
-      envio.loja_id,
+      envio.lojaId,
       saldoPosterior,
     );
 
     await recebimentosRepository.criarMovimentacaoRecebimento(client, {
-      lojaId: envio.loja_id,
+      lojaId: envio.lojaId,
       usuarioRecebimentoId,
       recebimentoId: recebimentoCriado.id,
       quantidadeRecebida,
