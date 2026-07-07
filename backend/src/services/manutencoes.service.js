@@ -19,6 +19,20 @@ function normalizarUsuarioId(usuarioId) {
   return usuarioIdNumerico;
 }
 
+function validarAcessoLoja(contextoUsuario, lojaId) {
+  if (!contextoUsuario) {
+    throw new AppError("Contexto do usuário não encontrado.", 401);
+  }
+
+  if (contextoUsuario.acessoGlobal) {
+    return;
+  }
+
+  if (!contextoUsuario.lojasIds.includes(lojaId)) {
+    throw new AppError("Você não tem permissão para acessar esta loja.", 403);
+  }
+}
+
 function obterTipoMovimentacao(tipoManutencao) {
   if (tipoManutencao === "AJUSTE_ENTRADA") {
     return "MANUTENCAO_ENTRADA";
@@ -60,13 +74,19 @@ function mapearManutencaoLista(manutencao) {
   };
 }
 
-async function listarManutencoes() {
-  const manutencoes = await manutencoesRepository.listarManutencoes();
+async function listarManutencoes(contextoUsuario) {
+  const manutencoes =
+    await manutencoesRepository.listarManutencoes(contextoUsuario);
 
-  return manutencoes.map(mapearManutencaoLista);
+  return manutencoes.map(function (manutencao) {
+    return {
+      ...manutencao,
+      quantidade: Number(manutencao.quantidade),
+    };
+  });
 }
 
-async function registrarManutencao(dados) {
+async function registrarManutencao(dados, contextoUsuario) {
   const lojaId = Number(dados.lojaId);
   const usuarioId = normalizarUsuarioId(dados.usuarioId);
   const tipoManutencao = String(dados.tipoManutencao || "").trim();
@@ -86,6 +106,8 @@ async function registrarManutencao(dados) {
   if (Number.isNaN(quantidade) || quantidade <= 0) {
     throw new AppError("A quantidade deve ser maior que zero.", 400);
   }
+
+  validarAcessoLoja(contextoUsuario, lojaId);
 
   if (!observacao) {
     throw new AppError(

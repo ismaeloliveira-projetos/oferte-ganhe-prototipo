@@ -1,22 +1,37 @@
 const { query } = require("../database/conexao");
 
-async function listarManutencoes() {
-  const resultado = await query(`
-    SELECT
-      m.id AS id,
-      m.loja_id AS "lojaId",
-      l.codigo_loja AS "codigoLoja",
-      l.nome_loja AS "nomeLoja",
-      m.usuario_id AS "usuarioId",
-      m.tipo_manutencao AS "tipoManutencao",
-      m.quantidade AS quantidade,
-      m.observacao AS observacao,
-      m.criado_em AS "criadoEm"
-    FROM manutencoes_taloes m
-    JOIN lojas l
-      ON l.id = m.loja_id
-    ORDER BY m.criado_em DESC
-  `);
+async function listarManutencoes(contextoUsuario) {
+  const parametros = [];
+  const filtros = [];
+
+  if (contextoUsuario && !contextoUsuario.acessoGlobal) {
+    parametros.push(contextoUsuario.lojasIds);
+    filtros.push(`m.loja_id = ANY($${parametros.length}::int[])`);
+  }
+
+  const where = filtros.length > 0 ? `WHERE ${filtros.join(" AND ")}` : "";
+
+  const resultado = await query(
+    `
+      SELECT
+        m.id,
+        m.loja_id AS "lojaId",
+        l.codigo_loja AS "codigoLoja",
+        l.nome_loja AS "nomeLoja",
+        m.usuario_id AS "usuarioResponsavelId",
+        u.nome AS "usuarioResponsavelNome",
+        m.tipo_manutencao AS "tipoManutencao",
+        m.quantidade,
+        m.observacao,
+        m.criado_em AS "criadoEm"
+      FROM manutencoes_taloes m
+      INNER JOIN lojas l ON l.id = m.loja_id
+      LEFT JOIN usuarios u ON u.id = m.usuario_id
+      ${where}
+      ORDER BY m.criado_em DESC
+    `,
+    parametros,
+  );
 
   return resultado.rows;
 }
