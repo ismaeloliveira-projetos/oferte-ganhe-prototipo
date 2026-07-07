@@ -65,15 +65,19 @@ function mapearHistoricoEnvios(historico) {
   });
 }
 
-async function buscarResumoDashboard() {
-  const cards = await dashboardRepository.buscarCardsDashboard();
-  const status = await dashboardRepository.buscarStatusLojas();
-  const lojasAtencao = await dashboardRepository.buscarLojasComAtencao();
+async function buscarResumoDashboard(contextoUsuario) {
+  const cards = await dashboardRepository.buscarCardsDashboard(contextoUsuario);
+  const status = await dashboardRepository.buscarStatusLojas(contextoUsuario);
+  const lojasAtencao =
+    await dashboardRepository.buscarLojasComAtencao(contextoUsuario);
   const enviosPendentesResultado =
-    await dashboardRepository.contarEnviosPendentes();
-  const recebimentosResultado = await dashboardRepository.contarRecebimentos();
-  const manutencoesResultado = await dashboardRepository.contarManutencoes();
-  const historicoEnvios = await dashboardRepository.buscarHistoricoEnvios();
+    await dashboardRepository.contarEnviosPendentes(contextoUsuario);
+  const recebimentosResultado =
+    await dashboardRepository.contarRecebimentos(contextoUsuario);
+  const manutencoesResultado =
+    await dashboardRepository.contarManutencoes(contextoUsuario);
+  const historicoEnvios =
+    await dashboardRepository.buscarHistoricoEnvios(contextoUsuario);
 
   const totalLojas = Number(cards.total_lojas);
   const totalEstoque = Number(cards.total_estoque);

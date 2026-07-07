@@ -17,12 +17,13 @@ function responderErro(res, erro) {
 
 router.get("/resumo", async function (req, res) {
   try {
-    const resumo = await dashboardService.buscarResumoDashboard();
+    const resumo = await dashboardService.buscarResumoDashboard(
+      req.usuarioContexto,
+    );
 
     return res.status(200).json(resumo);
   } catch (erro) {
     return responderErro(res, erro);
   }
 });
-
 module.exports = router;
