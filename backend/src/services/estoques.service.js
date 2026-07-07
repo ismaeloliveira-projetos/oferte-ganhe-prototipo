@@ -29,19 +29,30 @@ async function listarEstoques(contextoUsuario) {
   return estoques;
 }
 
-async function listarMovimentacoes(filtros = {}) {
+async function listarMovimentacoes(filtros = {}, contextoUsuario) {
   let lojaId = null;
 
   if (filtros.lojaId) {
     lojaId = Number(filtros.lojaId);
 
-    if (Number.isNaN(lojaId)) {
-      throw new AppError("lojaId deve ser um número.", 400);
+    if (Number.isNaN(lojaId) || lojaId <= 0) {
+      throw new AppError("lojaId deve ser um número válido.", 400);
     }
   }
 
-  const movimentacoes =
-    await estoquesRepository.listarMovimentacoesEstoque(lojaId);
+  if (
+    contextoUsuario &&
+    !contextoUsuario.acessoGlobal &&
+    lojaId &&
+    !contextoUsuario.lojasIds.includes(lojaId)
+  ) {
+    throw new AppError("Você não tem permissão para acessar esta loja.", 403);
+  }
+
+  const movimentacoes = await estoquesRepository.listarMovimentacoesEstoque(
+    lojaId,
+    contextoUsuario,
+  );
 
   return movimentacoes.map(function (movimentacao) {
     return {
