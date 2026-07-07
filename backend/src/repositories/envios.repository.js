@@ -1,23 +1,37 @@
 const { query } = require("../database/conexao");
 
-async function listarEnvios() {
-  const resultado = await query(`
-    SELECT
-      e.id AS id,
-      e.codigo_remessa AS "codigoRemessa",
-      e.loja_id AS "lojaId",
-      l.codigo_loja AS "codigoLoja",
-      l.nome_loja AS "nomeLoja",
-      e.usuario_envio_id AS "usuarioEnvioId",
-      e.quantidade_enviada AS "quantidadeEnviada",
-      e.data_envio AS "dataEnvio",
-      e.status AS status,
-      e.criado_em AS "criadoEm"
-    FROM envios_taloes e
-    JOIN lojas l
-      ON l.id = e.loja_id
-    ORDER BY e.data_envio DESC
-  `);
+async function listarEnvios(contextoUsuario) {
+  const parametros = [];
+  const filtros = [];
+
+  if (contextoUsuario && !contextoUsuario.acessoGlobal) {
+    parametros.push(contextoUsuario.lojasIds);
+    filtros.push(`e.loja_id = ANY($${parametros.length}::int[])`);
+  }
+
+  const where = filtros.length > 0 ? `WHERE ${filtros.join(" AND ")}` : "";
+
+  const resultado = await query(
+    `
+      SELECT
+        e.id,
+        e.codigo_remessa AS "codigoRemessa",
+        e.loja_id AS "lojaId",
+        l.codigo_loja AS "codigoLoja",
+        l.nome_loja AS "nomeLoja",
+        e.usuario_envio_id AS "usuarioEnvioId",
+        u.nome AS "usuarioEnvioNome",
+        e.quantidade_enviada AS "quantidadeEnviada",
+        e.status,
+        e.criado_em AS "criadoEm"
+      FROM envios_taloes e
+      INNER JOIN lojas l ON l.id = e.loja_id
+      LEFT JOIN usuarios u ON u.id = e.usuario_envio_id
+      ${where}
+      ORDER BY e.criado_em DESC
+    `,
+    parametros,
+  );
 
   return resultado.rows;
 }

@@ -14,8 +14,22 @@ function mapearEnvioResposta(envio) {
   };
 }
 
-async function listarEnvios() {
-  const envios = await enviosRepository.listarEnvios();
+function validarAcessoLoja(contextoUsuario, lojaId) {
+  if (!contextoUsuario) {
+    throw new AppError("Contexto do usuário não encontrado.", 401);
+  }
+
+  if (contextoUsuario.acessoGlobal) {
+    return;
+  }
+
+  if (!contextoUsuario.lojasIds.includes(lojaId)) {
+    throw new AppError("Você não tem permissão para acessar esta loja.", 403);
+  }
+}
+
+async function listarEnvios(contextoUsuario) {
+  const envios = await enviosRepository.listarEnvios(contextoUsuario);
 
   return envios.map(function (envio) {
     return {
@@ -25,7 +39,7 @@ async function listarEnvios() {
   });
 }
 
-async function cadastrarEnvio(dados) {
+async function cadastrarEnvio(dados, contextoUsuario) {
   const codigoRemessa = String(dados.codigoRemessa || "").trim();
   const lojaId = Number(dados.lojaId);
 
@@ -45,6 +59,8 @@ async function cadastrarEnvio(dados) {
   if (Number.isNaN(lojaId) || Number.isNaN(quantidadeEnviada)) {
     throw new AppError("Loja e quantidade enviada devem ser números.", 400);
   }
+
+  validarAcessoLoja(contextoUsuario, lojaId);
 
   if (usuarioEnvioId !== null && Number.isNaN(usuarioEnvioId)) {
     throw new AppError("Usuário de envio deve ser um número.", 400);
