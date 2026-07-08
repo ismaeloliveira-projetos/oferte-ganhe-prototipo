@@ -66,6 +66,8 @@ function mapearHistoricoEnvios(historico) {
 }
 
 async function buscarResumoDashboard(contextoUsuario) {
+  const enviosMesResultado =
+    await dashboardRepository.contarEnviosMes(contextoUsuario);
   const cards = await dashboardRepository.buscarCardsDashboard(contextoUsuario);
   const status = await dashboardRepository.buscarStatusLojas(contextoUsuario);
   const lojasAtencao =
@@ -79,10 +81,10 @@ async function buscarResumoDashboard(contextoUsuario) {
   const historicoEnvios =
     await dashboardRepository.buscarHistoricoEnvios(contextoUsuario);
 
-  const totalLojas = Number(cards.total_lojas);
-  const totalEstoque = Number(cards.total_estoque);
-  const lojasCriticas = Number(cards.lojas_criticas);
-  const enviosMes = Number(cards.envios_mes);
+  const totalLojas = Number(cards.totalLojas ?? 0);
+  const totalEstoque = Number(cards.totalEstoque ?? 0);
+  const lojasCriticas = Number(cards.lojasCriticas ?? 0);
+  const enviosMes = Number(enviosMesResultado.enviosMes ?? 0);
 
   const totalCritico = Number(status.critico);
   const totalAtencao = Number(status.atencao);

@@ -22,19 +22,54 @@ async function buscarCardsDashboard(contextoUsuario) {
   const resultado = await query(
     `
       SELECT
-        COUNT(*) AS "totalLojas",
-        COUNT(*) FILTER (
+        COALESCE(COUNT(*), 0) AS "totalLojas",
+
+        COALESCE(SUM(e.estoque_atual), 0) AS "totalEstoque",
+
+        COALESCE(COUNT(*) FILTER (
           WHERE e.estoque_atual <= l.quantidade_minima
-        ) AS "lojasCriticas",
-        COUNT(*) FILTER (
+        ), 0) AS "lojasCriticas",
+
+        COALESCE(COUNT(*) FILTER (
           WHERE e.estoque_atual > l.quantidade_minima
           AND e.estoque_atual < l.quantidade_recomendada
-        ) AS "lojasAtencao",
-        COUNT(*) FILTER (
+        ), 0) AS "lojasAtencao",
+
+        COALESCE(COUNT(*) FILTER (
           WHERE e.estoque_atual >= l.quantidade_recomendada
-        ) AS "lojasNormais"
+        ), 0) AS "lojasNormais"
+
       FROM lojas l
       INNER JOIN estoques_lojas e ON e.loja_id = l.id
+      WHERE ${filtros.join(" AND ")}
+    `,
+    parametros,
+  );
+
+  return resultado.rows[0];
+}
+
+async function contarEnviosMes(contextoUsuario) {
+  const parametros = [];
+  const filtros = [
+    "e.data_envio >= DATE_TRUNC('month', CURRENT_DATE)",
+    "e.data_envio < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'",
+  ];
+
+  const filtroLoja = aplicarFiltroDeLojas(
+    contextoUsuario,
+    parametros,
+    "e.loja_id",
+  );
+
+  if (filtroLoja) {
+    filtros.push(filtroLoja);
+  }
+
+  const resultado = await query(
+    `
+      SELECT COALESCE(SUM(e.quantidade_enviada), 0) AS "enviosMes"
+      FROM envios_taloes e
       WHERE ${filtros.join(" AND ")}
     `,
     parametros,
@@ -240,4 +275,5 @@ module.exports = {
   contarRecebimentos,
   contarManutencoes,
   buscarHistoricoEnvios,
+  contarEnviosMes,
 };
