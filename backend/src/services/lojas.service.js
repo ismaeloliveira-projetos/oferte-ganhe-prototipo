@@ -30,7 +30,9 @@ function mapearLojaResposta(loja, estoqueAtual = 0) {
 async function listarLojas(contextoUsuario) {
   const lojas = await lojasRepository.listarLojasAtivas(contextoUsuario);
 
-  return lojas.map(mapearLojaResposta);
+  return lojas.map(function (loja) {
+    return mapearLojaResposta(loja, loja.estoque_atual ?? 0);
+  });
 }
 
 async function cadastrarLoja(dados) {

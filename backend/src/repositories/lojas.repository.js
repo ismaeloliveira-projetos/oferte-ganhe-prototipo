@@ -13,13 +13,16 @@ async function listarLojasAtivas(contextoUsuario) {
     `
       SELECT
         l.id,
-        l.codigo_loja AS "codigoLoja",
-        l.nome_loja AS "nomeLoja",
-        l.quantidade_minima AS "estoqueMinimo",
-        l.quantidade_recomendada AS "estoqueRecomendado",
+        l.codigo_loja,
+        l.nome_loja,
+        l.quantidade_minima,
+        l.quantidade_recomendada,
         l.ativo,
-        l.criado_em AS "criadoEm"
+        l.criado_em,
+        COALESCE(e.estoque_atual, 0) AS estoque_atual
       FROM lojas l
+      LEFT JOIN estoques_lojas e
+        ON e.loja_id = l.id
       WHERE ${filtros.join(" AND ")}
       ORDER BY l.codigo_loja ASC
     `,
@@ -28,7 +31,6 @@ async function listarLojasAtivas(contextoUsuario) {
 
   return resultado.rows;
 }
-
 async function buscarLojaPorCodigo(codigo) {
   const resultado = await query(
     `
