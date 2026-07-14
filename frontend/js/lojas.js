@@ -225,7 +225,7 @@ async function carregarTabelaLojas() {
                 class="btntable-action btn-sm"
                 onclick="excluirLoja('${loja.codigoLoja}')"
               >
-                Excluir
+                Inativar
               </button>
 
               <button

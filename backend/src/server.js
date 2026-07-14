@@ -10,6 +10,7 @@ const manutencoesRoutes = require("./routes/manutencoes.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const usuariosRoutes = require("./routes/usuarios.routes");
 const perfisRoutes = require("./routes/perfis.routes");
+const relatoriosRoutes = require("./routes/relatorios.routes");
 const authRoutes = require("./routes/auth.routes");
 
 const app = express();
@@ -30,6 +31,7 @@ app.use("/api/estoques", contextoUsuarioMiddleware, estoquesRoutes);
 app.use("/api/envios", contextoUsuarioMiddleware, enviosRoutes);
 app.use("/api/recebimentos", contextoUsuarioMiddleware, recebimentosRoutes);
 app.use("/api/manutencoes", contextoUsuarioMiddleware, manutencoesRoutes);
+app.use("/api/relatorios", contextoUsuarioMiddleware, relatoriosRoutes);
 app.use("/api/dashboard", contextoUsuarioMiddleware, dashboardRoutes);
 app.use("/api/usuarios", contextoUsuarioMiddleware, usuariosRoutes);
 app.use("/api/perfis", contextoUsuarioMiddleware, perfisRoutes);
