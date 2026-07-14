@@ -1,2 +1,4 @@
 node_modules
 .env
+backend/ai-service/.env
+backend/ai-service/.venv/
