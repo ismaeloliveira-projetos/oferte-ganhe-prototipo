@@ -37,11 +37,15 @@ def gerar_insight_risco_estoque(
     inicio = time.perf_counter()
 
     try:
-        indicador = obter_risco_estoque()
+        indicador = obter_risco_estoque(
+            acesso_global=acesso_global,
+            lojas_ids=lojas_ids,
+        )
 
         dados_compactados = {
             "indicador": indicador["indicador"],
             "descricao": indicador["descricao"],
+            "escopo": indicador["escopo"],
             "total_lojas_analisadas": indicador["total_lojas_analisadas"],
             "resumo_por_status": indicador["resumo_por_status"],
             "lojas_prioritarias": [

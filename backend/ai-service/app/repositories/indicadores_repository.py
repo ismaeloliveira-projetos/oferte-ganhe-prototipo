@@ -50,7 +50,12 @@ def listar_estoque_por_loja() -> list[dict]:
     ]
 
 
-def listar_risco_estoque_por_loja() -> list[dict]:
+def listar_risco_estoque_por_loja(
+    acesso_global: bool = True,
+    lojas_ids: list[int] | None = None,
+) -> list[dict]:
+    lojas_ids = lojas_ids or []
+
     sql = """
         SELECT
             l.id,
@@ -70,6 +75,10 @@ def listar_risco_estoque_por_loja() -> list[dict]:
         FROM lojas l
         LEFT JOIN estoques_lojas e ON e.loja_id = l.id
         WHERE l.ativo = true
+          AND (
+              %s = true
+              OR l.id = ANY(%s::int[])
+          )
         ORDER BY
             CASE
                 WHEN e.loja_id IS NULL THEN 1
@@ -83,7 +92,7 @@ def listar_risco_estoque_por_loja() -> list[dict]:
 
     with criar_conexao() as conexao:
         with conexao.cursor() as cursor:
-            cursor.execute(sql)
+            cursor.execute(sql, (acesso_global, lojas_ids))
             resultados = cursor.fetchall()
 
     return [

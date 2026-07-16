@@ -26,8 +26,16 @@ def obter_estoque_por_loja() -> dict:
     }
 
 
-def obter_risco_estoque() -> dict:
-    lojas = listar_risco_estoque_por_loja()
+def obter_risco_estoque(
+    acesso_global: bool = True,
+    lojas_ids: list[int] | None = None,
+) -> dict:
+    lojas_ids = lojas_ids or []
+
+    lojas = listar_risco_estoque_por_loja(
+        acesso_global=acesso_global,
+        lojas_ids=lojas_ids,
+    )
 
     resumo_por_status = {
         "SEM_ESTOQUE_CADASTRADO": 0,
@@ -46,6 +54,10 @@ def obter_risco_estoque() -> dict:
             "Classificação de risco das lojas com base no estoque atual, "
             "quantidade mínima e quantidade recomendada."
         ),
+        "escopo": {
+            "acesso_global": acesso_global,
+            "lojas_ids": lojas_ids,
+        },
         "total_lojas_analisadas": len(lojas),
         "resumo_por_status": resumo_por_status,
         "dados": lojas,
