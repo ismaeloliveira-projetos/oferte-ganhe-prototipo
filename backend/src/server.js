@@ -12,6 +12,7 @@ const usuariosRoutes = require("./routes/usuarios.routes");
 const perfisRoutes = require("./routes/perfis.routes");
 const relatoriosRoutes = require("./routes/relatorios.routes");
 const authRoutes = require("./routes/auth.routes");
+const iaRoutes = require("./routes/ia.routes");
 
 const app = express();
 const PORTA = process.env.PORT || 3000;
@@ -35,6 +36,7 @@ app.use("/api/relatorios", contextoUsuarioMiddleware, relatoriosRoutes);
 app.use("/api/dashboard", contextoUsuarioMiddleware, dashboardRoutes);
 app.use("/api/usuarios", contextoUsuarioMiddleware, usuariosRoutes);
 app.use("/api/perfis", contextoUsuarioMiddleware, perfisRoutes);
+app.use("/api/ia", contextoUsuarioMiddleware, iaRoutes);
 app.use("/api/auth", authRoutes);
 
 app.use(function (req, res) {
