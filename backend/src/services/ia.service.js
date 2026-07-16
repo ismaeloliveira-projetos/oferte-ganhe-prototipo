@@ -34,11 +34,52 @@ async function verificarSaudeIa() {
   return chamarAiService("/health");
 }
 
-async function gerarInsightRiscoEstoque() {
-  return chamarAiService("/insights/estoque/risco");
+async function gerarInsightRiscoEstoque(contextoUsuarioIa) {
+  return chamarAiService("/insights/estoque/risco", {
+    method: "POST",
+    body: contextoUsuarioIa,
+  });
+}
+
+function montarContextoUsuarioIa(usuarioContexto) {
+  const usuario = usuarioContexto?.usuario || usuarioContexto;
+
+  const lojas =
+    usuarioContexto?.lojas ||
+    usuarioContexto?.lojasPermitidas ||
+    usuarioContexto?.lojas_ids ||
+    [];
+
+  const lojasIds = Array.isArray(lojas)
+    ? lojas
+        .map(function (loja) {
+          if (typeof loja === "number") {
+            return loja;
+          }
+
+          return loja.id || loja.loja_id;
+        })
+        .filter(function (id) {
+          return Number.isInteger(id);
+        })
+    : [];
+
+  return {
+    usuario_id:
+      usuario?.id ||
+      usuarioContexto?.usuario_id ||
+      usuarioContexto?.usuarioId ||
+      null,
+
+    acesso_global:
+      usuarioContexto?.acessoGlobal || usuarioContexto?.acesso_global || false,
+
+    lojas_ids: lojasIds,
+  };
 }
 
 module.exports = {
   verificarSaudeIa,
   gerarInsightRiscoEstoque,
+  montarContextoUsuarioIa,
 };

@@ -12,13 +12,25 @@ from app.services.indicadores_service import obter_risco_estoque
 from app.services.llm_service import chamar_llm
 
 
-def gerar_insight_risco_estoque() -> dict:
+def gerar_insight_risco_estoque(
+    contexto_usuario: dict | None = None,
+) -> dict:
+
+    contexto_usuario = contexto_usuario or {}
+
+    usuario_id = contexto_usuario.get("usuario_id")
+    acesso_global = contexto_usuario.get("acesso_global", False)
+    lojas_ids = contexto_usuario.get("lojas_ids", [])
+
     consulta_id = criar_consulta_ia(
         tipo_consulta="insight_risco_estoque",
         pergunta="Gerar insight executivo sobre risco de estoque.",
+        usuario_id=usuario_id,
         contexto={
             "origem": "endpoint /insights/estoque/risco",
             "indicador": "risco_estoque",
+            "acesso_global": acesso_global,
+            "lojas_ids": lojas_ids,
         },
     )
 

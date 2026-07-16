@@ -22,7 +22,12 @@ router.get("/health", async function (req, res) {
 
 router.get("/insights/estoque/risco", async function (req, res) {
   try {
-    const resultado = await iaService.gerarInsightRiscoEstoque();
+    const contextoUsuarioIa = iaService.montarContextoUsuarioIa(
+      req.usuarioContexto,
+    );
+
+    const resultado =
+      await iaService.gerarInsightRiscoEstoque(contextoUsuarioIa);
 
     res.status(200).json(resultado);
   } catch (erro) {
