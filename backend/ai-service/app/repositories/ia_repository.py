@@ -176,3 +176,34 @@ def registrar_insight(
             conexao.commit()
 
     return insight_id
+
+def buscar_prompt_ativo_por_nome(nome: str) -> dict[str, Any] | None:
+    sql = """
+        SELECT
+            id,
+            nome,
+            descricao,
+            conteudo,
+            versao
+        FROM ia.prompts
+        WHERE nome = %s
+          AND ativo = true
+        ORDER BY versao DESC
+        LIMIT 1;
+    """
+
+    with criar_conexao() as conexao:
+        with conexao.cursor() as cursor:
+            cursor.execute(sql, (nome,))
+            resultado = cursor.fetchone()
+
+    if not resultado:
+        return None
+
+    return {
+        "id": resultado[0],
+        "nome": resultado[1],
+        "descricao": resultado[2],
+        "conteudo": resultado[3],
+        "versao": resultado[4],
+    }

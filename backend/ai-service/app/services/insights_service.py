@@ -2,6 +2,7 @@ import json
 import time
 
 from app.repositories.ia_repository import (
+    buscar_prompt_ativo_por_nome,
     criar_consulta_ia,
     finalizar_consulta_ia,
     registrar_execucao_llm,
@@ -46,6 +47,11 @@ def gerar_insight_risco_estoque() -> dict:
             ],
         }
 
+        prompt = buscar_prompt_ativo_por_nome("insight_risco_estoque")
+
+        if not prompt:
+            raise RuntimeError("Prompt ativo 'insight_risco_estoque' não encontrado")
+
         mensagens = [
             {
                 "role": "system",
@@ -59,14 +65,16 @@ def gerar_insight_risco_estoque() -> dict:
             {
                 "role": "user",
                 "content": (
-                    "Analise o indicador de risco de estoque abaixo e gere um insight "
-                    "executivo curto, em no máximo 5 tópicos. "
-                    "Cada tópico deve ter no máximo 2 frases. "
-                    "Fale apenas sobre resumo geral, riscos principais e ação recomendada. "
-                    "Considere que quantidade_minima e quantidade_recomendada são os parâmetros da loja. "
-                    "Considere que gap_minimo e gap_recomendado representam quanto falta para atingir esses parâmetros. "
-                    "Não confunda gap com quantidade mínima ou recomendada. "
-                    "Não invente números. Não repita todas as lojas.\n\n"
+                    f"{prompt['conteudo']}\n\n"
+                    "Regras adicionais:\n"
+                    "- Responda em no máximo 5 tópicos.\n"
+                    "- Cada tópico deve ter no máximo 2 frases.\n"
+                    "- Considere que quantidade_minima e quantidade_recomendada são os parâmetros da loja.\n"
+                    "- Considere que gap_minimo e gap_recomendado representam quanto falta para atingir esses parâmetros.\n"
+                    "- Não confunda gap com quantidade mínima ou recomendada.\n"
+                    "- Não invente números.\n"
+                    "- Não repita todas as lojas.\n\n"
+                    "Dados do indicador:\n"
                     f"{json.dumps(dados_compactados, ensure_ascii=False, indent=2)}"
                 ),
             },
