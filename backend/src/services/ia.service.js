@@ -122,6 +122,13 @@ async function listarLogsIa(contextoUsuarioIa, filtros = {}) {
   });
 }
 
+async function obterIndicadorRiscoEstoque(contextoUsuarioIa) {
+  return chamarAiService("/indicadores/estoque/risco", {
+    method: "POST",
+    body: contextoUsuarioIa,
+  });
+}
+
 module.exports = {
   verificarSaudeIa,
   gerarInsightRiscoEstoque,
@@ -129,5 +136,6 @@ module.exports = {
   registrarFeedbackInsight,
   obterResumoUsoIa,
   listarLogsIa,
+  obterIndicadorRiscoEstoque,
   montarContextoUsuarioIa,
 };

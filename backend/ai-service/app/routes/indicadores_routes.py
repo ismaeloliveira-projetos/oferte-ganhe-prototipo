@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from app.schemas.indicadores_schemas import IndicadorRiscoEstoqueRequest
 
 from app.services.indicadores_service import (
     obter_resumo_estoque,
@@ -42,4 +43,18 @@ def risco_estoque():
         raise HTTPException(
             status_code=500,
             detail=f"Erro ao calcular risco de estoque: {erro}",
+        )
+
+
+@router.post("/estoque/risco")
+def risco_estoque_com_contexto(request: IndicadorRiscoEstoqueRequest):
+    try:
+        return obter_risco_estoque(
+            acesso_global=request.acesso_global,
+            lojas_ids=request.lojas_ids,
+        )
+    except Exception as erro:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao calcular risco de estoque com contexto: {erro}",
         )

@@ -143,4 +143,22 @@ router.get("/logs", async function (req, res) {
   }
 });
 
+router.get("/indicadores/estoque/risco", async function (req, res) {
+  try {
+    const contextoUsuarioIa = iaService.montarContextoUsuarioIa(
+      req.usuarioContexto,
+    );
+
+    const resultado =
+      await iaService.obterIndicadorRiscoEstoque(contextoUsuarioIa);
+
+    res.status(200).json(resultado);
+  } catch (erro) {
+    res.status(502).json({
+      mensagem: "Erro ao buscar indicador de risco de estoque.",
+      detalhe: erro.message,
+    });
+  }
+});
+
 module.exports = router;
