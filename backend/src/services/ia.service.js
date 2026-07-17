@@ -88,9 +88,22 @@ async function listarHistoricoInsights(contextoUsuarioIa, limite = 20) {
   });
 }
 
+async function registrarFeedbackInsight(contextoUsuarioIa, feedback) {
+  return chamarAiService("/insights/feedback", {
+    method: "POST",
+    body: {
+      usuario_id: contextoUsuarioIa.usuario_id,
+      insight_id: feedback.insight_id,
+      avaliacao: feedback.avaliacao,
+      comentario: feedback.comentario || null,
+    },
+  });
+}
+
 module.exports = {
   verificarSaudeIa,
   gerarInsightRiscoEstoque,
   listarHistoricoInsights,
+  registrarFeedbackInsight,
   montarContextoUsuarioIa,
 };

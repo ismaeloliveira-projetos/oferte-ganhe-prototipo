@@ -7,6 +7,7 @@ from app.repositories.ia_repository import (
     finalizar_consulta_ia,
     listar_historico_insights_por_usuario,
     registrar_execucao_llm,
+    registrar_feedback_resposta,
     registrar_insight,
 )
 from app.services.indicadores_service import obter_risco_estoque
@@ -159,6 +160,8 @@ def gerar_insight_risco_estoque(
         )
 
         raise
+
+
 def obter_historico_insights_usuario(
     usuario_id: int,
     limite: int = 20,
@@ -173,4 +176,24 @@ def obter_historico_insights_usuario(
         "usuario_id": usuario_id,
         "total_registros": len(historico),
         "dados": historico,
+    }
+
+
+def registrar_feedback_insight_usuario(
+    usuario_id: int,
+    insight_id: int,
+    avaliacao: str,
+    comentario: str | None = None,
+) -> dict:
+    feedback = registrar_feedback_resposta(
+        insight_id=insight_id,
+        usuario_id=usuario_id,
+        avaliacao=avaliacao,
+        comentario=comentario,
+    )
+
+    return {
+        "tipo": "feedback_insight",
+        "mensagem": "Feedback registrado com sucesso.",
+        "dados": feedback,
     }

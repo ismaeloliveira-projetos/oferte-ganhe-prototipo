@@ -60,4 +60,24 @@ router.get("/insights/historico", async function (req, res) {
   }
 });
 
+router.post("/insights/feedback", async function (req, res) {
+  try {
+    const contextoUsuarioIa = iaService.montarContextoUsuarioIa(
+      req.usuarioContexto,
+    );
+
+    const resultado = await iaService.registrarFeedbackInsight(
+      contextoUsuarioIa,
+      req.body,
+    );
+
+    res.status(201).json(resultado);
+  } catch (erro) {
+    res.status(502).json({
+      mensagem: "Erro ao registrar feedback do insight.",
+      detalhe: erro.message,
+    });
+  }
+});
+
 module.exports = router;

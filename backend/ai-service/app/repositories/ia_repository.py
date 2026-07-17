@@ -284,3 +284,66 @@ def listar_historico_insights_por_usuario(
         }
         for linha in resultados
     ]
+
+def registrar_feedback_resposta(
+    insight_id: int,
+    usuario_id: int,
+    avaliacao: str | None = None,
+    comentario: str | None = None,
+) -> dict:
+    sql_validacao = """
+        SELECT i.id
+        FROM ia.insights i
+        INNER JOIN ia.consultas_ia c ON c.id = i.consulta_ia_id
+        WHERE i.id = %s
+          AND c.usuario_id = %s;
+    """
+
+    sql_insert = """
+        INSERT INTO ia.feedback_respostas (
+            insight_id,
+            usuario_id,
+            avaliacao,
+            comentario
+        )
+        VALUES (%s, %s, %s, %s)
+        RETURNING
+            id,
+            insight_id,
+            usuario_id,
+            avaliacao,
+            comentario,
+            criado_em;
+    """
+
+    with criar_conexao() as conexao:
+        with conexao.cursor() as cursor:
+            cursor.execute(sql_validacao, (insight_id, usuario_id))
+            insight_encontrado = cursor.fetchone()
+
+            if not insight_encontrado:
+                raise ValueError(
+                    "Insight não encontrado para este usuário."
+                )
+
+            cursor.execute(
+                sql_insert,
+                (
+                    insight_id,
+                    usuario_id,
+                    avaliacao,
+                    comentario,
+                ),
+            )
+
+            resultado = cursor.fetchone()
+            conexao.commit()
+
+    return {
+        "feedback_id": resultado[0],
+        "insight_id": resultado[1],
+        "usuario_id": resultado[2],
+        "avaliacao": resultado[3],
+        "comentario": resultado[4],
+        "criado_em": resultado[5],
+    }
