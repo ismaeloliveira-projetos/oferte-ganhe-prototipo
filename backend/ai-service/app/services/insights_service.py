@@ -5,6 +5,7 @@ from app.repositories.ia_repository import (
     buscar_prompt_ativo_por_nome,
     criar_consulta_ia,
     finalizar_consulta_ia,
+    listar_historico_insights_por_usuario,
     registrar_execucao_llm,
     registrar_insight,
 )
@@ -158,3 +159,18 @@ def gerar_insight_risco_estoque(
         )
 
         raise
+def obter_historico_insights_usuario(
+    usuario_id: int,
+    limite: int = 20,
+) -> dict:
+    historico = listar_historico_insights_por_usuario(
+        usuario_id=usuario_id,
+        limite=limite,
+    )
+
+    return {
+        "tipo": "historico_insights",
+        "usuario_id": usuario_id,
+        "total_registros": len(historico),
+        "dados": historico,
+    }

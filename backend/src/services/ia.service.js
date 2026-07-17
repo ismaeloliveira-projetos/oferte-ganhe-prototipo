@@ -78,8 +78,19 @@ function montarContextoUsuarioIa(usuarioContexto) {
   };
 }
 
+async function listarHistoricoInsights(contextoUsuarioIa, limite = 20) {
+  return chamarAiService("/insights/historico", {
+    method: "POST",
+    body: {
+      usuario_id: contextoUsuarioIa.usuario_id,
+      limite,
+    },
+  });
+}
+
 module.exports = {
   verificarSaudeIa,
   gerarInsightRiscoEstoque,
+  listarHistoricoInsights,
   montarContextoUsuarioIa,
 };

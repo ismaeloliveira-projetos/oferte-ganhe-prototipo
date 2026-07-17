@@ -38,4 +38,26 @@ router.get("/insights/estoque/risco", async function (req, res) {
   }
 });
 
+router.get("/insights/historico", async function (req, res) {
+  try {
+    const contextoUsuarioIa = iaService.montarContextoUsuarioIa(
+      req.usuarioContexto,
+    );
+
+    const limite = Number(req.query.limite) || 20;
+
+    const resultado = await iaService.listarHistoricoInsights(
+      contextoUsuarioIa,
+      limite,
+    );
+
+    res.status(200).json(resultado);
+  } catch (erro) {
+    res.status(502).json({
+      mensagem: "Erro ao buscar histórico de insights.",
+      detalhe: erro.message,
+    });
+  }
+});
+
 module.exports = router;

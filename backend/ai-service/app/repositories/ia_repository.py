@@ -177,6 +177,7 @@ def registrar_insight(
 
     return insight_id
 
+
 def buscar_prompt_ativo_por_nome(nome: str) -> dict[str, Any] | None:
     sql = """
         SELECT
@@ -207,3 +208,79 @@ def buscar_prompt_ativo_por_nome(nome: str) -> dict[str, Any] | None:
         "conteudo": resultado[3],
         "versao": resultado[4],
     }
+
+
+def listar_historico_insights_por_usuario(
+    usuario_id: int,
+    limite: int = 20,
+) -> list[dict]:
+    sql = """
+        SELECT
+            c.id AS consulta_ia_id,
+            c.tipo_consulta,
+            c.pergunta,
+            c.contexto,
+            c.status AS status_consulta,
+            c.criado_em AS consulta_criada_em,
+            c.finalizado_em,
+
+            e.id AS execucao_llm_id,
+            e.modelo,
+            e.provedor,
+            e.prompt_tokens,
+            e.completion_tokens,
+            e.total_tokens,
+            e.custo,
+            e.tempo_ms,
+            e.status AS status_execucao,
+
+            i.id AS insight_id,
+            i.tipo_insight,
+            i.titulo,
+            i.dados_base,
+            i.resposta,
+            i.nivel_confianca,
+            i.modelo_utilizado,
+            i.criado_em AS insight_criado_em
+        FROM ia.consultas_ia c
+        LEFT JOIN ia.execucoes_llm e ON e.consulta_ia_id = c.id
+        LEFT JOIN ia.insights i ON i.consulta_ia_id = c.id
+        WHERE c.usuario_id = %s
+        ORDER BY c.id DESC
+        LIMIT %s;
+    """
+
+    with criar_conexao() as conexao:
+        with conexao.cursor() as cursor:
+            cursor.execute(sql, (usuario_id, limite))
+            resultados = cursor.fetchall()
+
+    return [
+        {
+            "consulta_ia_id": linha[0],
+            "tipo_consulta": linha[1],
+            "pergunta": linha[2],
+            "contexto": linha[3],
+            "status_consulta": linha[4],
+            "consulta_criada_em": linha[5],
+            "finalizado_em": linha[6],
+            "execucao_llm_id": linha[7],
+            "modelo": linha[8],
+            "provedor": linha[9],
+            "prompt_tokens": linha[10],
+            "completion_tokens": linha[11],
+            "total_tokens": linha[12],
+            "custo": linha[13],
+            "tempo_ms": linha[14],
+            "status_execucao": linha[15],
+            "insight_id": linha[16],
+            "tipo_insight": linha[17],
+            "titulo": linha[18],
+            "dados_base": linha[19],
+            "resposta": linha[20],
+            "nivel_confianca": linha[21],
+            "modelo_utilizado": linha[22],
+            "insight_criado_em": linha[23],
+        }
+        for linha in resultados
+    ]
