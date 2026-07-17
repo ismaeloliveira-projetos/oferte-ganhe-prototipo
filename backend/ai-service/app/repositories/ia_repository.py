@@ -443,3 +443,37 @@ def obter_resumo_uso_ia_por_usuario(usuario_id: int) -> dict:
             "INCOMPLETA": resultado[15],
         },
     }
+
+
+def registrar_log_ia(
+    nivel: str,
+    origem: str,
+    mensagem: str,
+    metadados: dict | None = None,
+) -> int:
+    sql = """
+        INSERT INTO ia.logs_ia (
+            nivel,
+            origem,
+            mensagem,
+            metadados
+        )
+        VALUES (%s, %s, %s, %s)
+        RETURNING id;
+    """
+
+    with criar_conexao() as conexao:
+        with conexao.cursor() as cursor:
+            cursor.execute(
+                sql,
+                (
+                    nivel,
+                    origem,
+                    mensagem,
+                    Jsonb(metadados or {}),
+                ),
+            )
+            log_id = cursor.fetchone()[0]
+            conexao.commit()
+
+    return log_id

@@ -12,6 +12,7 @@ from app.repositories.ia_repository import (
 )
 from app.services.indicadores_service import obter_risco_estoque
 from app.services.llm_service import chamar_llm
+from app.services.logs_service import registrar_log_ia_seguro
 
 
 def gerar_insight_risco_estoque(
@@ -31,6 +32,17 @@ def gerar_insight_risco_estoque(
         contexto={
             "origem": "endpoint /insights/estoque/risco",
             "indicador": "risco_estoque",
+            "acesso_global": acesso_global,
+            "lojas_ids": lojas_ids,
+        },
+    )
+    registrar_log_ia_seguro(
+        nivel="INFO",
+        origem="insights_service.gerar_insight_risco_estoque",
+        mensagem="Consulta de insight de risco de estoque iniciada.",
+        metadados={
+            "consulta_ia_id": consulta_id,
+            "usuario_id": usuario_id,
             "acesso_global": acesso_global,
             "lojas_ids": lojas_ids,
         },
@@ -129,6 +141,21 @@ def gerar_insight_risco_estoque(
             consulta_ia_id=consulta_id,
             status="SUCESSO",
         )
+        registrar_log_ia_seguro(
+            nivel="INFO",
+            origem="insights_service.gerar_insight_risco_estoque",
+            mensagem="Insight de risco de estoque gerado com sucesso.",
+            metadados={
+                "consulta_ia_id": consulta_id,
+                "execucao_llm_id": execucao_id,
+                "insight_id": insight_id,
+                "usuario_id": usuario_id,
+                "modelo": resposta_llm["modelo"],
+                "total_tokens": resposta_llm["usage"].get("total_tokens", 0),
+                "custo": resposta_llm["usage"].get("cost", 0),
+                "tempo_ms": tempo_ms,
+            },
+        )
 
         return {
             "tipo": "insight_risco_estoque",
@@ -157,6 +184,17 @@ def gerar_insight_risco_estoque(
         finalizar_consulta_ia(
             consulta_ia_id=consulta_id,
             status="ERRO",
+        )
+        registrar_log_ia_seguro(
+            nivel="ERROR",
+            origem="insights_service.gerar_insight_risco_estoque",
+            mensagem="Erro ao gerar insight de risco de estoque.",
+            metadados={
+                "consulta_ia_id": consulta_id,
+                "usuario_id": usuario_id,
+                "erro": str(erro),
+                "tempo_ms": tempo_ms,
+            },
         )
 
         raise
