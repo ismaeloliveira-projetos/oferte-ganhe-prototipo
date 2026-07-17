@@ -129,6 +129,18 @@ async function obterIndicadorRiscoEstoque(contextoUsuarioIa) {
   });
 }
 
+async function enviarMensagemChatIa(contextoUsuarioIa, mensagem) {
+  return chamarAiService("/chat", {
+    method: "POST",
+    body: {
+      usuario_id: contextoUsuarioIa.usuario_id,
+      acesso_global: contextoUsuarioIa.acesso_global,
+      lojas_ids: contextoUsuarioIa.lojas_ids,
+      mensagem,
+    },
+  });
+}
+
 module.exports = {
   verificarSaudeIa,
   gerarInsightRiscoEstoque,
@@ -137,5 +149,6 @@ module.exports = {
   obterResumoUsoIa,
   listarLogsIa,
   obterIndicadorRiscoEstoque,
+  enviarMensagemChatIa,
   montarContextoUsuarioIa,
 };

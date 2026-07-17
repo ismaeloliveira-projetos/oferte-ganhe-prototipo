@@ -161,4 +161,32 @@ router.get("/indicadores/estoque/risco", async function (req, res) {
   }
 });
 
+router.post("/chat", async function (req, res) {
+  try {
+    const contextoUsuarioIa = iaService.montarContextoUsuarioIa(
+      req.usuarioContexto,
+    );
+
+    const mensagem = req.body?.mensagem;
+
+    if (!mensagem || typeof mensagem !== "string") {
+      return res.status(400).json({
+        mensagem: "Campo 'mensagem' é obrigatório.",
+      });
+    }
+
+    const resultado = await iaService.enviarMensagemChatIa(
+      contextoUsuarioIa,
+      mensagem,
+    );
+
+    res.status(200).json(resultado);
+  } catch (erro) {
+    res.status(502).json({
+      mensagem: "Erro ao processar mensagem no chat da IA.",
+      detalhe: erro.message,
+    });
+  }
+});
+
 module.exports = router;

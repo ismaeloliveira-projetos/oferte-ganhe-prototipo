@@ -17,6 +17,7 @@ from app.services.logs_service import registrar_log_ia_seguro
 
 def gerar_insight_risco_estoque(
     contexto_usuario: dict | None = None,
+    pergunta_usuario: str | None = None,
 ) -> dict:
 
     contexto_usuario = contexto_usuario or {}
@@ -26,14 +27,14 @@ def gerar_insight_risco_estoque(
     lojas_ids = contexto_usuario.get("lojas_ids", [])
 
     consulta_id = criar_consulta_ia(
-        tipo_consulta="insight_risco_estoque",
-        pergunta="Gerar insight executivo sobre risco de estoque.",
-        usuario_id=usuario_id,
-        contexto={
-            "origem": "endpoint /insights/estoque/risco",
-            "indicador": "risco_estoque",
-            "acesso_global": acesso_global,
-            "lojas_ids": lojas_ids,
+    tipo_consulta="insight_risco_estoque",
+    pergunta=pergunta_usuario or "Gerar insight executivo sobre risco de estoque.",
+    usuario_id=usuario_id,
+    contexto={
+        "origem": "endpoint /insights/estoque/risco",
+        "indicador": "risco_estoque",
+        "acesso_global": acesso_global,
+        "lojas_ids": lojas_ids,
         },
     )
     registrar_log_ia_seguro(
