@@ -80,4 +80,27 @@ router.post("/insights/feedback", async function (req, res) {
   }
 });
 
+router.get("/resumo", async function (req, res) {
+  try {
+    const contextoUsuarioIa = iaService.montarContextoUsuarioIa(
+      req.usuarioContexto,
+    );
+
+    if (!contextoUsuarioIa.usuario_id) {
+      return res.status(400).json({
+        mensagem: "Usuário não identificado para consultar resumo da IA.",
+      });
+    }
+
+    const resultado = await iaService.obterResumoUsoIa(contextoUsuarioIa);
+
+    res.status(200).json(resultado);
+  } catch (erro) {
+    res.status(502).json({
+      mensagem: "Erro ao buscar resumo de uso da IA.",
+      detalhe: erro.message,
+    });
+  }
+});
+
 module.exports = router;

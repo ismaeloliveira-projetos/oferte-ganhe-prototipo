@@ -100,10 +100,20 @@ async function registrarFeedbackInsight(contextoUsuarioIa, feedback) {
   });
 }
 
+async function obterResumoUsoIa(contextoUsuarioIa) {
+  return chamarAiService("/uso/resumo", {
+    method: "POST",
+    body: {
+      usuario_id: contextoUsuarioIa.usuario_id,
+    },
+  });
+}
+
 module.exports = {
   verificarSaudeIa,
   gerarInsightRiscoEstoque,
   listarHistoricoInsights,
   registrarFeedbackInsight,
+  obterResumoUsoIa,
   montarContextoUsuarioIa,
 };

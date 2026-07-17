@@ -285,6 +285,7 @@ def listar_historico_insights_por_usuario(
         for linha in resultados
     ]
 
+
 def registrar_feedback_resposta(
     insight_id: int,
     usuario_id: int,
@@ -322,9 +323,7 @@ def registrar_feedback_resposta(
             insight_encontrado = cursor.fetchone()
 
             if not insight_encontrado:
-                raise ValueError(
-                    "Insight não encontrado para este usuário."
-                )
+                raise ValueError("Insight não encontrado para este usuário.")
 
             cursor.execute(
                 sql_insert,
@@ -346,4 +345,101 @@ def registrar_feedback_resposta(
         "avaliacao": resultado[3],
         "comentario": resultado[4],
         "criado_em": resultado[5],
+    }
+
+
+def obter_resumo_uso_ia_por_usuario(usuario_id: int) -> dict:
+    sql = """
+        WITH consultas_usuario AS (
+            SELECT *
+            FROM ia.consultas_ia
+            WHERE usuario_id = %s
+        ),
+        resumo_consultas AS (
+            SELECT
+                COUNT(*) AS total_consultas,
+                COUNT(*) FILTER (WHERE status = 'SUCESSO') AS consultas_sucesso,
+                COUNT(*) FILTER (WHERE status = 'ERRO') AS consultas_erro,
+                MAX(criado_em) AS ultima_consulta_em
+            FROM consultas_usuario
+        ),
+        resumo_execucoes AS (
+            SELECT
+                COUNT(e.id) AS total_execucoes_llm,
+                COALESCE(SUM(e.prompt_tokens), 0) AS prompt_tokens,
+                COALESCE(SUM(e.completion_tokens), 0) AS completion_tokens,
+                COALESCE(SUM(e.total_tokens), 0) AS total_tokens,
+                COALESCE(SUM(e.custo), 0) AS custo_total,
+                COALESCE(ROUND(AVG(e.tempo_ms)), 0) AS tempo_medio_ms
+            FROM ia.execucoes_llm e
+            INNER JOIN consultas_usuario c ON c.id = e.consulta_ia_id
+        ),
+        resumo_insights AS (
+            SELECT
+                COUNT(i.id) AS total_insights
+            FROM ia.insights i
+            INNER JOIN consultas_usuario c ON c.id = i.consulta_ia_id
+        ),
+        resumo_feedbacks AS (
+            SELECT
+                COUNT(f.id) AS total_feedbacks,
+                COUNT(f.id) FILTER (WHERE f.avaliacao = 'UTIL') AS feedback_util,
+                COUNT(f.id) FILTER (WHERE f.avaliacao = 'NAO_UTIL') AS feedback_nao_util,
+                COUNT(f.id) FILTER (WHERE f.avaliacao = 'INCORRETA') AS feedback_incorreta,
+                COUNT(f.id) FILTER (WHERE f.avaliacao = 'INCOMPLETA') AS feedback_incompleta
+            FROM ia.feedback_respostas f
+            WHERE f.usuario_id = %s
+        )
+        SELECT
+            rc.total_consultas,
+            rc.consultas_sucesso,
+            rc.consultas_erro,
+            rc.ultima_consulta_em,
+
+            re.total_execucoes_llm,
+            re.prompt_tokens,
+            re.completion_tokens,
+            re.total_tokens,
+            re.custo_total,
+            re.tempo_medio_ms,
+
+            ri.total_insights,
+
+            rf.total_feedbacks,
+            rf.feedback_util,
+            rf.feedback_nao_util,
+            rf.feedback_incorreta,
+            rf.feedback_incompleta
+        FROM resumo_consultas rc
+        CROSS JOIN resumo_execucoes re
+        CROSS JOIN resumo_insights ri
+        CROSS JOIN resumo_feedbacks rf;
+    """
+
+    with criar_conexao() as conexao:
+        with conexao.cursor() as cursor:
+            cursor.execute(sql, (usuario_id, usuario_id))
+            resultado = cursor.fetchone()
+
+    return {
+        "total_consultas": resultado[0],
+        "consultas_sucesso": resultado[1],
+        "consultas_erro": resultado[2],
+        "ultima_consulta_em": resultado[3],
+        "total_execucoes_llm": resultado[4],
+        "tokens": {
+            "prompt_tokens": resultado[5],
+            "completion_tokens": resultado[6],
+            "total_tokens": resultado[7],
+        },
+        "custo_total": float(resultado[8]),
+        "tempo_medio_ms": int(resultado[9] or 0),
+        "total_insights": resultado[10],
+        "feedbacks": {
+            "total": resultado[11],
+            "UTIL": resultado[12],
+            "NAO_UTIL": resultado[13],
+            "INCORRETA": resultado[14],
+            "INCOMPLETA": resultado[15],
+        },
     }
