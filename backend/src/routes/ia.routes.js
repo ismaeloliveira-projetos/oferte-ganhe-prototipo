@@ -103,4 +103,44 @@ router.get("/resumo", async function (req, res) {
   }
 });
 
+router.get("/logs", async function (req, res) {
+  try {
+    const contextoUsuarioIa = iaService.montarContextoUsuarioIa(
+      req.usuarioContexto,
+    );
+
+    if (!contextoUsuarioIa.acesso_global) {
+      return res.status(403).json({
+        mensagem: "Usuário sem permissão para consultar logs técnicos da IA.",
+      });
+    }
+
+    const nivel = req.query.nivel || null;
+    const origem = req.query.origem || null;
+    const limite = Number(req.query.limite) || 50;
+
+    const niveisPermitidos = ["DEBUG", "INFO", "WARN", "ERROR"];
+
+    if (nivel && !niveisPermitidos.includes(nivel)) {
+      return res.status(400).json({
+        mensagem: "Nível de log inválido.",
+        valores_permitidos: niveisPermitidos,
+      });
+    }
+
+    const resultado = await iaService.listarLogsIa(contextoUsuarioIa, {
+      nivel,
+      origem,
+      limite,
+    });
+
+    res.status(200).json(resultado);
+  } catch (erro) {
+    res.status(502).json({
+      mensagem: "Erro ao consultar logs da IA.",
+      detalhe: erro.message,
+    });
+  }
+});
+
 module.exports = router;

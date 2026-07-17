@@ -4,6 +4,7 @@ from app.routes.health_routes import router as health_router
 from app.routes.indicadores_routes import router as indicadores_router
 from app.routes.insights_routes import router as insights_router
 from app.routes.uso_routes import router as uso_router
+from app.routes.logs_routes import router as logs_router
 
 app = FastAPI(
     title="Oferte e Ganhe - AI Service",
@@ -15,6 +16,7 @@ app.include_router(health_router)
 app.include_router(indicadores_router)
 app.include_router(insights_router)
 app.include_router(uso_router)
+app.include_router(logs_router)
 
 @app.get("/")
 def root():

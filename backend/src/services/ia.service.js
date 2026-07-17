@@ -109,11 +109,25 @@ async function obterResumoUsoIa(contextoUsuarioIa) {
   });
 }
 
+async function listarLogsIa(contextoUsuarioIa, filtros = {}) {
+  return chamarAiService("/logs", {
+    method: "POST",
+    body: {
+      usuario_id: contextoUsuarioIa.usuario_id,
+      acesso_global: contextoUsuarioIa.acesso_global,
+      nivel: filtros.nivel || null,
+      origem: filtros.origem || null,
+      limite: filtros.limite || 50,
+    },
+  });
+}
+
 module.exports = {
   verificarSaudeIa,
   gerarInsightRiscoEstoque,
   listarHistoricoInsights,
   registrarFeedbackInsight,
   obterResumoUsoIa,
+  listarLogsIa,
   montarContextoUsuarioIa,
 };

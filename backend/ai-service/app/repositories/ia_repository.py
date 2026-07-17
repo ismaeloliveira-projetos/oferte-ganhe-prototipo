@@ -477,3 +477,50 @@ def registrar_log_ia(
             conexao.commit()
 
     return log_id
+
+
+def listar_logs_ia(
+    nivel: str | None = None,
+    origem: str | None = None,
+    limite: int = 50,
+) -> list[dict]:
+    sql = """
+        SELECT
+            id,
+            nivel,
+            origem,
+            mensagem,
+            metadados,
+            criado_em
+        FROM ia.logs_ia
+        WHERE (%s::text IS NULL OR nivel = %s)
+          AND (%s::text IS NULL OR origem ILIKE '%%' || %s || '%%')
+        ORDER BY id DESC
+        LIMIT %s;
+    """
+
+    with criar_conexao() as conexao:
+        with conexao.cursor() as cursor:
+            cursor.execute(
+                sql,
+                (
+                    nivel,
+                    nivel,
+                    origem,
+                    origem,
+                    limite,
+                ),
+            )
+            resultados = cursor.fetchall()
+
+    return [
+        {
+            "id": linha[0],
+            "nivel": linha[1],
+            "origem": linha[2],
+            "mensagem": linha[3],
+            "metadados": linha[4],
+            "criado_em": linha[5],
+        }
+        for linha in resultados
+    ]
