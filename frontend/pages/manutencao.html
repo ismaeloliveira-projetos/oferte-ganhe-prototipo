@@ -300,64 +300,6 @@
       </main>
     </div>
 
-    <button class="assistant-toggle" onclick="abrirAssistente()">
-      Assistente IA
-    </button>
-
-    <div
-      id="assistantOverlay"
-      class="assistant-overlay"
-      onclick="fecharAssistente()"
-    ></div>
-
-    <aside id="assistantSidebar" class="assistant-sidebar">
-      <div class="assistant-header">
-        <div>
-          <h2>Assistente IA</h2>
-          <p>Consulta inteligente do sistema</p>
-        </div>
-
-        <button class="assistant-close" onclick="fecharAssistente()">×</button>
-      </div>
-
-      <div id="chatMessages" class="chat-messages">
-        <div class="chat-message assistant">
-          Olá! Você pode perguntar, por exemplo: "Quais lojas estão abaixo do
-          estoque mínimo?"
-        </div>
-      </div>
-
-      <div class="assistant-suggestions">
-        <button
-          onclick="usarSugestao('Quais lojas estão abaixo do estoque mínimo?')"
-        >
-          Lojas abaixo do mínimo
-        </button>
-
-        <button onclick="usarSugestao('Qual foi o total de talões enviados?')">
-          Total enviado
-        </button>
-
-        <button onclick="usarSugestao('Quantas lojas existem?')">
-          Total de lojas
-        </button>
-      </div>
-
-      <div class="chat-input-area">
-        <input
-          type="text"
-          id="chatInput"
-          class="form-input"
-          placeholder="Digite sua pergunta..."
-          onkeydown="verificarEnterAssistente(event)"
-        />
-
-        <button class="btn-primary" onclick="enviarPerguntaAssistente()">
-          Enviar
-        </button>
-      </div>
-    </aside>
-
     <script src="../js/api.js"></script>
     <script src="../js/ui.js"></script>
     <script src="../js/manutencao.js"></script>

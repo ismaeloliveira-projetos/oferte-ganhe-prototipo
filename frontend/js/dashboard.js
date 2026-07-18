@@ -623,7 +623,12 @@ function escaparHtmlDashboardIA(valor) {
 }
 
 function formatarTextoDashboardIA(texto) {
-  return escaparHtmlDashboardIA(texto).replace(/\n/g, "<br>");
+  const textoSeguro = escaparHtmlDashboardIA(texto);
+
+  return textoSeguro
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*\*/g, "")
+    .replace(/\n/g, "<br>");
 }
 
 function renderizarIndicadorIA(indicador) {
