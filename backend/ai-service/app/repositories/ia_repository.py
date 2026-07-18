@@ -534,3 +534,113 @@ def listar_logs_ia(
         }
         for linha in resultados
     ]
+
+def listar_prompts_ia(
+    nome: str | None = None,
+    limite: int = 50,
+) -> list[dict]:
+    sql = """
+        SELECT
+            id,
+            nome,
+            descricao,
+            conteudo,
+            versao,
+            ativo,
+            criado_em,
+            atualizado_em
+        FROM ia.prompts
+        WHERE (%s::text IS NULL OR nome ILIKE '%%' || %s || '%%')
+        ORDER BY nome, versao DESC
+        LIMIT %s;
+    """
+
+    with criar_conexao() as conexao:
+        with conexao.cursor() as cursor:
+            cursor.execute(sql, (nome, nome, limite))
+            resultados = cursor.fetchall()
+
+    return [
+        {
+            "id": linha[0],
+            "nome": linha[1],
+            "descricao": linha[2],
+            "conteudo": linha[3],
+            "versao": linha[4],
+            "ativo": linha[5],
+            "criado_em": linha[6],
+            "atualizado_em": linha[7],
+        }
+        for linha in resultados
+    ]
+
+
+def criar_nova_versao_prompt(
+    nome: str,
+    conteudo: str,
+    descricao: str | None = None,
+) -> dict:
+    sql_buscar_versao = """
+        SELECT COALESCE(MAX(versao), 0)
+        FROM ia.prompts
+        WHERE nome = %s;
+    """
+
+    sql_desativar_anteriores = """
+        UPDATE ia.prompts
+        SET ativo = false
+        WHERE nome = %s
+          AND ativo = true;
+    """
+
+    sql_inserir = """
+        INSERT INTO ia.prompts (
+            nome,
+            descricao,
+            conteudo,
+            versao,
+            ativo
+        )
+        VALUES (%s, %s, %s, %s, true)
+        RETURNING
+            id,
+            nome,
+            descricao,
+            conteudo,
+            versao,
+            ativo,
+            criado_em,
+            atualizado_em;
+    """
+
+    with criar_conexao() as conexao:
+        with conexao.cursor() as cursor:
+            cursor.execute(sql_buscar_versao, (nome,))
+            versao_atual = cursor.fetchone()[0]
+            nova_versao = versao_atual + 1
+
+            cursor.execute(sql_desativar_anteriores, (nome,))
+
+            cursor.execute(
+                sql_inserir,
+                (
+                    nome,
+                    descricao,
+                    conteudo,
+                    nova_versao,
+                ),
+            )
+
+            resultado = cursor.fetchone()
+            conexao.commit()
+
+    return {
+        "id": resultado[0],
+        "nome": resultado[1],
+        "descricao": resultado[2],
+        "conteudo": resultado[3],
+        "versao": resultado[4],
+        "ativo": resultado[5],
+        "criado_em": resultado[6],
+        "atualizado_em": resultado[7],
+    }

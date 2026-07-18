@@ -141,6 +141,31 @@ async function enviarMensagemChatIa(contextoUsuarioIa, mensagem) {
   });
 }
 
+async function listarPromptsIa(contextoUsuarioIa, filtros = {}) {
+  return chamarAiService("/prompts/listar", {
+    method: "POST",
+    body: {
+      usuario_id: contextoUsuarioIa.usuario_id,
+      acesso_global: contextoUsuarioIa.acesso_global,
+      nome: filtros.nome || null,
+      limite: filtros.limite || 50,
+    },
+  });
+}
+
+async function criarVersaoPromptIa(contextoUsuarioIa, dadosPrompt) {
+  return chamarAiService("/prompts/versao", {
+    method: "POST",
+    body: {
+      usuario_id: contextoUsuarioIa.usuario_id,
+      acesso_global: contextoUsuarioIa.acesso_global,
+      nome: dadosPrompt.nome,
+      descricao: dadosPrompt.descricao || null,
+      conteudo: dadosPrompt.conteudo,
+    },
+  });
+}
+
 module.exports = {
   verificarSaudeIa,
   gerarInsightRiscoEstoque,
@@ -148,6 +173,8 @@ module.exports = {
   registrarFeedbackInsight,
   obterResumoUsoIa,
   listarLogsIa,
+  listarPromptsIa,
+  criarVersaoPromptIa,
   obterIndicadorRiscoEstoque,
   enviarMensagemChatIa,
   montarContextoUsuarioIa,

@@ -189,4 +189,74 @@ router.post("/chat", async function (req, res) {
   }
 });
 
+router.get("/prompts", async function (req, res) {
+  try {
+    const contextoUsuarioIa = iaService.montarContextoUsuarioIa(
+      req.usuarioContexto,
+    );
+
+    if (!contextoUsuarioIa.acesso_global) {
+      return res.status(403).json({
+        mensagem: "Usuário sem permissão para consultar prompts da IA.",
+      });
+    }
+
+    const nome = req.query.nome || null;
+    const limite = Number(req.query.limite) || 50;
+
+    const resultado = await iaService.listarPromptsIa(contextoUsuarioIa, {
+      nome,
+      limite,
+    });
+
+    res.status(200).json(resultado);
+  } catch (erro) {
+    res.status(502).json({
+      mensagem: "Erro ao consultar prompts da IA.",
+      detalhe: erro.message,
+    });
+  }
+});
+
+router.post("/prompts/versao", async function (req, res) {
+  try {
+    const contextoUsuarioIa = iaService.montarContextoUsuarioIa(
+      req.usuarioContexto,
+    );
+
+    if (!contextoUsuarioIa.acesso_global) {
+      return res.status(403).json({
+        mensagem: "Usuário sem permissão para criar versão de prompt da IA.",
+      });
+    }
+
+    const { nome, descricao, conteudo } = req.body || {};
+
+    if (!nome || typeof nome !== "string") {
+      return res.status(400).json({
+        mensagem: "Campo 'nome' é obrigatório.",
+      });
+    }
+
+    if (!conteudo || typeof conteudo !== "string") {
+      return res.status(400).json({
+        mensagem: "Campo 'conteudo' é obrigatório.",
+      });
+    }
+
+    const resultado = await iaService.criarVersaoPromptIa(contextoUsuarioIa, {
+      nome,
+      descricao,
+      conteudo,
+    });
+
+    res.status(201).json(resultado);
+  } catch (erro) {
+    res.status(502).json({
+      mensagem: "Erro ao criar versão de prompt da IA.",
+      detalhe: erro.message,
+    });
+  }
+});
+
 module.exports = router;

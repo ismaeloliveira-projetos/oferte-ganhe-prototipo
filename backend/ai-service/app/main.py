@@ -6,6 +6,8 @@ from app.routes.insights_routes import router as insights_router
 from app.routes.uso_routes import router as uso_router
 from app.routes.logs_routes import router as logs_router
 from app.routes.chat_routes import router as chat_router
+from app.routes.prompts_routes import router as prompts_router
+
 
 app = FastAPI(
     title="Oferte e Ganhe - AI Service",
@@ -19,6 +21,7 @@ app.include_router(insights_router)
 app.include_router(uso_router)
 app.include_router(logs_router)
 app.include_router(chat_router)
+app.include_router(prompts_router)
 
 @app.get("/")
 def root():
