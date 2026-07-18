@@ -84,6 +84,8 @@ def registrar_execucao_llm(
     tempo_ms: int | None = None,
     status: str = "SUCESSO",
     erro: str | None = None,
+    prompt_id: int | None = None,
+    prompt_versao: int | None = None,
 ) -> int:
     usage = usage or {}
 
@@ -98,9 +100,11 @@ def registrar_execucao_llm(
             custo,
             tempo_ms,
             status,
-            erro
+            erro,
+            prompt_id,
+            prompt_versao
         )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING id;
     """
 
@@ -119,6 +123,8 @@ def registrar_execucao_llm(
                     tempo_ms,
                     status,
                     erro,
+                    prompt_id,
+                    prompt_versao,
                 ),
             )
             execucao_id = cursor.fetchone()[0]
@@ -227,6 +233,8 @@ def listar_historico_insights_por_usuario(
             e.id AS execucao_llm_id,
             e.modelo,
             e.provedor,
+            e.prompt_id,
+            e.prompt_versao,
             e.prompt_tokens,
             e.completion_tokens,
             e.total_tokens,
@@ -267,20 +275,22 @@ def listar_historico_insights_por_usuario(
             "execucao_llm_id": linha[7],
             "modelo": linha[8],
             "provedor": linha[9],
-            "prompt_tokens": linha[10],
-            "completion_tokens": linha[11],
-            "total_tokens": linha[12],
-            "custo": linha[13],
-            "tempo_ms": linha[14],
-            "status_execucao": linha[15],
-            "insight_id": linha[16],
-            "tipo_insight": linha[17],
-            "titulo": linha[18],
-            "dados_base": linha[19],
-            "resposta": linha[20],
-            "nivel_confianca": linha[21],
-            "modelo_utilizado": linha[22],
-            "insight_criado_em": linha[23],
+            "prompt_id": linha[10],
+            "prompt_versao": linha[11],
+            "prompt_tokens": linha[12],
+            "completion_tokens": linha[13],
+            "total_tokens": linha[14],
+            "custo": linha[15],
+            "tempo_ms": linha[16],
+            "status_execucao": linha[17],
+            "insight_id": linha[18],
+            "tipo_insight": linha[19],
+            "titulo": linha[20],
+            "dados_base": linha[21],
+            "resposta": linha[22],
+            "nivel_confianca": linha[23],
+            "modelo_utilizado": linha[24],
+            "insight_criado_em": linha[25],
         }
         for linha in resultados
     ]

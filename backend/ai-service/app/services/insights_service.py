@@ -27,14 +27,14 @@ def gerar_insight_risco_estoque(
     lojas_ids = contexto_usuario.get("lojas_ids", [])
 
     consulta_id = criar_consulta_ia(
-    tipo_consulta="insight_risco_estoque",
-    pergunta=pergunta_usuario or "Gerar insight executivo sobre risco de estoque.",
-    usuario_id=usuario_id,
-    contexto={
-        "origem": "endpoint /insights/estoque/risco",
-        "indicador": "risco_estoque",
-        "acesso_global": acesso_global,
-        "lojas_ids": lojas_ids,
+        tipo_consulta="insight_risco_estoque",
+        pergunta=pergunta_usuario or "Gerar insight executivo sobre risco de estoque.",
+        usuario_id=usuario_id,
+        contexto={
+            "origem": "endpoint /insights/estoque/risco",
+            "indicador": "risco_estoque",
+            "acesso_global": acesso_global,
+            "lojas_ids": lojas_ids,
         },
     )
     registrar_log_ia_seguro(
@@ -50,6 +50,9 @@ def gerar_insight_risco_estoque(
     )
 
     inicio = time.perf_counter()
+
+    prompt_id_usado = None
+    prompt_versao_usada = None
 
     try:
         indicador = obter_risco_estoque(
@@ -82,6 +85,9 @@ def gerar_insight_risco_estoque(
 
         if not prompt:
             raise RuntimeError("Prompt ativo 'insight_risco_estoque' não encontrado")
+
+        prompt_id_usado = prompt["id"]
+        prompt_versao_usada = prompt["versao"]
 
         mensagens = [
             {
@@ -125,6 +131,8 @@ def gerar_insight_risco_estoque(
             usage=resposta_llm["usage"],
             tempo_ms=tempo_ms,
             status="SUCESSO",
+            prompt_id=prompt_id_usado,
+            prompt_versao=prompt_versao_usada,
         )
 
         insight_id = registrar_insight(
@@ -180,6 +188,8 @@ def gerar_insight_risco_estoque(
             tempo_ms=tempo_ms,
             status="ERRO",
             erro=str(erro),
+            prompt_id=prompt_id_usado,
+            prompt_versao=prompt_versao_usada,
         )
 
         finalizar_consulta_ia(
