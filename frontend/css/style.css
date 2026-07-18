@@ -2692,3 +2692,23 @@ video {
 #btnEntrar.btn-primary:hover {
   background: var(--qq-green-dark, #007a2f);
 }
+
+/*feedback ia */
+.btn-feedback-ia {
+  border: 1px solid;
+  background: var(--qq-green-dark);
+  color: white;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn-feedback-ia:hover {
+  background: #054f0a;
+}
+
+.btn-feedback-ia:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

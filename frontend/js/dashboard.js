@@ -718,7 +718,32 @@ function renderizarInsightGeradoDashboardIA(resultado) {
       Custo estimado ${resultado?.usage?.cost ?? 0} |
       Tempo ${normalizarNumero(resultado.tempo_ms)} ms
     </div>
+
+        <div class="insight-item">
+      <strong>Essa resposta foi útil?</strong>
+
+      <div class="form-actions">
+        <button class="btn-feedback-ia" data-avaliacao="UTIL" data-insight-id="${resultado.insight_id}">
+          Útil
+        </button>
+
+        <button class="btn-feedback-ia" data-avaliacao="NAO_UTIL" data-insight-id="${resultado.insight_id}">
+          Não útil
+        </button>
+
+        <button class="btn-feedback-ia" data-avaliacao="INCORRETA" data-insight-id="${resultado.insight_id}">
+          Incorreta
+        </button>
+
+        <button class="btn-feedback-ia" data-avaliacao="INCOMPLETA" data-insight-id="${resultado.insight_id}">
+          Incompleta
+        </button>
+      </div>
+
+      <small id="mensagemFeedbackIA"></small>
+    </div>
   `;
+  configurarBotoesFeedbackIA();
 }
 
 async function carregarPainelInsightsIA() {
@@ -804,6 +829,64 @@ function configurarEventosDashboardIA() {
   if (botao) {
     botao.addEventListener("click", aoClicarGerarInsightDashboardIA);
   }
+}
+
+async function registrarFeedbackInsightDashboardIA(insightId, avaliacao) {
+  return await apiFetch("/api/ia/insights/feedback", {
+    method: "POST",
+    body: JSON.stringify({
+      insight_id: Number(insightId),
+      avaliacao,
+      comentario: null,
+    }),
+  });
+}
+
+function configurarBotoesFeedbackIA() {
+  const botoes = document.querySelectorAll(".btn-feedback-ia");
+
+  botoes.forEach(function (botao) {
+    botao.addEventListener("click", async function () {
+      const insightId = botao.getAttribute("data-insight-id");
+      const avaliacao = botao.getAttribute("data-avaliacao");
+      const mensagemEl = document.getElementById("mensagemFeedbackIA");
+
+      try {
+        botoes.forEach(function (item) {
+          item.disabled = true;
+        });
+
+        if (mensagemEl) {
+          mensagemEl.textContent = "Registrando feedback...";
+        }
+
+        await registrarFeedbackInsightDashboardIA(insightId, avaliacao);
+
+        if (mensagemEl) {
+          mensagemEl.textContent = "Feedback registrado com sucesso.";
+        }
+
+        if (typeof mostrarToast === "function") {
+          mostrarToast("Feedback registrado com sucesso.");
+        }
+      } catch (erro) {
+        console.error("Erro ao registrar feedback da IA:", erro);
+
+        botoes.forEach(function (item) {
+          item.disabled = false;
+        });
+
+        if (mensagemEl) {
+          mensagemEl.textContent =
+            erro.message || "Não foi possível registrar o feedback.";
+        }
+
+        if (typeof mostrarToast === "function") {
+          mostrarToast("Erro ao registrar feedback da IA.", true);
+        }
+      }
+    });
+  });
 }
 
 document.addEventListener("DOMContentLoaded", function () {
