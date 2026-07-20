@@ -1,4 +1,5 @@
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || "http://127.0.0.1:8000";
+const AI_SERVICE_INTERNAL_KEY = process.env.AI_SERVICE_INTERNAL_KEY || "";
 
 async function chamarAiService(caminho, opcoes = {}) {
   const url = `${AI_SERVICE_URL}${caminho}`;
@@ -7,6 +8,9 @@ async function chamarAiService(caminho, opcoes = {}) {
     method: opcoes.method || "GET",
     headers: {
       "Content-Type": "application/json",
+      ...(AI_SERVICE_INTERNAL_KEY
+        ? { "X-AI-Internal-Key": AI_SERVICE_INTERNAL_KEY }
+        : {}),
       ...(opcoes.headers || {}),
     },
     body: opcoes.body ? JSON.stringify(opcoes.body) : undefined,

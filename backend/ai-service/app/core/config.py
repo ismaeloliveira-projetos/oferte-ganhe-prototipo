@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     openrouter_api_key: str | None = None
     openrouter_model: str = "openrouter/auto"
 
+    ia_internal_api_key: str | None = None 
+
     db_host: str = "localhost"
     db_port: int = 5432
     db_name: str
