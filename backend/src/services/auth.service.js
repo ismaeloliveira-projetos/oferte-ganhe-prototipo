@@ -1,6 +1,7 @@
 const authRepository = require("../repositories/auth.repository");
 const AppError = require("../utils/AppError");
 const { compararSenha } = require("../utils/criptografia");
+const { gerarTokenUsuario } = require("../utils/jwt");
 
 function montarUsuarioLogado(usuario, perfis, permissoes, lojas) {
   const perfilPrincipal = perfis[0] || null;
@@ -73,9 +74,12 @@ async function login(dados = {}) {
 
   const usuarioLogado = montarUsuarioLogado(usuario, perfis, permissoes, lojas);
 
+  const token = gerarTokenUsuario(usuarioLogado);
+
   return {
     mensagem: "Login realizado com sucesso.",
     usuario: usuarioLogado,
+    token,
   };
 }
 
