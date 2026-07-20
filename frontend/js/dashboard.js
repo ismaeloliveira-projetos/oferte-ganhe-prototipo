@@ -1,3 +1,7 @@
+let lojasCriticasPaginadas = [];
+let paginaAtualLojasCriticas = 1;
+const ITENS_POR_PAGINA_LOJAS_CRITICAS = 10;
+
 function obterClasseStatus(status) {
   if (status === "Crítico") {
     return "badge-critico";
@@ -258,7 +262,15 @@ function carregarCardsDashboard(dados) {
 }
 
 function carregarTabelaLojasCriticas(dados) {
+  lojasCriticasPaginadas = dados.lojasAtencao || [];
+  paginaAtualLojasCriticas = 1;
+
+  renderizarTabelaLojasCriticasPaginada();
+}
+
+function renderizarTabelaLojasCriticasPaginada() {
   const tabela = document.getElementById("tabelaLojasCriticas");
+  const paginacao = document.getElementById("paginacaoLojasCriticas");
 
   if (!tabela) {
     return;
@@ -266,36 +278,105 @@ function carregarTabelaLojasCriticas(dados) {
 
   tabela.innerHTML = "";
 
-  if (!dados.lojasAtencao || dados.lojasAtencao.length === 0) {
+  if (!lojasCriticasPaginadas || lojasCriticasPaginadas.length === 0) {
     tabela.innerHTML = `
       <tr>
         <td colspan="6">Nenhuma loja em situação crítica ou de atenção.</td>
       </tr>
     `;
+
+    if (paginacao) {
+      paginacao.innerHTML = "";
+    }
+
     return;
   }
 
-  dados.lojasAtencao.forEach(function (loja) {
-    const classeStatus = obterClasseStatus(loja.statusEstoque);
+  const totalItens = lojasCriticasPaginadas.length;
+  const totalPaginas = Math.ceil(totalItens / ITENS_POR_PAGINA_LOJAS_CRITICAS);
 
-    tabela.innerHTML += `
-      <tr>
-        <td>${loja.codigoLoja}</td>
-        <td>${loja.nomeLoja}</td>
-        <td>${loja.estoqueAtual}</td>
-        <td>${loja.estoqueMinimo}</td>
-        <td>${loja.estoqueRecomendado}</td>
-        <td>
-          <span class="badge-status ${classeStatus}">
-            ${loja.statusEstoque}
-          </span>
-        </td>
-      </tr>
+  const inicio =
+    (paginaAtualLojasCriticas - 1) * ITENS_POR_PAGINA_LOJAS_CRITICAS;
+
+  const fim = inicio + ITENS_POR_PAGINA_LOJAS_CRITICAS;
+
+  const lojasDaPagina = lojasCriticasPaginadas.slice(inicio, fim);
+
+  tabela.innerHTML = lojasDaPagina
+    .map(function (loja) {
+      const classeStatus = obterClasseStatus(loja.statusEstoque);
+
+      return `
+        <tr>
+          <td>${loja.codigoLoja}</td>
+          <td>${loja.nomeLoja}</td>
+          <td>${loja.estoqueAtual}</td>
+          <td>${loja.estoqueMinimo}</td>
+          <td>${loja.estoqueRecomendado}</td>
+          <td>
+            <span class="badge-status ${classeStatus}">
+              ${loja.statusEstoque}
+            </span>
+          </td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  if (paginacao) {
+    paginacao.innerHTML = `
+      <button
+        type="button"
+        class="btn-paginacao-ia"
+        id="btnAnteriorLojasCriticas"
+        ${paginaAtualLojasCriticas <= 1 ? "disabled" : ""}
+      >
+        Anterior
+      </button>
+
+      <span class="info-paginacao-ia">
+        Página ${paginaAtualLojasCriticas} de ${totalPaginas}
+        · ${totalItens} loja(s)
+      </span>
+
+      <button
+        type="button"
+        class="btn-paginacao-ia"
+        id="btnProximaLojasCriticas"
+        ${paginaAtualLojasCriticas >= totalPaginas ? "disabled" : ""}
+      >
+        Próxima
+      </button>
     `;
-  });
+
+    configurarEventosPaginacaoLojasCriticas(totalPaginas);
+  }
 
   if (typeof aplicarResponsividadeTabelas === "function") {
     aplicarResponsividadeTabelas();
+  }
+}
+
+function configurarEventosPaginacaoLojasCriticas(totalPaginas) {
+  const btnAnterior = document.getElementById("btnAnteriorLojasCriticas");
+  const btnProxima = document.getElementById("btnProximaLojasCriticas");
+
+  if (btnAnterior) {
+    btnAnterior.addEventListener("click", function () {
+      if (paginaAtualLojasCriticas > 1) {
+        paginaAtualLojasCriticas -= 1;
+        renderizarTabelaLojasCriticasPaginada();
+      }
+    });
+  }
+
+  if (btnProxima) {
+    btnProxima.addEventListener("click", function () {
+      if (paginaAtualLojasCriticas < totalPaginas) {
+        paginaAtualLojasCriticas += 1;
+        renderizarTabelaLojasCriticasPaginada();
+      }
+    });
   }
 }
 
@@ -545,9 +626,11 @@ async function inicializarDashboard() {
 
     carregarCardsDashboard(dados);
     carregarTabelaLojasCriticas(dados);
-    carregarInsights(dados);
     carregarHistoricoEnvios(dados);
     carregarResumoStatusLojas(dados);
+
+    configurarEventosDashboardIA();
+    await carregarPainelInsightsIA();
 
     if (typeof aplicarPermissoesMenu === "function") {
       aplicarPermissoesMenu();
@@ -556,6 +639,326 @@ async function inicializarDashboard() {
     console.error("Erro ao carregar dashboard:", erro);
     exibirErroDashboard();
   }
+}
+
+async function buscarIndicadorRiscoEstoqueIA() {
+  return await apiFetch("/api/ia/indicadores/estoque/risco");
+}
+
+async function gerarInsightRiscoEstoqueIA() {
+  return await apiFetch("/api/ia/insights/estoque/risco");
+}
+
+function traduzirStatusRiscoIA(status) {
+  const mapa = {
+    SEM_ESTOQUE_CADASTRADO: "sem estoque cadastrado",
+    CRITICO: "crítica",
+    ATENCAO: "em atenção",
+    OK: "normal",
+  };
+
+  return mapa[status] || status || "-";
+}
+
+function obterResumoStatusIA(indicador, status) {
+  return normalizarNumero(indicador?.resumo_por_status?.[status]);
+}
+
+function obterLojasIndicadorIA(indicador) {
+  if (!indicador || !Array.isArray(indicador.dados)) {
+    return [];
+  }
+
+  return indicador.dados;
+}
+
+function ordenarLojasPrioridadeIA(lojas) {
+  const pesoStatus = {
+    SEM_ESTOQUE_CADASTRADO: 1,
+    CRITICO: 2,
+    ATENCAO: 3,
+    OK: 4,
+  };
+
+  return [...lojas].sort(function (a, b) {
+    const pesoA = pesoStatus[a.status_risco] || 99;
+    const pesoB = pesoStatus[b.status_risco] || 99;
+
+    if (pesoA !== pesoB) {
+      return pesoA - pesoB;
+    }
+
+    return (
+      normalizarNumero(b.gap_recomendado) - normalizarNumero(a.gap_recomendado)
+    );
+  });
+}
+
+function escaparHtmlDashboardIA(valor) {
+  return String(valor ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function formatarTextoDashboardIA(texto) {
+  const textoSeguro = escaparHtmlDashboardIA(texto);
+
+  return textoSeguro
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*\*/g, "")
+    .replace(/\n/g, "<br>");
+}
+
+function renderizarIndicadorIA(indicador) {
+  const lista = document.getElementById("listaInsights");
+
+  if (!lista) {
+    return;
+  }
+
+  const total = normalizarNumero(indicador.total_lojas_analisadas);
+  const criticas = obterResumoStatusIA(indicador, "CRITICO");
+  const atencao = obterResumoStatusIA(indicador, "ATENCAO");
+  const ok = obterResumoStatusIA(indicador, "OK");
+  const semEstoque = obterResumoStatusIA(indicador, "SEM_ESTOQUE_CADASTRADO");
+
+  const lojasPrioritarias = ordenarLojasPrioridadeIA(
+    obterLojasIndicadorIA(indicador),
+  )
+    .filter(function (loja) {
+      return (
+        loja.status_risco === "SEM_ESTOQUE_CADASTRADO" ||
+        loja.status_risco === "CRITICO" ||
+        loja.status_risco === "ATENCAO"
+      );
+    })
+    .slice(0, 3);
+
+  let html = `
+    <div class="insight-item">
+      <strong>Resumo IA:</strong>
+      A camada de IA analisou ${total} loja(s) dentro do seu escopo.
+      Foram encontradas ${criticas} crítica(s), ${atencao} em atenção,
+      ${ok} normal(is) e ${semEstoque} sem estoque cadastrado.
+    </div>
+  `;
+
+  if (lojasPrioritarias.length > 0) {
+    html += `
+      <div class="insight-item">
+        <strong>Prioridades:</strong>
+        <ul>
+          ${lojasPrioritarias
+            .map(function (loja) {
+              return `
+                <li>
+                  ${escaparHtmlDashboardIA(loja.codigo_loja)} -
+                  ${escaparHtmlDashboardIA(loja.nome_loja)}:
+                  ${traduzirStatusRiscoIA(loja.status_risco)}.
+                  Falta para recomendado:
+                  ${normalizarNumero(loja.gap_recomendado)} talões.
+                </li>
+              `;
+            })
+            .join("")}
+        </ul>
+      </div>
+    `;
+  } else {
+    html += `
+      <div class="insight-item">
+        <strong>Situação estável:</strong>
+        Nenhuma loja crítica ou em atenção dentro do seu escopo.
+      </div>
+    `;
+  }
+
+  lista.innerHTML = html;
+}
+
+function renderizarInsightGeradoDashboardIA(resultado) {
+  const lista = document.getElementById("listaInsights");
+
+  if (!lista) {
+    return;
+  }
+
+  lista.innerHTML = `
+    <div class="insight-item">
+      <strong>Insight gerado pela IA:</strong>
+      <div>${formatarTextoDashboardIA(resultado.insight)}</div>
+    </div>
+
+    <div class="insight-item">
+      <strong>Auditoria:</strong>
+      Modelo ${escaparHtmlDashboardIA(resultado.modelo)} |
+      Tokens ${normalizarNumero(resultado?.usage?.total_tokens)} |
+      Custo estimado ${resultado?.usage?.cost ?? 0} |
+      Tempo ${normalizarNumero(resultado.tempo_ms)} ms
+    </div>
+
+        <div class="insight-item">
+      <strong>Essa resposta foi útil?</strong>
+
+      <div class="form-actions">
+        <button class="btn-feedback-ia" data-avaliacao="UTIL" data-insight-id="${resultado.insight_id}">
+          Útil
+        </button>
+
+        <button class="btn-feedback-ia" data-avaliacao="NAO_UTIL" data-insight-id="${resultado.insight_id}">
+          Não útil
+        </button>
+
+        <button class="btn-feedback-ia" data-avaliacao="INCORRETA" data-insight-id="${resultado.insight_id}">
+          Incorreta
+        </button>
+
+        <button class="btn-feedback-ia" data-avaliacao="INCOMPLETA" data-insight-id="${resultado.insight_id}">
+          Incompleta
+        </button>
+      </div>
+
+      <small id="mensagemFeedbackIA"></small>
+    </div>
+  `;
+  configurarBotoesFeedbackIA();
+}
+
+async function carregarPainelInsightsIA() {
+  const lista = document.getElementById("listaInsights");
+
+  try {
+    const indicador = await buscarIndicadorRiscoEstoqueIA();
+
+    console.log("INDICADOR IA DASHBOARD:", indicador);
+
+    renderizarIndicadorIA(indicador);
+  } catch (erro) {
+    console.error("Erro ao carregar indicador da IA:", erro);
+
+    if (lista) {
+      lista.innerHTML = `
+        <div class="insight-item">
+          <strong>Erro na IA:</strong>
+          Não foi possível carregar o indicador inteligente.
+        </div>
+      `;
+    }
+  }
+}
+
+async function aoClicarGerarInsightDashboardIA() {
+  const botao = document.getElementById("btnGerarInsightDashboard");
+  const lista = document.getElementById("listaInsights");
+
+  if (!botao) {
+    return;
+  }
+
+  try {
+    botao.disabled = true;
+    botao.textContent = "Gerando insight...";
+
+    if (lista) {
+      lista.innerHTML = `
+        <div class="insight-item">
+          <strong>Gerando insight:</strong>
+          A IA está calculando o indicador, buscando o prompt versionado e chamando a LLM.
+        </div>
+      `;
+    }
+
+    const resultado = await gerarInsightRiscoEstoqueIA();
+
+    console.log("INSIGHT IA DASHBOARD:", resultado);
+
+    renderizarInsightGeradoDashboardIA(resultado);
+  } catch (erro) {
+    console.error("Erro ao gerar insight da IA:", erro);
+
+    if (lista) {
+      lista.innerHTML = `
+        <div class="insight-item">
+          <strong>Erro:</strong>
+          ${escaparHtmlDashboardIA(
+            erro.message || "Não foi possível gerar o insight com IA.",
+          )}
+        </div>
+      `;
+    }
+  } finally {
+    botao.disabled = false;
+    botao.textContent = "Gerar insight com IA";
+  }
+}
+
+function configurarEventosDashboardIA() {
+  const botao = document.getElementById("btnGerarInsightDashboard");
+
+  if (botao) {
+    botao.addEventListener("click", aoClicarGerarInsightDashboardIA);
+  }
+}
+
+async function registrarFeedbackInsightDashboardIA(insightId, avaliacao) {
+  return await apiFetch("/api/ia/insights/feedback", {
+    method: "POST",
+    body: JSON.stringify({
+      insight_id: Number(insightId),
+      avaliacao,
+      comentario: null,
+    }),
+  });
+}
+
+function configurarBotoesFeedbackIA() {
+  const botoes = document.querySelectorAll(".btn-feedback-ia");
+
+  botoes.forEach(function (botao) {
+    botao.addEventListener("click", async function () {
+      const insightId = botao.getAttribute("data-insight-id");
+      const avaliacao = botao.getAttribute("data-avaliacao");
+      const mensagemEl = document.getElementById("mensagemFeedbackIA");
+
+      try {
+        botoes.forEach(function (item) {
+          item.disabled = true;
+        });
+
+        if (mensagemEl) {
+          mensagemEl.textContent = "Registrando feedback...";
+        }
+
+        await registrarFeedbackInsightDashboardIA(insightId, avaliacao);
+
+        if (mensagemEl) {
+          mensagemEl.textContent = "Feedback registrado com sucesso.";
+        }
+
+        if (typeof mostrarToast === "function") {
+          mostrarToast("Feedback registrado com sucesso.");
+        }
+      } catch (erro) {
+        console.error("Erro ao registrar feedback da IA:", erro);
+
+        botoes.forEach(function (item) {
+          item.disabled = false;
+        });
+
+        if (mensagemEl) {
+          mensagemEl.textContent =
+            erro.message || "Não foi possível registrar o feedback.";
+        }
+
+        if (typeof mostrarToast === "function") {
+          mostrarToast("Erro ao registrar feedback da IA.", true);
+        }
+      }
+    });
+  });
 }
 
 document.addEventListener("DOMContentLoaded", function () {

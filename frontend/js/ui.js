@@ -197,26 +197,25 @@ function criarAssistenteGlobal() {
       </button>
     </div>
 
-    <div id="chatMessages" class="chat-messages">
-      <div class="chat-message assistant">
-        Olá! Você pode perguntar, por exemplo:
-        "Quais lojas estão abaixo do estoque mínimo?"
-      </div>
-    </div>
+ <div id="chatMessages" class="chat-messages">
+  <div class="chat-message assistant">
+    Olá! Posso responder sobre risco de estoque, histórico de insights e uso da IA.
+  </div>
+</div>
 
     <div class="assistant-suggestions">
-      <button onclick="usarSugestao('Quais lojas estão abaixo do estoque mínimo?')">
-        Lojas abaixo do mínimo
-      </button>
+  <button onclick="usarSugestao('Quais lojas estão com risco de falta de talões?')">
+    Risco de estoque
+  </button>
 
-      <button onclick="usarSugestao('Qual foi o total de talões enviados?')">
-        Total enviado
-      </button>
+  <button onclick="usarSugestao('Mostre meu histórico de insights')">
+    Histórico de insights
+  </button>
 
-      <button onclick="usarSugestao('Quantas lojas existem?')">
-        Total de lojas
-      </button>
-    </div>
+  <button onclick="usarSugestao('Qual foi meu uso da IA?')">
+    Uso da IA
+  </button>
+</div>
 
     <div class="chat-input-area">
       <input
@@ -236,6 +235,21 @@ function criarAssistenteGlobal() {
   document.body.appendChild(botaoAssistente);
   document.body.appendChild(overlay);
   document.body.appendChild(sidebar);
+}
+
+async function consultarAssistenteIA(pergunta) {
+  if (typeof apiFetch !== "function") {
+    throw new Error(
+      "apiFetch não está disponível. Verifique se api.js foi carregado antes de ui.js.",
+    );
+  }
+
+  return await apiFetch("/api/ia/chat", {
+    method: "POST",
+    body: JSON.stringify({
+      mensagem: pergunta,
+    }),
+  });
 }
 
 function abrirAssistente() {
@@ -279,49 +293,42 @@ function verificarEnterAssistente(event) {
   }
 }
 
+function escaparHtmlAssistente(valor) {
+  return String(valor ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function formatarTextoAssistente(texto) {
+  const textoSeguro = escaparHtmlAssistente(texto);
+
+  return textoSeguro
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*\*/g, "")
+    .replace(/\n/g, "<br>");
+}
+
 function adicionarMensagemChat(texto, tipo) {
   const chatMessages = document.getElementById("chatMessages");
 
   if (!chatMessages) {
-    return;
+    return null;
   }
 
-  chatMessages.innerHTML += `
-    <div class="chat-message ${tipo}">
-      ${texto}
-    </div>
-  `;
+  const mensagem = document.createElement("div");
+  mensagem.className = `chat-message ${tipo}`;
+  mensagem.innerHTML = formatarTextoAssistente(texto);
 
+  chatMessages.appendChild(mensagem);
   chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  return mensagem;
 }
 
-function responderPerguntaAssistente(pergunta) {
-  const perguntaNormalizada = pergunta
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-
-  if (
-    perguntaNormalizada.includes("abaixo") ||
-    perguntaNormalizada.includes("minimo") ||
-    perguntaNormalizada.includes("critico")
-  ) {
-    return "Essa consulta será conectada aos dados reais do backend na etapa de Insights IA.";
-  }
-
-  if (
-    perguntaNormalizada.includes("total") ||
-    perguntaNormalizada.includes("envios") ||
-    perguntaNormalizada.includes("lojas") ||
-    perguntaNormalizada.includes("estoque")
-  ) {
-    return "Os dados reais já estão no backend. A próxima etapa é conectar o assistente à API de insights.";
-  }
-
-  return "Ainda não tenho uma resposta específica para essa pergunta. Em breve este assistente será conectado ao backend.";
-}
-
-function enviarPerguntaAssistente() {
+async function enviarPerguntaAssistente() {
   const input = document.getElementById("chatInput");
 
   if (!input) {
@@ -334,15 +341,37 @@ function enviarPerguntaAssistente() {
     return;
   }
 
+  input.value = "";
+
   adicionarMensagemChat(pergunta, "user");
 
-  const resposta = responderPerguntaAssistente(pergunta);
+  const mensagemCarregando = adicionarMensagemChat(
+    "Processando sua pergunta...",
+    "assistant",
+  );
 
-  setTimeout(function () {
-    adicionarMensagemChat(resposta, "assistant");
-  }, 500);
+  try {
+    const resposta = await consultarAssistenteIA(pergunta);
 
-  input.value = "";
+    if (mensagemCarregando) {
+      mensagemCarregando.remove();
+    }
+
+    adicionarMensagemChat(resposta.resposta, "assistant");
+
+    console.log("ASSISTENTE IA:", resposta);
+  } catch (erro) {
+    console.error("Erro ao consultar assistente IA:", erro);
+
+    if (mensagemCarregando) {
+      mensagemCarregando.remove();
+    }
+
+    adicionarMensagemChat(
+      erro.message || "Não foi possível consultar a assistente IA.",
+      "assistant",
+    );
+  }
 }
 
 function mostrarToast(mensagem, erro = false) {
