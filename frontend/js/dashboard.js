@@ -1,3 +1,7 @@
+let lojasCriticasPaginadas = [];
+let paginaAtualLojasCriticas = 1;
+const ITENS_POR_PAGINA_LOJAS_CRITICAS = 10;
+
 function obterClasseStatus(status) {
   if (status === "Crítico") {
     return "badge-critico";
@@ -258,7 +262,15 @@ function carregarCardsDashboard(dados) {
 }
 
 function carregarTabelaLojasCriticas(dados) {
+  lojasCriticasPaginadas = dados.lojasAtencao || [];
+  paginaAtualLojasCriticas = 1;
+
+  renderizarTabelaLojasCriticasPaginada();
+}
+
+function renderizarTabelaLojasCriticasPaginada() {
   const tabela = document.getElementById("tabelaLojasCriticas");
+  const paginacao = document.getElementById("paginacaoLojasCriticas");
 
   if (!tabela) {
     return;
@@ -266,36 +278,105 @@ function carregarTabelaLojasCriticas(dados) {
 
   tabela.innerHTML = "";
 
-  if (!dados.lojasAtencao || dados.lojasAtencao.length === 0) {
+  if (!lojasCriticasPaginadas || lojasCriticasPaginadas.length === 0) {
     tabela.innerHTML = `
       <tr>
         <td colspan="6">Nenhuma loja em situação crítica ou de atenção.</td>
       </tr>
     `;
+
+    if (paginacao) {
+      paginacao.innerHTML = "";
+    }
+
     return;
   }
 
-  dados.lojasAtencao.forEach(function (loja) {
-    const classeStatus = obterClasseStatus(loja.statusEstoque);
+  const totalItens = lojasCriticasPaginadas.length;
+  const totalPaginas = Math.ceil(totalItens / ITENS_POR_PAGINA_LOJAS_CRITICAS);
 
-    tabela.innerHTML += `
-      <tr>
-        <td>${loja.codigoLoja}</td>
-        <td>${loja.nomeLoja}</td>
-        <td>${loja.estoqueAtual}</td>
-        <td>${loja.estoqueMinimo}</td>
-        <td>${loja.estoqueRecomendado}</td>
-        <td>
-          <span class="badge-status ${classeStatus}">
-            ${loja.statusEstoque}
-          </span>
-        </td>
-      </tr>
+  const inicio =
+    (paginaAtualLojasCriticas - 1) * ITENS_POR_PAGINA_LOJAS_CRITICAS;
+
+  const fim = inicio + ITENS_POR_PAGINA_LOJAS_CRITICAS;
+
+  const lojasDaPagina = lojasCriticasPaginadas.slice(inicio, fim);
+
+  tabela.innerHTML = lojasDaPagina
+    .map(function (loja) {
+      const classeStatus = obterClasseStatus(loja.statusEstoque);
+
+      return `
+        <tr>
+          <td>${loja.codigoLoja}</td>
+          <td>${loja.nomeLoja}</td>
+          <td>${loja.estoqueAtual}</td>
+          <td>${loja.estoqueMinimo}</td>
+          <td>${loja.estoqueRecomendado}</td>
+          <td>
+            <span class="badge-status ${classeStatus}">
+              ${loja.statusEstoque}
+            </span>
+          </td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  if (paginacao) {
+    paginacao.innerHTML = `
+      <button
+        type="button"
+        class="btn-paginacao-ia"
+        id="btnAnteriorLojasCriticas"
+        ${paginaAtualLojasCriticas <= 1 ? "disabled" : ""}
+      >
+        Anterior
+      </button>
+
+      <span class="info-paginacao-ia">
+        Página ${paginaAtualLojasCriticas} de ${totalPaginas}
+        · ${totalItens} loja(s)
+      </span>
+
+      <button
+        type="button"
+        class="btn-paginacao-ia"
+        id="btnProximaLojasCriticas"
+        ${paginaAtualLojasCriticas >= totalPaginas ? "disabled" : ""}
+      >
+        Próxima
+      </button>
     `;
-  });
+
+    configurarEventosPaginacaoLojasCriticas(totalPaginas);
+  }
 
   if (typeof aplicarResponsividadeTabelas === "function") {
     aplicarResponsividadeTabelas();
+  }
+}
+
+function configurarEventosPaginacaoLojasCriticas(totalPaginas) {
+  const btnAnterior = document.getElementById("btnAnteriorLojasCriticas");
+  const btnProxima = document.getElementById("btnProximaLojasCriticas");
+
+  if (btnAnterior) {
+    btnAnterior.addEventListener("click", function () {
+      if (paginaAtualLojasCriticas > 1) {
+        paginaAtualLojasCriticas -= 1;
+        renderizarTabelaLojasCriticasPaginada();
+      }
+    });
+  }
+
+  if (btnProxima) {
+    btnProxima.addEventListener("click", function () {
+      if (paginaAtualLojasCriticas < totalPaginas) {
+        paginaAtualLojasCriticas += 1;
+        renderizarTabelaLojasCriticasPaginada();
+      }
+    });
   }
 }
 
@@ -748,15 +829,6 @@ function renderizarInsightGeradoDashboardIA(resultado) {
 
 async function carregarPainelInsightsIA() {
   const lista = document.getElementById("listaInsights");
-
-  if (lista) {
-    lista.innerHTML = `
-      <div class="insight-item">
-        <strong>Carregando IA:</strong>
-        Consultando indicador de risco de estoque.
-      </div>
-    `;
-  }
 
   try {
     const indicador = await buscarIndicadorRiscoEstoqueIA();
