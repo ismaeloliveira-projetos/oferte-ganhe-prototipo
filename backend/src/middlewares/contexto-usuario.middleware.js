@@ -1,22 +1,20 @@
 const usuariosRepository = require("../repositories/usuarios.repository");
 
-// Middleware para carregar o contexto do usuário a partir do header x-usuario-id, proxima etapa evoluir para autenticação JWT//
-// proteção inicial para garantir que o usuário está autenticado e ativo antes de acessar rotas protegidas//
 async function contextoUsuarioMiddleware(req, res, next) {
   try {
-    const usuarioIdHeader = req.headers["x-usuario-id"];
+    const usuarioAutenticado = req.usuarioAutenticado;
 
-    if (!usuarioIdHeader) {
+    if (!usuarioAutenticado || !usuarioAutenticado.id) {
       return res.status(401).json({
-        erro: "Usuário não autenticado. Informe o header x-usuario-id.",
+        erro: "Usuário não autenticado.",
       });
     }
 
-    const usuarioId = Number(usuarioIdHeader);
+    const usuarioId = Number(usuarioAutenticado.id);
 
-    if (Number.isNaN(usuarioId) || usuarioId <= 0) {
-      return res.status(400).json({
-        erro: "Header x-usuario-id deve ser um número válido.",
+    if (!Number.isInteger(usuarioId) || usuarioId <= 0) {
+      return res.status(401).json({
+        erro: "Usuário autenticado inválido.",
       });
     }
 
@@ -27,6 +25,8 @@ async function contextoUsuarioMiddleware(req, res, next) {
         erro: "Usuário inválido ou inativo.",
       });
     }
+
+    // daqui para baixo você mantém o resto da função
     // Carregar as lojas do usuário
     //aqui é buscado as lojas do usuário para determinar se ele tem acesso global ou restrito a lojas específicas.
     const lojas = await usuariosRepository.listarLojasDoUsuario(usuario.id);

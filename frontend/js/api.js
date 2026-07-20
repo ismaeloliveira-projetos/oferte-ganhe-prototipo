@@ -32,7 +32,6 @@ async function apiFetch(caminho, opcoes = {}) {
   const headers = {
     "Content-Type": "application/json",
     ...(opcoes.headers || {}),
-    "x-usuario-id": String(usuarioLogado.id),
     ...(tokenAuth ? { Authorization: `Bearer ${tokenAuth}` } : {}),
   };
 
