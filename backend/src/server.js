@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const contextoUsuarioMiddleware = require("./middlewares/contexto-usuario.middleware");
+const autenticarJWT = require("./middlewares/autenticacao.middleware");
 
 const lojasRoutes = require("./routes/lojas.routes");
 const estoquesRoutes = require("./routes/estoques.routes");
@@ -27,6 +28,13 @@ app.get("/api/health", function (req, res) {
   });
 });
 
+// rota pública
+app.use("/api/auth", authRoutes);
+
+// daqui para baixo, tudo exige JWT
+app.use("/api", autenticarJWT);
+
+// rotas protegidas
 app.use("/api/lojas", contextoUsuarioMiddleware, lojasRoutes);
 app.use("/api/estoques", contextoUsuarioMiddleware, estoquesRoutes);
 app.use("/api/envios", contextoUsuarioMiddleware, enviosRoutes);
@@ -37,7 +45,6 @@ app.use("/api/dashboard", contextoUsuarioMiddleware, dashboardRoutes);
 app.use("/api/usuarios", contextoUsuarioMiddleware, usuariosRoutes);
 app.use("/api/perfis", contextoUsuarioMiddleware, perfisRoutes);
 app.use("/api/ia", contextoUsuarioMiddleware, iaRoutes);
-app.use("/api/auth", authRoutes);
 
 app.use(function (req, res) {
   res.status(404).json({

@@ -22,6 +22,7 @@ function redirecionarParaLogin() {
 
 async function apiFetch(caminho, opcoes = {}) {
   const usuarioLogado = obterUsuarioLogado();
+  const tokenAuth = localStorage.getItem("tokenAuth");
 
   if (!usuarioLogado || !usuarioLogado.id) {
     redirecionarParaLogin();
@@ -31,7 +32,7 @@ async function apiFetch(caminho, opcoes = {}) {
   const headers = {
     "Content-Type": "application/json",
     ...(opcoes.headers || {}),
-    "x-usuario-id": String(usuarioLogado.id),
+    ...(tokenAuth ? { Authorization: `Bearer ${tokenAuth}` } : {}),
   };
 
   const resposta = await fetch(`${API_BASE_URL}${caminho}`, {
@@ -45,6 +46,7 @@ async function apiFetch(caminho, opcoes = {}) {
     if (resposta.status === 401) {
       localStorage.removeItem("usuarioLogado");
       redirecionarParaLogin();
+      localStorage.removeItem("tokenAuth");
     }
 
     throw new Error(dados.erro || "Erro ao buscar dados da API.");

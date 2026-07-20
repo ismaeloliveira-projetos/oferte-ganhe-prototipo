@@ -134,6 +134,7 @@ function protegerPaginaAtual() {
 
 function logout() {
   localStorage.removeItem("usuarioLogado");
+  localStorage.removeItem("tokenAuth");
   sessionStorage.clear();
   window.location.href = "login.html";
 }

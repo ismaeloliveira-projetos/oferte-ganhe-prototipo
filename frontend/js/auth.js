@@ -98,7 +98,12 @@ if (loginForm) {
     try {
       const resultado = await fazerLogin(email, senha);
 
+      if (!resultado.token) {
+        throw new Error("Token de autenticação não retornado pelo servidor.");
+      }
+
       localStorage.setItem("usuarioLogado", JSON.stringify(resultado.usuario));
+      localStorage.setItem("tokenAuth", resultado.token);
 
       window.location.href = "dashboard.html";
     } catch (erro) {
