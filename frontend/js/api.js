@@ -1,17 +1,29 @@
 const API_BASE_URL = "http://localhost:3000";
 
+let redirecionamentoLoginEmAndamento = false;
+
 function limparSessaoLocal() {
   localStorage.removeItem("usuarioLogado");
   localStorage.removeItem("tokenAuth");
-  sessionStorage.clear();
 }
 
 function redirecionarParaLoginComMensagem(mensagem) {
+  if (redirecionamentoLoginEmAndamento) {
+    return;
+  }
+
+  redirecionamentoLoginEmAndamento = true;
+
+  const mensagemAtual = sessionStorage.getItem("mensagemLogin");
+
   limparSessaoLocal();
 
-  if (mensagem) {
-    sessionStorage.setItem("mensagemLogin", mensagem);
-  }
+  sessionStorage.setItem(
+    "mensagemLogin",
+    mensagemAtual ||
+      mensagem ||
+      "Sua sessão expirou ou foi encerrada. Faça login novamente.",
+  );
 
   window.location.href = "login.html";
 }
