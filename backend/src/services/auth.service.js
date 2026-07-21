@@ -118,6 +118,18 @@ async function login(dados = {}, metadados = {}) {
   };
 }
 
+async function logout(tokenSessao) {
+  if (!tokenSessao) {
+    throw new AppError("Sessão não informada para logout.", 400);
+  }
+  await sessoesRepository.encerrarSessaoPorTokenSessao(tokenSessao);
+
+  return {
+    mensagem: "Lougout realizado com sucesso.",
+  };
+}
+
 module.exports = {
   login,
+  logout,
 };

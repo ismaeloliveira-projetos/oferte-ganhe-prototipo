@@ -132,11 +132,28 @@ function protegerPaginaAtual() {
   }
 }
 
-function logout() {
-  localStorage.removeItem("usuarioLogado");
-  localStorage.removeItem("tokenAuth");
-  sessionStorage.clear();
-  window.location.href = "login.html";
+async function logout() {
+  const tokenAuth = localStorage.getItem("tokenAuth");
+
+  try {
+    if (tokenAuth) {
+      await fetch("http://localhost:3000/api/auth/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${tokenAuth}`,
+        },
+      });
+    }
+  } catch (erro) {
+    console.warn("Não foi possível encerrar a sessão no backend:", erro);
+  } finally {
+    localStorage.removeItem("usuarioLogado");
+    localStorage.removeItem("tokenAuth");
+    sessionStorage.clear();
+
+    window.location.href = "login.html";
+  }
 }
 
 function abrirMenuMobile() {
