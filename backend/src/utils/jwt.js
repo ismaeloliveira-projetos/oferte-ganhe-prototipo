@@ -10,7 +10,7 @@ function validarConfiguracaoJWT() {
   }
 }
 
-function gerarTokenUsuario(usuario) {
+function gerarTokenUsuario(usuario, tokenSessao) {
   validarConfiguracaoJWT();
 
   return jwt.sign(
@@ -18,6 +18,7 @@ function gerarTokenUsuario(usuario) {
       sub: String(usuario.id),
       email: usuario.email,
       nome: usuario.nome,
+      jti: tokenSessao,
     },
     JWT_SECRET,
     {

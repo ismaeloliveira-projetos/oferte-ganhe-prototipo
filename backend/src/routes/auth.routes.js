@@ -17,7 +17,10 @@ function responderErro(res, erro) {
 
 router.post("/login", async function (req, res) {
   try {
-    const resultado = await authService.login(req.body);
+    const resultado = await authService.login(req.body, {
+      ip: req.ip,
+      userAgent: req.get("user-agent"),
+    });
 
     return res.status(200).json(resultado);
   } catch (erro) {

@@ -1,3 +1,5 @@
+const crypto = require("crypto");
+const sessoesRepository = require("../repositories/sessoes.repository");
 const authRepository = require("../repositories/auth.repository");
 const AppError = require("../utils/AppError");
 const { compararSenha } = require("../utils/criptografia");
@@ -5,6 +7,7 @@ const { gerarTokenUsuario } = require("../utils/jwt");
 
 function montarUsuarioLogado(usuario, perfis, permissoes, lojas) {
   const perfilPrincipal = perfis[0] || null;
+
   const permissoesLista = permissoes.map(function (item) {
     return item.permissao;
   });
@@ -32,7 +35,22 @@ function montarUsuarioLogado(usuario, perfis, permissoes, lojas) {
   };
 }
 
-async function login(dados = {}) {
+function calcularExpiracaoSessao() {
+  const minutos = Number(process.env.SESSION_TIMEOUT_MINUTES || 480);
+
+  const expiracao = new Date();
+  expiracao.setMinutes(expiracao.getMinutes() + minutos);
+
+  return expiracao;
+}
+
+function obterDescricaoDispositivo(userAgent) {
+  const texto = String(userAgent || "Dispositivo desconhecido");
+
+  return texto.slice(0, 150);
+}
+
+async function login(dados = {}, metadados = {}) {
   const email = String(dados.email || "")
     .trim()
     .toLowerCase();
@@ -74,12 +92,29 @@ async function login(dados = {}) {
 
   const usuarioLogado = montarUsuarioLogado(usuario, perfis, permissoes, lojas);
 
-  const token = gerarTokenUsuario(usuarioLogado);
+  // Proteção contra múltiplos acessos:
+  // ao fazer novo login, encerra sessões antigas do mesmo usuário.
+  await sessoesRepository.encerrarSessoesAtivasDoUsuario(usuarioLogado.id);
+
+  const tokenSessao = crypto.randomUUID();
+  const expiracaoSessao = calcularExpiracaoSessao();
+
+  await sessoesRepository.criarSessaoUsuario({
+    usuarioId: usuarioLogado.id,
+    tokenSessao,
+    dispositivo: obterDescricaoDispositivo(metadados.userAgent),
+    expiracaoSessao,
+  });
+
+  const token = gerarTokenUsuario(usuarioLogado, tokenSessao);
 
   return {
     mensagem: "Login realizado com sucesso.",
     usuario: usuarioLogado,
     token,
+    sessao: {
+      expiraEm: expiracaoSessao,
+    },
   };
 }
 
