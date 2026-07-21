@@ -194,3 +194,12 @@ if (btnConfirmarReset) {
     }
   });
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+  const mensagemLogin = sessionStorage.getItem("mensagemLogin");
+
+  if (mensagemLogin) {
+    mostrarErroLogin(mensagemLogin);
+    sessionStorage.removeItem("mensagemLogin");
+  }
+});

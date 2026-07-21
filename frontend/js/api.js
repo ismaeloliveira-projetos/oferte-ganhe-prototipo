@@ -1,5 +1,21 @@
 const API_BASE_URL = "http://localhost:3000";
 
+function limparSessaoLocal() {
+  localStorage.removeItem("usuarioLogado");
+  localStorage.removeItem("tokenAuth");
+  sessionStorage.clear();
+}
+
+function redirecionarParaLoginComMensagem(mensagem) {
+  limparSessaoLocal();
+
+  if (mensagem) {
+    sessionStorage.setItem("mensagemLogin", mensagem);
+  }
+
+  window.location.href = "login.html";
+}
+
 function obterUsuarioLogado() {
   const usuarioSalvo = localStorage.getItem("usuarioLogado");
 
@@ -24,15 +40,18 @@ async function apiFetch(caminho, opcoes = {}) {
   const usuarioLogado = obterUsuarioLogado();
   const tokenAuth = localStorage.getItem("tokenAuth");
 
-  if (!usuarioLogado || !usuarioLogado.id) {
-    redirecionarParaLogin();
+  if (!usuarioLogado || !usuarioLogado.id || !tokenAuth) {
+    redirecionarParaLoginComMensagem(
+      "Sua sessão não foi encontrada. Faça login novamente.",
+    );
+
     throw new Error("Usuário não autenticado.");
   }
 
   const headers = {
     "Content-Type": "application/json",
-    ...(opcoes.headers || {}),
     ...(tokenAuth ? { Authorization: `Bearer ${tokenAuth}` } : {}),
+    ...(opcoes.headers || {}),
   };
 
   const resposta = await fetch(`${API_BASE_URL}${caminho}`, {
@@ -40,15 +59,20 @@ async function apiFetch(caminho, opcoes = {}) {
     headers,
   });
 
-  const dados = await resposta.json();
+  const dados = await resposta.json().catch(function () {
+    return {};
+  });
+
+  if (resposta.status === 401) {
+    redirecionarParaLoginComMensagem(
+      dados.erro ||
+        "Sua sessão expirou ou foi encerrada. Faça login novamente.",
+    );
+
+    throw new Error(dados.erro || "Sessão inválida.");
+  }
 
   if (!resposta.ok) {
-    if (resposta.status === 401) {
-      localStorage.removeItem("usuarioLogado");
-      redirecionarParaLogin();
-      localStorage.removeItem("tokenAuth");
-    }
-
     throw new Error(dados.erro || "Erro ao buscar dados da API.");
   }
 
