@@ -1,0 +1,46 @@
+/*
+ * Ponto de entrada único dos estilos do frontend.
+ * A ordem dos imports preserva a cascata do antigo style.css.
+ */
+
+/* Base */
+@import url("./base/reset.css");
+@import url("./base/variables.css");
+@import url("./base/global.css");
+@import url("./base/utilities.css");
+
+/* Components: fundamentos compartilhados */
+@import url("./components/form-controls.css");
+@import url("./components/feedback-actions.css");
+
+/* Layouts */
+@import url("./layouts/auth-legacy.css");
+@import url("./layouts/app-shell.css");
+@import url("./layouts/dashboard-content.css");
+
+/* Components */
+@import url("./components/tables.css");
+@import url("./components/assistant.css");
+
+/* Ajustes responsivos compartilhados */
+@import url("./layouts/responsive.css");
+
+/* Formulários e superfícies interativas */
+@import url("./components/forms.css");
+@import url("./components/bottom-sheets.css");
+@import url("./layouts/topbar-responsive.css");
+@import url("./components/notifications.css");
+@import url("./components/chat-recommendations.css");
+
+/* Autenticação e modais */
+@import url("./layouts/auth.css");
+@import url("./components/modals.css");
+@import url("./components/session-feedback.css");
+
+/* Relatórios, dashboard e IA */
+@import url("./components/reports.css");
+@import url("./components/dashboard-analytics.css");
+@import url("./components/insights.css");
+
+/* Sobrescritas específicas mantidas ao fim da cascata */
+@import url("./components/page-overrides.css");

@@ -1,0 +1,101 @@
+.chat-box {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.chat-messages {
+  height: 280px;
+  overflow-y: auto;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chat-message {
+  max-width: 85%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.chat-message.ia {
+  align-self: flex-start;
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.chat-message.usuario {
+  align-self: flex-end;
+  background: var(--color-primary);
+  color: #ffffff;
+}
+
+.chat-form {
+  display: flex;
+  gap: 10px;
+}
+
+.chat-form input {
+  flex: 1;
+}
+
+.recommendation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recommendation-item {
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+}
+
+.recommendation-item strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--color-text);
+}
+
+.recommendation-item p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 14px;
+}
+
+.recommendation-item.danger {
+  border-left: 4px solid #dc2626;
+}
+
+.recommendation-item.warning {
+  border-left: 4px solid #f59e0b;
+}
+
+@media (max-width: 768px) {
+  .chat-form {
+    flex-direction: column;
+  }
+
+  .chat-message {
+    max-width: 100%;
+  }
+}
+
+.user-role-badge {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(0, 128, 64, 0.12);
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
