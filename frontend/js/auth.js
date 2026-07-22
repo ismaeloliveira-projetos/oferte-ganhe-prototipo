@@ -194,3 +194,35 @@ if (btnConfirmarReset) {
     }
   });
 }
+
+function mostrarMensagemLogin(texto, tipo = "erro") {
+  const loginError = document.getElementById("loginError");
+
+  if (!loginError) {
+    return;
+  }
+
+  loginError.textContent = texto;
+  loginError.classList.remove("hidden");
+  loginError.classList.remove("alert-error");
+  loginError.classList.remove("alert-success");
+
+  if (tipo === "sucesso") {
+    loginError.classList.add("alert-success");
+  } else {
+    loginError.classList.add("alert-error");
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  const mensagemLogin = sessionStorage.getItem("mensagemLogin");
+  const mensagemLoginTipo =
+    sessionStorage.getItem("mensagemLoginTipo") || "erro";
+
+  if (mensagemLogin) {
+    mostrarMensagemLogin(mensagemLogin, mensagemLoginTipo);
+
+    sessionStorage.removeItem("mensagemLogin");
+    sessionStorage.removeItem("mensagemLoginTipo");
+  }
+});

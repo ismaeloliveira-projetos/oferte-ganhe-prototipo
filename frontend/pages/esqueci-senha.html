@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Recuperar senha | Oferte e Ganhe</title>
+
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+
+  <body class="login-page">
+    <main class="login-container">
+      <div class="login-brand">
+        <img src="../assets/logo.png" alt="Logo Oferte e Ganhe" />
+        <h1>Oferte e Ganhe</h1>
+        <p>Sistema de controle e gestão de talões</p>
+      </div>
+
+      <div class="login-form-wrapper">
+        <section class="login-card">
+          <h2>Recuperar senha</h2>
+
+          <p>
+            Informe seu e-mail cadastrado. Se ele existir no sistema, enviaremos
+            um link para redefinição de senha.
+          </p>
+
+          <form id="formEsqueciSenha">
+            <div class="form-group">
+              <label for="email">E-mail</label>
+              <input
+                type="email"
+                class="form-input"
+                id="email"
+                placeholder="Digite seu e-mail"
+                required
+              />
+            </div>
+
+            <div id="mensagemRecuperacao" class="alert-error hidden"></div>
+
+            <button
+              type="submit"
+              class="btn-primary full-width"
+              id="btnEnviarRecuperacao"
+            >
+              Enviar link de recuperação
+            </button>
+          </form>
+
+          <div class="auth-links">
+            <a href="login.html">Voltar para o login</a>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script src="../js/esqueci-senha.js"></script>
+  </body>
+</html>

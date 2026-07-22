@@ -1,3 +1,200 @@
+let timerAvisoSessao = null;
+let timerLogoutSessao = null;
+let modalAvisoSessaoAberto = false;
+let ultimaRenovacaoSessaoEm = 0;
+
+const TEMPO_AVISO_SESSAO_MS = 20 * 1000; //
+const TEMPO_LOGOUT_SESSAO_MS = 60 * 1000; //
+const INTERVALO_MINIMO_RENOVACAO_MS = 10 * 1000; //
+
+function criarModalAvisoSessao() {
+  if (document.getElementById("modalAvisoSessao")) {
+    return;
+  }
+
+  const modal = document.createElement("div");
+  modal.id = "modalAvisoSessao";
+  modal.className = "modal-sessao hidden";
+
+  modal.innerHTML = `
+    <div class="modal-sessao-card">
+      <h2>Sessão prestes a expirar</h2>
+      <p>
+        Você ficou inativo por alguns minutos.
+        Deseja continuar conectado?
+      </p>
+
+      <div class="modal-sessao-actions">
+        <button id="btnContinuarSessao" type="button" class="btn-primary">
+          Continuar conectado
+        </button>
+
+        <button id="btnSairSessao" type="button" class="btn-secondary">
+          Sair agora
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  document
+    .getElementById("btnContinuarSessao")
+    .addEventListener("click", renovarSessaoPeloUsuario);
+
+  document
+    .getElementById("btnSairSessao")
+    .addEventListener("click", function () {
+      logout();
+    });
+}
+
+function abrirModalAvisoSessao() {
+  const modal = document.getElementById("modalAvisoSessao");
+
+  if (!modal) {
+    return;
+  }
+  modalAvisoSessaoAberto = true;
+  modal.classList.remove("hidden");
+}
+
+function fecharModalAvisoSessao() {
+  const modal = document.getElementById("modalAvisoSessao");
+
+  if (!modal) {
+    return;
+  }
+
+  modalAvisoSessaoAberto = false;
+  modal.classList.add("hidden");
+}
+
+async function renovarSessaoAtiva() {
+  const tokenAuth = localStorage.getItem("tokenAuth");
+
+  if (!tokenAuth) {
+    return;
+  }
+
+  const resposta = await fetch("http://localhost:3000/api/auth/sessao", {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${tokenAuth}`,
+    },
+  });
+
+  const dados = await resposta.json().catch(function () {
+    return {};
+  });
+
+  if (resposta.status === 401) {
+    localStorage.removeItem("usuarioLogado");
+    localStorage.removeItem("tokenAuth");
+
+    sessionStorage.setItem(
+      "mensagemLogin",
+      dados.erro || "Sua sessão expirou. Faça login novamente.",
+    );
+
+    window.location.href = "login.html";
+    return;
+  }
+
+  if (!resposta.ok) {
+    throw new Error(dados.erro || "Erro ao renovar sessão.");
+  }
+
+  ultimaRenovacaoSessaoEm = Date.now();
+
+  return dados;
+}
+
+async function renovarSessaoPeloUsuario() {
+  try {
+    await renovarSessaoAtiva();
+
+    fecharModalAvisoSessao();
+    reiniciarControleInatividade();
+  } catch (erro) {
+    console.error("Erro ao renovar sessão:", erro);
+    logout();
+  }
+}
+
+function limparTimersSessao() {
+  if (timerAvisoSessao) {
+    clearTimeout(timerAvisoSessao);
+  }
+
+  if (timerLogoutSessao) {
+    clearTimeout(timerLogoutSessao);
+  }
+
+  timerAvisoSessao = null;
+  timerLogoutSessao = null;
+}
+
+function reiniciarControleInatividade() {
+  if (!localStorage.getItem("tokenAuth")) {
+    return;
+  }
+
+  if (modalAvisoSessaoAberto) {
+    return;
+  }
+
+  limparTimersSessao();
+
+  timerAvisoSessao = setTimeout(function () {
+    abrirModalAvisoSessao();
+  }, TEMPO_AVISO_SESSAO_MS);
+
+  timerLogoutSessao = setTimeout(function () {
+    logout();
+  }, TEMPO_LOGOUT_SESSAO_MS);
+}
+
+function registrarAtividadeUsuario() {
+  if (!localStorage.getItem("tokenAuth")) {
+    return;
+  }
+
+  if (modalAvisoSessaoAberto) {
+    return;
+  }
+
+  reiniciarControleInatividade();
+
+  const agora = Date.now();
+
+  if (agora - ultimaRenovacaoSessaoEm >= INTERVALO_MINIMO_RENOVACAO_MS) {
+    ultimaRenovacaoSessaoEm = agora;
+
+    renovarSessaoAtiva().catch(function (erro) {
+      console.warn("Não foi possível renovar sessão por atividade:", erro);
+    });
+  }
+}
+
+function inicializarControleInatividadeSessao() {
+  if (!localStorage.getItem("tokenAuth")) {
+    return;
+  }
+
+  criarModalAvisoSessao();
+
+  const eventos = ["click", "keydown", "mousemove", "scroll", "touchstart"];
+
+  eventos.forEach(function (evento) {
+    document.addEventListener(evento, registrarAtividadeUsuario, {
+      passive: true,
+    });
+  });
+
+  reiniciarControleInatividade();
+}
+
 function aplicarResponsividadeTabelas() {
   const tabelas = document.querySelectorAll(".responsive-table");
 
@@ -132,11 +329,28 @@ function protegerPaginaAtual() {
   }
 }
 
-function logout() {
-  localStorage.removeItem("usuarioLogado");
-  localStorage.removeItem("tokenAuth");
-  sessionStorage.clear();
-  window.location.href = "login.html";
+async function logout() {
+  const tokenAuth = localStorage.getItem("tokenAuth");
+
+  try {
+    if (tokenAuth) {
+      await fetch("http://localhost:3000/api/auth/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${tokenAuth}`,
+        },
+      });
+    }
+  } catch (erro) {
+    console.warn("Não foi possível encerrar a sessão no backend:", erro);
+  } finally {
+    localStorage.removeItem("usuarioLogado");
+    localStorage.removeItem("tokenAuth");
+    sessionStorage.clear();
+
+    window.location.href = "login.html";
+  }
 }
 
 function abrirMenuMobile() {
@@ -400,5 +614,6 @@ document.addEventListener("DOMContentLoaded", function () {
   if (temSidebar) {
     carregarUsuarioLogado();
     criarAssistenteGlobal();
+    inicializarControleInatividadeSessao();
   }
 });

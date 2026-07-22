@@ -240,6 +240,27 @@ async function buscarLojaAtivaPorId(lojaId) {
   return resultado.rows[0] || null;
 }
 
+async function atualizarSenhaUsuarioPorId(id, senhaHash) {
+  const resultado = await query(
+    `
+      UPDATE usuarios
+      SET senha_hash = $1
+      WHERE id = $2
+        AND ativo = true
+      RETURNING
+        id,
+        nome,
+        matricula,
+        email,
+        ativo,
+        criado_em
+    `,
+    [senhaHash, id],
+  );
+
+  return resultado.rows[0] || null;
+}
+
 module.exports = {
   listarUsuariosAtivos,
   buscarUsuarioPorId,
@@ -248,6 +269,7 @@ module.exports = {
   buscarOutroUsuarioPorEmail,
   buscarOutroUsuarioPorMatricula,
   criarUsuario,
+  atualizarSenhaUsuarioPorId,
   atualizarUsuarioPorId,
   inativarUsuarioPorId,
   removerLojasDoUsuario,
