@@ -1,0 +1,10 @@
+.app-layout,
+.main-content,
+.topbar,
+.content-grid,
+.content-card,
+.table-wrapper,
+.chat-input-area {
+  max-width: 100%;
+  min-width: 0;
+}

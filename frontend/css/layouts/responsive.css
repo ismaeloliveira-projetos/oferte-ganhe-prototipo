@@ -1,0 +1,263 @@
+.menu-overlay.open {
+  display: block;
+}
+
+@media (max-width: 1200px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .content-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .app-layout {
+    display: block;
+  }
+
+  .sidebar {
+    width: 260px;
+    max-width: 85vw;
+    left: 0;
+    transform: translateX(-100%);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .menu-toggle {
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+    max-width: 100vw;
+    padding: 14px;
+  }
+
+  .topbar {
+    width: 100%;
+    padding: 16px;
+    gap: 12px;
+    flex-wrap: nowrap;
+  }
+
+  .topbar-title {
+    flex: 1;
+  }
+
+  .topbar-title h1 {
+    font-size: 20px;
+  }
+
+  .topbar-title p {
+    display: none;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .dashboard-card {
+    padding: 16px;
+  }
+
+  .dashboard-card strong {
+    font-size: 28px;
+  }
+
+  .content-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .content-card {
+    padding: 16px;
+  }
+
+  .assistant-sidebar {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    right: 0;
+    transform: translateX(100%);
+  }
+
+  .assistant-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .assistant-header {
+    padding: 16px;
+  }
+
+  .assistant-header h2 {
+    font-size: 18px;
+  }
+
+  .assistant-header p {
+    font-size: 12px;
+  }
+
+  .chat-messages {
+    padding: 14px;
+  }
+
+  .chat-message {
+    max-width: 94%;
+  }
+
+  .chat-input-area {
+    flex-direction: column;
+    width: 100%;
+    padding: 12px;
+  }
+
+  .chat-input-area .form-input,
+  .chat-input-area .btn-primary {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 10px;
+  }
+
+  .topbar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .menu-toggle {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+  }
+
+  .topbar-title h1 {
+    font-size: 18px;
+  }
+
+  .user-info span {
+    display: none;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .dashboard-card {
+    padding: 14px;
+  }
+
+  .dashboard-card strong {
+    font-size: 24px;
+  }
+
+  .content-card {
+    padding: 12px;
+  }
+
+  .assistant-toggle {
+    right: 10px;
+    bottom: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    max-width: calc(100vw - 20px);
+  }
+
+  .assistant-header {
+    padding: 14px;
+  }
+
+  .assistant-header h2 {
+    font-size: 17px;
+  }
+
+  .chat-messages {
+    padding: 12px;
+  }
+
+  .chat-message {
+    max-width: 96%;
+  }
+
+  .login-container {
+    padding: 14px;
+  }
+
+  .login-card {
+    max-width: 100%;
+    padding: 20px;
+  }
+
+  .login-header h1 {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .responsive-table {
+    min-width: 0;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 12px;
+  }
+
+  .responsive-table thead {
+    display: none;
+  }
+
+  .responsive-table,
+  .responsive-table tbody,
+  .responsive-table tr,
+  .responsive-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .responsive-table tr {
+    background-color: var(--qq-white);
+    border: 1px solid var(--qq-border);
+    border-radius: 14px;
+    padding: 12px;
+    margin-bottom: 14px;
+    box-shadow: 0 4px 12px rgba(31, 41, 55, 0.06);
+  }
+
+  .responsive-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 4px;
+    border-bottom: 1px solid var(--qq-border);
+    white-space: normal;
+    text-align: right;
+  }
+
+  .responsive-table td:last-child {
+    border-bottom: none;
+  }
+
+  .responsive-table td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: var(--qq-gray);
+    text-align: left;
+  }
+
+  .table-wrapper {
+    overflow-x: visible;
+  }
+}
+

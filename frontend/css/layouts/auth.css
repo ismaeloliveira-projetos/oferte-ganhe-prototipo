@@ -1,0 +1,209 @@
+/* =============================================
+   LOGIN – ESTILO PROFISSIONAL LIMPO
+   ============================================= */
+
+.login-page {
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+.login-container {
+  display: flex;
+  width: 880px;
+  max-width: 100%;
+  min-height: 560px;
+  background: var(--qq-green-dark);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+}
+
+/* Painel da marca (esquerda) */
+.login-brand {
+  flex: 1.5;
+  background: var(--qq-green-dark); /* Azul escuro elegante */
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 145px 32px;
+  text-align: center;
+  position: relative;
+}
+
+/* Opcional: detalhe decorativo sutil */
+.login-brand::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(255, 255, 255, 0.03),
+    transparent 70%
+  );
+}
+
+.login-brand img {
+  width: 250px;
+  margin-bottom: 20px;
+  opacity: 0.95;
+  z-index: 1;
+}
+
+.login-brand h1 {
+  margin-top: -6px;
+  margin-bottom: 8px;
+  font-size: 1.98rem;
+  font-weight: 500;
+  letter-spacing: -0.2px;
+  color: var(--qq-yellow);
+  z-index: 1;
+}
+
+.login-brand p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: gba(255, 255, 255, 0.65);
+  font-weight: 500;
+  z-index: 1;
+}
+
+/* Painel do formulário (direita) */
+.login-form-wrapper {
+  flex: 1;
+  display: flex;
+  border-radius: 15px;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 40px;
+  background: white;
+}
+
+/* Cartão de login – transparente, sem bordas */
+.login-card {
+  width: 100%;
+  max-width: 360px;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  border-top: none;
+  box-shadow: none;
+}
+
+.login-card h2 {
+  margin: 0 0 8px;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.login-card .subtitle {
+  color: #64748b;
+  font-size: 0.95rem;
+  margin-bottom: 32px;
+}
+
+/* Labels e inputs */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #2b282e85;
+  margin-bottom: 6px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: #ffffff;
+  transition: 0.2s;
+}
+
+.form-input:focus {
+  border-color: var(--qq-green);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+}
+
+/* Botão */
+.btn-primary {
+  background-color: var(--qq-green);
+  color: white;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: var(--qq-green-dark);
+}
+
+.full-width {
+  width: 100%;
+}
+
+/* Erro */
+.alert-error {
+  background-color: #fef2f2;
+  color: #991b1b;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  border-left: 3px solid #ef4444;
+}
+
+.alert-error.hidden {
+  display: none;
+}
+
+/* Responsivo */
+@media (max-width: 640px) {
+  .login-container {
+    flex-direction: column;
+    min-height: auto;
+    margin: 16px;
+    border-radius: 20px;
+  }
+
+  .login-brand {
+    padding: 40px 24px;
+  }
+
+  .login-brand img {
+    width: 140px;
+  }
+
+  .login-form-wrapper {
+    padding: 32px 24px;
+  }
+
+  .login-card h2 {
+    font-size: 1.4rem;
+  }
+}
+

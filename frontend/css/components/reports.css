@@ -1,0 +1,117 @@
+/* ===== RELATÓRIOS ===== */
+.rel-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.rel-card {
+  background: white;
+  padding: 22px;
+  border-radius: 16px;
+  min-width: 0;
+}
+
+.rel-card-header {
+  margin-bottom: 16px;
+}
+
+.rel-card-header h2 {
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+
+.rel-card-header span {
+  color: var(--qq-gray);
+  font-size: 13px;
+}
+
+@media (max-width: 768px) {
+  .rel-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.metricas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.metrica-card {
+  background: var(--qq-bg-secondary, #f5f5f5);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.metrica-card .metrica-label {
+  font-size: 11px;
+  color: var(--qq-text-secondary, #888);
+  margin-bottom: 6px;
+}
+
+.metrica-card .metrica-valor {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--qq-text-primary, #111);
+  margin-bottom: 4px;
+}
+
+.metrica-card .metrica-tendencia {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.metrica-card .tendencia-up {
+  color: var(--qq-success, #3b6d11);
+}
+.metrica-card .tendencia-down {
+  color: var(--qq-danger, #a32d2d);
+}
+.metrica-card .tendencia-flat {
+  color: var(--qq-warning, #854f0b);
+}
+
+.historico-lista .historico-linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--qq-border, #eee);
+  font-size: 12px;
+}
+
+.historico-lista .historico-linha:last-child {
+  border-bottom: none;
+}
+
+.historico-mes {
+  color: var(--qq-text-secondary, #888);
+  width: 36px;
+}
+
+.historico-barra-wrap {
+  flex: 1;
+  margin: 0 12px;
+  height: 4px;
+  background: var(--qq-bg-secondary, #f5f5f5);
+  border-radius: 2px;
+}
+
+.historico-barra {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--qq-primary, #1d9e75);
+}
+
+.historico-valor {
+  color: var(--qq-text-primary, #111);
+  font-weight: 500;
+  width: 32px;
+  text-align: right;
+}
+
