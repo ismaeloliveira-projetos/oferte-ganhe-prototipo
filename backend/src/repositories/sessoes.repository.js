@@ -23,6 +23,7 @@ async function criarSessaoUsuario(dados) {
         token_sessao,
         dispositivo,
         criado_em,
+        ultima_atividade_em,
         expiracao_sessao,
         encerrado_em,
         ativo
@@ -32,6 +33,7 @@ async function criarSessaoUsuario(dados) {
         $1,
         $2,
         $3,
+        NOW(),
         NOW(),
         $4,
         NULL,
@@ -43,6 +45,7 @@ async function criarSessaoUsuario(dados) {
         token_sessao AS "tokenSessao",
         dispositivo,
         criado_em AS "criadoEm",
+        ultima_atividade_em AS "ultimaAtividadeEm",
         expiracao_sessao AS "expiracaoSessao",
         encerrado_em AS "encerradoEm",
         ativo
@@ -67,6 +70,7 @@ async function buscarSessaoPorTokenSessao(tokenSessao) {
         token_sessao AS "tokenSessao",
         dispositivo,
         criado_em AS "criadoEm",
+        ultima_atividade_em AS "ultimaAtividadeEm",
         expiracao_sessao AS "expiracaoSessao",
         encerrado_em AS "encerradoEm",
         ativo
@@ -75,6 +79,33 @@ async function buscarSessaoPorTokenSessao(tokenSessao) {
       LIMIT 1
     `,
     [tokenSessao],
+  );
+
+  return resultado.rows[0] || null;
+}
+
+async function renovarSessaoPorTokenSessao(tokenSessao, novaExpiracaoSessao) {
+  const resultado = await query(
+    `
+           UPDATE sessoes_usuarios
+      SET
+        ultima_atividade_em = NOW(),
+        expiracao_sessao = $2
+      WHERE token_sessao = $1
+        AND ativo = true
+        AND encerrado_em IS NULL
+      RETURNING
+        id,
+        usuario_id AS "usuarioId",
+        token_sessao AS "tokenSessao",
+        dispositivo,
+        criado_em AS "criadoEm",
+        ultima_atividade_em AS "ultimaAtividadeEm",
+        expiracao_sessao AS "expiracaoSessao",
+        encerrado_em AS "encerradoEm",
+        ativo
+    `,
+    [tokenSessao, novaExpiracaoSessao],
   );
 
   return resultado.rows[0] || null;
@@ -122,6 +153,7 @@ module.exports = {
   encerrarSessoesAtivasDoUsuario,
   criarSessaoUsuario,
   buscarSessaoPorTokenSessao,
+  renovarSessaoPorTokenSessao,
   encerrarSessaoPorTokenSessao,
   encerrarSessoesExpiradas,
 };

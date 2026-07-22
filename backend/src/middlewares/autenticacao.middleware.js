@@ -2,6 +2,15 @@ const AppError = require("../utils/AppError");
 const { verificarTokenUsuario } = require("../utils/jwt");
 const sessoesRepository = require("../repositories/sessoes.repository");
 
+function calcularNovaExpiracaoSessao() {
+  const minutos = Number(process.env.SESSION_TIMEOUT_MINUTES || 480);
+
+  const expiracao = new Date();
+  expiracao.setMinutes(expiracao.getMinutes() + minutos);
+
+  return expiracao;
+}
+
 async function autenticarJWT(req, res, next) {
   try {
     const authorization = req.headers.authorization;
@@ -47,6 +56,15 @@ async function autenticarJWT(req, res, next) {
     if (Number(sessao.usuarioId) !== Number(payload.sub)) {
       throw new AppError("Sessão incompativel com o usuário.", 401);
     }
+
+    const sessaoRenovada = await sessoesRepository.renovarSessaoPorTokenSessao(
+      payload.jti,
+      calcularNovaExpiracaoSessao(),
+    );
+
+    if (!sessaoRenovada) {
+      throw new AppError("Não foi possível renovar a sessão.", 401);
+    }
     req.usuarioAutenticado = {
       id: Number(payload.sub),
       email: payload.email,
@@ -54,9 +72,9 @@ async function autenticarJWT(req, res, next) {
     };
 
     req.sessaoAtual = {
-      id: sessao.id,
-      tokenSessao: sessao.tokenSessao,
-      expireEm: sessao.expiracaoSesao,
+      id: sessaoRenovada.id,
+      tokenSessao: sessaoRenovada.tokenSessao,
+      expiraEm: sessaoRenovada.expiracaoSessao,
     };
 
     return next();
