@@ -1,9 +1,39 @@
 const crypto = require("crypto");
+const usuariosRepository = require("../repositories/usuarios.repository");
+const recuperacoesSenhaRepository = require("../repositories/recuperacoes-senha.repository");
+const { enviarEmailRedefinicaoSenha } = require("./email.service");
 const sessoesRepository = require("../repositories/sessoes.repository");
 const authRepository = require("../repositories/auth.repository");
 const AppError = require("../utils/AppError");
-const { compararSenha } = require("../utils/criptografia");
+const { compararSenha, gerarHashSenha } = require("../utils/criptografia");
 const { gerarTokenUsuario } = require("../utils/jwt");
+
+function calcularExpiracaoRecuperacaoSenha() {
+  const minutos = Number(process.env.PASSWORD_RESET_TOKEN_MINUTES || 30);
+
+  const expiracao = new Date();
+  expiracao.setMinutes(expiracao.getMinutes() + minutos);
+
+  return expiracao;
+}
+
+function gerarTokenRecuperacaoSenha() {
+  return crypto.randomBytes(32).toString("hex");
+}
+
+function gerarHashTokenRecuperacao(token) {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+function montarLinkRedefinicaoSenha(token) {
+  const urlBase = process.env.FRONTEND_RESET_PASSWORD_URL;
+
+  if (!urlBase) {
+    throw new AppError("FRONTEND_RESET_PASSWORD_URL não configurada.", 500);
+  }
+
+  return `${urlBase}?token=${encodeURIComponent(token)}`;
+}
 
 function montarUsuarioLogado(usuario, perfis, permissoes, lojas) {
   const perfilPrincipal = perfis[0] || null;
@@ -129,7 +159,101 @@ async function logout(tokenSessao) {
   };
 }
 
+async function solicitarRecuperacaoSenha(dados = {}, metadados = {}) {
+  const email = String(dados.email || "")
+    .trim()
+    .toLowerCase();
+
+  if (!email) {
+    throw new AppError("E-mail é obrigatório.", 400);
+  }
+
+  const respostaGenerica = {
+    mensagem:
+      "Se o e-mail estiver cadastrado, enviaremos um link para redefinição de senha.",
+  };
+
+  const usuario = await authRepository.buscarUsuarioPorEmailComSenha(email);
+
+  if (!usuario || usuario.ativo === false) {
+    return respostaGenerica;
+  }
+
+  await recuperacoesSenhaRepository.invalidarRecuperacoesPendentesDoUsuario(
+    usuario.id,
+  );
+
+  const token = gerarTokenRecuperacaoSenha();
+  const tokenHash = gerarHashTokenRecuperacao(token);
+  const dataExpiracao = calcularExpiracaoRecuperacaoSenha();
+
+  await recuperacoesSenhaRepository.criarRecuperacaoSenha({
+    usuarioId: usuario.id,
+    tokenHash,
+    dataExpiracao,
+  });
+
+  const link = montarLinkRedefinicaoSenha(token);
+
+  await enviarEmailRedefinicaoSenha({
+    para: usuario.email,
+    nome: usuario.nome,
+    link,
+  });
+
+  return respostaGenerica;
+}
+
+async function redefinirSenha(dados = {}) {
+  const token = String(dados.token || "").trim();
+  const novaSenha = String(dados.novaSenha || "").trim();
+
+  if (!token) {
+    throw new AppError("Token de redefinição é obrigatório.", 400);
+  }
+
+  if (!novaSenha) {
+    throw new AppError("Nova senha é obrigatória.", 400);
+  }
+
+  if (novaSenha.length < 6) {
+    throw new AppError("Nova senha deve ter pelo menos 6 caracteres.", 400);
+  }
+
+  const tokenHash = gerarHashTokenRecuperacao(token);
+
+  const recuperacao =
+    await recuperacoesSenhaRepository.buscarRecuperacaoValidaPorTokenHash(
+      tokenHash,
+    );
+
+  if (!recuperacao) {
+    throw new AppError("Token inválido, expirado ou já utilizado.", 400);
+  }
+
+  const senhaHash = gerarHashSenha(novaSenha);
+
+  const usuarioAtualizado = await usuariosRepository.atualizarSenhaUsuarioPorId(
+    recuperacao.usuarioId,
+    senhaHash,
+  );
+
+  if (!usuarioAtualizado) {
+    throw new AppError("Usuário não encontrado ou inativo.", 404);
+  }
+
+  await recuperacoesSenhaRepository.marcarRecuperacaoComoUsada(recuperacao.id);
+
+  await sessoesRepository.encerrarSessoesAtivasDoUsuario(recuperacao.usuarioId);
+
+  return {
+    mensagem: "Senha redefinida com sucesso. Faça login novamente.",
+  };
+}
+
 module.exports = {
   login,
   logout,
+  solicitarRecuperacaoSenha,
+  redefinirSenha,
 };

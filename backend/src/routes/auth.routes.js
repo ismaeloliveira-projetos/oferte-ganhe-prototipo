@@ -29,6 +29,49 @@ router.post("/login", async function (req, res) {
   }
 });
 
+router.post("/esqueci-senha", async function (req, res) {
+  try {
+    const resultado = await authService.solicitarRecuperacaoSenha(req.body, {
+      ip: req.ip,
+      userAgent: req.get("user-agent"),
+    });
+
+    return res.status(200).json(resultado);
+  } catch (erro) {
+    if (erro.statusCode) {
+      return res.status(erro.statusCode).json({
+        erro: erro.message,
+      });
+    }
+
+    console.error("Erro interno na rota de recuperação de senha:", erro);
+
+    return res.status(500).json({
+      erro: "Erro interno ao solicitar recuperação de senha.",
+    });
+  }
+});
+
+router.post("/redefinir-senha", async function (req, res) {
+  try {
+    const resultado = await authService.redefinirSenha(req.body);
+
+    return res.status(200).json(resultado);
+  } catch (erro) {
+    if (erro.statusCode) {
+      return res.status(erro.statusCode).json({
+        erro: erro.message,
+      });
+    }
+
+    console.error("Erro interno na rota de redefinição de senha:", erro);
+
+    return res.status(500).json({
+      erro: "Erro interno ao redefinir senha.",
+    });
+  }
+});
+
 router.post("/logout", autenticarJWT, async function (req, res) {
   try {
     const resultado = await authService.logout(req.sessaoAtual.tokenSessao);
