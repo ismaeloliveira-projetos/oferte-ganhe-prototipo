@@ -2773,3 +2773,45 @@ video {
   background: #e5e7eb;
   color: #374151;
 }
+
+/* modal timeout */
+
+.modal-sessao {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.modal-sessao.hidden {
+  display: none;
+}
+
+.modal-sessao-card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+}
+
+.modal-sessao-card h2 {
+  margin: 0 0 12px;
+}
+
+.modal-sessao-card p {
+  margin: 0 0 20px;
+  color: #475569;
+}
+
+.modal-sessao-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}

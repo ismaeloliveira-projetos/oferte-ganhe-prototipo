@@ -49,4 +49,14 @@ router.post("/logout", autenticarJWT, async function (req, res) {
   }
 });
 
+router.get("/sessao", autenticarJWT, async function (req, res) {
+  return res.status(200).json({
+    mensagem: "Sessão ativa.",
+    sessao: {
+      id: req.sessaoAtual.id,
+      expiraEm: req.sessaoAtual.expiraEm,
+    },
+  });
+});
+
 module.exports = router;
