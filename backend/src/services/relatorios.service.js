@@ -5,6 +5,7 @@ const estoquesService = require("./estoques.service");
 const enviosService = require("./envios.service");
 const recebimentosService = require("./recebimentos.service");
 const manutencoesService = require("./manutencoes.service");
+const relatoriosExportadosRepository = require("../repositories/relatorios-exportados.repository");
 
 // Este service consolida relatórios em JSON usando os services já existentes da API.
 // Futuramente, a geração de relatórios analíticos e exportações CSV/Excel
@@ -108,6 +109,92 @@ async function gerarResumoRelatorios(contextoUsuario) {
   };
 }
 
+async function exportarCsvComPython(tipo, dados) {
+  const aiServiceUrl = process.env.AI_SERVICE_URL;
+  const iaInternalKey = process.env.AI_SERVICE_INTERNAL_KEY;
+
+  if (!aiServiceUrl) {
+    const erro = new Error("AI_SERVICE_URL não configurada no backend Node.");
+    erro.statusCode = 500;
+    throw erro;
+  }
+
+  if (!iaInternalKey) {
+    const erro = new Error(
+      "AI_SERVICE_INTERNAL_KEY não configurada no backend Node.",
+    );
+    erro.statusCode = 500;
+    throw erro;
+  }
+
+  const resposta = await fetch(`${aiServiceUrl}/relatorios/exportar/csv`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-ai-internal-key": iaInternalKey,
+    },
+    body: JSON.stringify({
+      tipo,
+      dados,
+    }),
+  });
+
+  if (!resposta.ok) {
+    const textoErro = await resposta.text();
+
+    const erro = new Error(`Erro ao gerar relatório no Python: ${textoErro}`);
+
+    erro.statusCode = resposta.status;
+    throw erro;
+  }
+
+  const arrayBuffer = await resposta.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+
+  const contentType =
+    resposta.headers.get("content-type") || "text/csv; charset=utf-8";
+
+  const contentDisposition =
+    resposta.headers.get("content-disposition") ||
+    `attachment; filename="relatorio-${tipo}.csv"`;
+
+  return {
+    buffer,
+    contentType,
+    contentDisposition,
+  };
+}
+
+function extrairNomeArquivoDoContentDisposition(
+  contentDisposition,
+  nomePadrao,
+) {
+  if (!contentDisposition) {
+    return nomePadrao;
+  }
+
+  const match = contentDisposition.match(/filename="([^"]+)"/);
+
+  if (!match) {
+    return nomePadrao;
+  }
+
+  return match[1];
+}
+
+async function registrarHistoricoExportacao(dados) {
+  return await relatoriosExportadosRepository.registrarExportacaoRelatorio({
+    usuarioId: dados.usuarioId,
+    tipoExportacao: dados.tipoExportacao,
+    arquivoGerado: dados.arquivoGerado,
+    filtros: dados.filtros || {},
+  });
+}
+
+async function listarHistoricoExportacoesRelatorios() {
+  return await relatoriosExportadosRepository.listarExportacoesRelatorios(50);
+}
+
 module.exports = {
   gerarRelatorioUsuarios,
   gerarRelatorioPerfis,
@@ -118,4 +205,8 @@ module.exports = {
   gerarRelatorioManutencoes,
   gerarRelatorioMovimentacoes,
   gerarResumoRelatorios,
+  exportarCsvComPython,
+  extrairNomeArquivoDoContentDisposition,
+  registrarHistoricoExportacao,
+  listarHistoricoExportacoesRelatorios,
 };
