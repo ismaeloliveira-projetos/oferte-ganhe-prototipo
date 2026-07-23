@@ -58,42 +58,22 @@ function formatarDataHora(dataHora) {
   return data.toLocaleString("pt-BR");
 }
 
-function limparValorCsv(valor) {
-  return String(valor ?? "")
-    .replace(/;/g, ",")
-    .replace(/\n/g, " ");
-}
-
-function montarLinhaCsv(valores) {
-  return valores
-    .map(function (valor) {
-      return limparValorCsv(valor);
-    })
-    .join(";");
-}
-
-function baixarCsv(nomeArquivo, linhas) {
-  const conteudo = "\uFEFF" + linhas.join("\n");
-
-  const blob = new Blob([conteudo], {
-    type: "text/csv;charset=utf-8;",
-  });
-
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-
-  link.href = url;
-  link.download = nomeArquivo;
-
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-
-  URL.revokeObjectURL(url);
-}
-
 async function buscarApi(caminho) {
   return await apiFetch(caminho);
+}
+
+async function carregarHistoricoExportacoesRelatorios() {
+  try {
+    const exportacoes = await buscarApi("/api/relatorios/exportacoes");
+
+    historicoRelatorios = Array.isArray(exportacoes) ? exportacoes : [];
+
+    carregarCardsRelatorios();
+    carregarTabelaHistoricoRelatorios();
+  } catch (erro) {
+    console.error("Erro ao carregar histórico de exportações:", erro);
+    mostrarAlerta("Erro ao carregar histórico de exportações.", true);
+  }
 }
 
 function obterStatusEstoque(item) {
@@ -196,19 +176,6 @@ function obterNomeUsuario(item) {
     item.usuario_id ||
     "-"
   );
-}
-
-function registrarHistoricoRelatorio(tipo, formato, filtros) {
-  const usuario = obterUsuarioAtualRelatorio();
-
-  historicoRelatorios.push({
-    id: Date.now(),
-    dataHora: new Date().toISOString(),
-    tipo,
-    formato,
-    usuario: usuario?.nome || "Usuário",
-    filtros,
-  });
 }
 
 function carregarCardsRelatorios() {
@@ -314,292 +281,162 @@ async function carregarDadosRelatorios() {
   }
 }
 
-function exportarRelatorioEstoqueGeral() {
-  const estoques = dadosRelatorios.estoques;
+async function exportarRelatorioBackend({
+  caminho,
+  nomeArquivo,
+  mensagemSucesso,
+}) {
+  await apiDownload(caminho, nomeArquivo);
 
-  if (estoques.length === 0) {
-    mostrarAlerta("Nenhum estoque encontrado para exportar.");
-    return;
-  }
+  await carregarHistoricoExportacoesRelatorios();
 
-  const cabecalho = montarLinhaCsv([
-    "Código",
-    "Loja",
-    "Estoque Atual",
-    "Estoque Mínimo",
-    "Estoque Recomendado",
-    "Status",
-  ]);
-
-  const linhas = estoques.map(function (estoque) {
-    return montarLinhaCsv([
-      obterCodigoLoja(estoque),
-      obterNomeLoja(estoque),
-      obterEstoqueAtual(estoque),
-      obterEstoqueMinimo(estoque),
-      obterEstoqueRecomendado(estoque),
-      obterStatusEstoque(estoque),
-    ]);
-  });
-
-  baixarCsv("relatorio-estoque-geral.csv", [cabecalho, ...linhas]);
-
-  registrarHistoricoRelatorio("Estoque Geral", "CSV", "Todas as lojas");
-  carregarCardsRelatorios();
-  carregarTabelaHistoricoRelatorios();
-
-  mostrarAlerta("Relatório de estoque geral exportado com sucesso.");
+  mostrarAlerta(mensagemSucesso);
 }
 
-function exportarRelatorioEstoqueCritico() {
-  const estoquesCriticos = dadosRelatorios.estoques.filter(function (estoque) {
-    return obterStatusEstoque(estoque) === "Crítico";
-  });
+async function exportarRelatorioEstoqueGeral() {
+  try {
+    if (dadosRelatorios.estoques.length === 0) {
+      mostrarAlerta("Nenhum estoque encontrado para exportar.");
+      return;
+    }
 
-  if (estoquesCriticos.length === 0) {
-    mostrarAlerta("Nenhuma loja crítica encontrada.");
-    return;
+    await exportarRelatorioBackend({
+      caminho: "/api/relatorios/exportar/estoque-geral",
+      nomeArquivo: "relatorio-estoque-geral.csv",
+      tipo: "Estoque Geral",
+      filtros: "Todas as lojas",
+      mensagemSucesso: "Relatório de estoque geral exportado com sucesso.",
+    });
+  } catch (erro) {
+    console.error("Erro ao exportar relatório de estoque geral:", erro);
+    mostrarAlerta("Erro ao exportar relatório de estoque geral.", true);
   }
-
-  const cabecalho = montarLinhaCsv([
-    "Código",
-    "Loja",
-    "Estoque Atual",
-    "Estoque Mínimo",
-    "Status",
-  ]);
-
-  const linhas = estoquesCriticos.map(function (estoque) {
-    return montarLinhaCsv([
-      obterCodigoLoja(estoque),
-      obterNomeLoja(estoque),
-      obterEstoqueAtual(estoque),
-      obterEstoqueMinimo(estoque),
-      obterStatusEstoque(estoque),
-    ]);
-  });
-
-  baixarCsv("relatorio-estoque-critico.csv", [cabecalho, ...linhas]);
-
-  registrarHistoricoRelatorio(
-    "Estoque Crítico",
-    "CSV",
-    "Lojas com estoque atual menor ou igual ao mínimo",
-  );
-
-  carregarCardsRelatorios();
-  carregarTabelaHistoricoRelatorios();
-
-  mostrarAlerta("Relatório de estoque crítico exportado com sucesso.");
 }
 
-function exportarRelatorioEnvios() {
-  const envios = dadosRelatorios.envios;
+async function exportarRelatorioEstoqueCritico() {
+  try {
+    const estoquesCriticos = dadosRelatorios.estoques.filter(
+      function (estoque) {
+        return obterStatusEstoque(estoque) === "Crítico";
+      },
+    );
 
-  if (envios.length === 0) {
-    mostrarAlerta("Nenhum envio registrado para exportar.");
-    return;
+    if (estoquesCriticos.length === 0) {
+      mostrarAlerta("Nenhuma loja crítica encontrada.");
+      return;
+    }
+
+    await exportarRelatorioBackend({
+      caminho: "/api/relatorios/exportar/estoque-critico",
+      nomeArquivo: "relatorio-estoque-critico.csv",
+      tipo: "Estoque Crítico",
+      filtros: "Lojas com estoque atual menor ou igual ao mínimo",
+      mensagemSucesso: "Relatório de estoque crítico exportado com sucesso.",
+    });
+  } catch (erro) {
+    console.error("Erro ao exportar relatório de estoque crítico:", erro);
+    mostrarAlerta("Erro ao exportar relatório de estoque crítico.", true);
   }
-
-  const cabecalho = montarLinhaCsv([
-    "Data/Hora",
-    "Código da Loja",
-    "Loja",
-    "Quantidade",
-    "Remessa",
-    "Responsável",
-    "Status",
-  ]);
-
-  const linhas = envios.map(function (envio) {
-    return montarLinhaCsv([
-      formatarDataHora(envio.dataHora || envio.criadoEm || envio.dataEnvio),
-      obterCodigoLoja(envio),
-      obterNomeLoja(envio),
-      obterQuantidadeEnvio(envio),
-      envio.remessa || envio.codigoRemessa || envio.codigo_remessa || "-",
-      obterNomeUsuario(envio),
-      envio.status || "-",
-    ]);
-  });
-
-  baixarCsv("relatorio-envios.csv", [cabecalho, ...linhas]);
-
-  registrarHistoricoRelatorio("Envios", "CSV", "Todos os envios registrados");
-  carregarCardsRelatorios();
-  carregarTabelaHistoricoRelatorios();
-
-  mostrarAlerta("Relatório de envios exportado com sucesso.");
 }
 
-function exportarRelatorioRecebimentos() {
-  const recebimentos = dadosRelatorios.recebimentos;
+async function exportarRelatorioEnvios() {
+  try {
+    if (dadosRelatorios.envios.length === 0) {
+      mostrarAlerta("Nenhum envio registrado para exportar.");
+      return;
+    }
 
-  if (recebimentos.length === 0) {
-    mostrarAlerta("Nenhum recebimento registrado para exportar.");
-    return;
+    await exportarRelatorioBackend({
+      caminho: "/api/relatorios/exportar/envios",
+      nomeArquivo: "relatorio-envios.csv",
+      tipo: "Envios",
+      filtros: "Todos os envios registrados",
+      mensagemSucesso: "Relatório de envios exportado com sucesso.",
+    });
+  } catch (erro) {
+    console.error("Erro ao exportar relatório de envios:", erro);
+    mostrarAlerta("Erro ao exportar relatório de envios.", true);
   }
-
-  const cabecalho = montarLinhaCsv([
-    "Data/Hora",
-    "Código da Loja",
-    "Loja",
-    "Quantidade Recebida",
-    "Responsável",
-    "Status",
-    "Observação",
-  ]);
-
-  const linhas = recebimentos.map(function (recebimento) {
-    return montarLinhaCsv([
-      formatarDataHora(
-        recebimento.dataHora ||
-          recebimento.criadoEm ||
-          recebimento.dataRecebimento,
-      ),
-      obterCodigoLoja(recebimento),
-      obterNomeLoja(recebimento),
-      obterQuantidadeRecebida(recebimento),
-      obterNomeUsuario(recebimento),
-      recebimento.status || "Recebido",
-      recebimento.observacao || "-",
-    ]);
-  });
-
-  baixarCsv("relatorio-recebimentos.csv", [cabecalho, ...linhas]);
-
-  registrarHistoricoRelatorio(
-    "Recebimentos",
-    "CSV",
-    "Todos os recebimentos confirmados",
-  );
-
-  carregarCardsRelatorios();
-  carregarTabelaHistoricoRelatorios();
-
-  mostrarAlerta("Relatório de recebimentos exportado com sucesso.");
 }
 
-function exportarRelatorioManutencoes() {
-  const manutencoes = dadosRelatorios.manutencoes;
+async function exportarRelatorioRecebimentos() {
+  try {
+    if (dadosRelatorios.recebimentos.length === 0) {
+      mostrarAlerta("Nenhum recebimento registrado para exportar.");
+      return;
+    }
 
-  if (manutencoes.length === 0) {
-    mostrarAlerta("Nenhuma manutenção registrada para exportar.");
-    return;
+    await exportarRelatorioBackend({
+      caminho: "/api/relatorios/exportar/recebimentos",
+      nomeArquivo: "relatorio-recebimentos.csv",
+      tipo: "Recebimentos",
+      filtros: "Todos os recebimentos confirmados",
+      mensagemSucesso: "Relatório de recebimentos exportado com sucesso.",
+    });
+  } catch (erro) {
+    console.error("Erro ao exportar relatório de recebimentos:", erro);
+    mostrarAlerta("Erro ao exportar relatório de recebimentos.", true);
   }
-
-  const cabecalho = montarLinhaCsv([
-    "Data/Hora",
-    "Código da Loja",
-    "Loja",
-    "Tipo",
-    "Quantidade",
-    "Responsável",
-    "Observação",
-  ]);
-
-  const linhas = manutencoes.map(function (manutencao) {
-    return montarLinhaCsv([
-      formatarDataHora(
-        manutencao.dataHora || manutencao.criadoEm || manutencao.dataManutencao,
-      ),
-      obterCodigoLoja(manutencao),
-      obterNomeLoja(manutencao),
-      manutencao.tipo || manutencao.tipoManutencao || "-",
-      manutencao.quantidade || 0,
-      obterNomeUsuario(manutencao),
-      manutencao.observacao || "-",
-    ]);
-  });
-
-  baixarCsv("relatorio-manutencoes.csv", [cabecalho, ...linhas]);
-
-  registrarHistoricoRelatorio(
-    "Manutenções",
-    "CSV",
-    "Todas as manutenções de estoque",
-  );
-
-  carregarCardsRelatorios();
-  carregarTabelaHistoricoRelatorios();
-
-  mostrarAlerta("Relatório de manutenções exportado com sucesso.");
 }
 
-function exportarRelatorioUsuarios() {
-  const usuarios = dadosRelatorios.usuarios;
+async function exportarRelatorioManutencoes() {
+  try {
+    if (dadosRelatorios.manutencoes.length === 0) {
+      mostrarAlerta("Nenhuma manutenção registrada para exportar.");
+      return;
+    }
 
-  if (usuarios.length === 0) {
-    mostrarAlerta("Nenhum usuário cadastrado para exportar.");
-    return;
+    await exportarRelatorioBackend({
+      caminho: "/api/relatorios/exportar/manutencoes",
+      nomeArquivo: "relatorio-manutencoes.csv",
+      tipo: "Manutenções",
+      filtros: "Todas as manutenções de estoque",
+      mensagemSucesso: "Relatório de manutenções exportado com sucesso.",
+    });
+  } catch (erro) {
+    console.error("Erro ao exportar relatório de manutenções:", erro);
+    mostrarAlerta("Erro ao exportar relatório de manutenções.", true);
   }
-
-  const cabecalho = montarLinhaCsv([
-    "Nome",
-    "Matrícula",
-    "E-mail",
-    "Ativo",
-    "Criado em",
-  ]);
-
-  const linhas = usuarios.map(function (usuario) {
-    return montarLinhaCsv([
-      usuario.nome || "-",
-      usuario.matricula || "-",
-      usuario.email || "-",
-      usuario.ativo === false ? "Não" : "Sim",
-      formatarDataHora(usuario.criadoEm || usuario.criado_em),
-    ]);
-  });
-
-  baixarCsv("relatorio-usuarios.csv", [cabecalho, ...linhas]);
-
-  registrarHistoricoRelatorio(
-    "Usuários",
-    "CSV",
-    "Todos os usuários cadastrados",
-  );
-
-  carregarCardsRelatorios();
-  carregarTabelaHistoricoRelatorios();
-
-  mostrarAlerta("Relatório de usuários exportado com sucesso.");
 }
 
-function exportarRelatorioPerfis() {
-  const perfis = dadosRelatorios.perfis;
+async function exportarRelatorioUsuarios() {
+  try {
+    if (dadosRelatorios.usuarios.length === 0) {
+      mostrarAlerta("Nenhum usuário cadastrado para exportar.");
+      return;
+    }
 
-  if (perfis.length === 0) {
-    mostrarAlerta("Nenhum perfil cadastrado para exportar.");
-    return;
+    await exportarRelatorioBackend({
+      caminho: "/api/relatorios/exportar/usuarios",
+      nomeArquivo: "relatorio-usuarios.csv",
+      tipo: "Usuários",
+      filtros: "Todos os usuários cadastrados",
+      mensagemSucesso: "Relatório de usuários exportado com sucesso.",
+    });
+  } catch (erro) {
+    console.error("Erro ao exportar relatório de usuários:", erro);
+    mostrarAlerta("Erro ao exportar relatório de usuários.", true);
   }
+}
 
-  const cabecalho = montarLinhaCsv([
-    "Nome",
-    "Nível",
-    "Permissões",
-    "Total de Permissões",
-  ]);
+async function exportarRelatorioPerfis() {
+  try {
+    if (dadosRelatorios.perfis.length === 0) {
+      mostrarAlerta("Nenhum perfil cadastrado para exportar.");
+      return;
+    }
 
-  const linhas = perfis.map(function (perfil) {
-    const permissoes = perfil.permissoes || [];
-
-    return montarLinhaCsv([
-      perfil.nomePerfil || perfil.nome_perfil || perfil.nome || "-",
-      perfil.nivel || "-",
-      Array.isArray(permissoes) ? permissoes.join(", ") : "-",
-      Array.isArray(permissoes) ? permissoes.length : 0,
-    ]);
-  });
-
-  baixarCsv("relatorio-perfis.csv", [cabecalho, ...linhas]);
-
-  registrarHistoricoRelatorio("Perfis", "CSV", "Todos os perfis de acesso");
-
-  carregarCardsRelatorios();
-  carregarTabelaHistoricoRelatorios();
-
-  mostrarAlerta("Relatório de perfis exportado com sucesso.");
+    await exportarRelatorioBackend({
+      caminho: "/api/relatorios/exportar/perfis",
+      nomeArquivo: "relatorio-perfis.csv",
+      tipo: "Perfis",
+      filtros: "Todos os perfis de acesso",
+      mensagemSucesso: "Relatório de perfis exportado com sucesso.",
+    });
+  } catch (erro) {
+    console.error("Erro ao exportar relatório de perfis:", erro);
+    mostrarAlerta("Erro ao exportar relatório de perfis.", true);
+  }
 }
 
 async function iniciarPaginaRelatorios() {
@@ -610,6 +447,7 @@ async function iniciarPaginaRelatorios() {
   }
 
   await carregarDadosRelatorios();
+  await carregarHistoricoExportacoesRelatorios();
 
   if (typeof aplicarPermissoesMenu === "function") {
     aplicarPermissoesMenu();

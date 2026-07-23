@@ -90,3 +90,58 @@ async function apiFetch(caminho, opcoes = {}) {
 
   return dados;
 }
+
+async function apiDownload(caminho, nomeArquivoPadrao) {
+  const usuarioLogado = obterUsuarioLogado();
+  const tokenAuth = localStorage.getItem("tokenAuth");
+
+  if (!usuarioLogado || !usuarioLogado.id || !tokenAuth) {
+    redirecionarParaLoginComMensagem(
+      "Sua sessão não foi encontrada. Faça login novamente.",
+    );
+
+    throw new Error("Usuário não autenticado.");
+  }
+
+  const resposta = await fetch(`${API_BASE_URL}${caminho}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${tokenAuth}`,
+    },
+  });
+
+  if (resposta.status === 401) {
+    const dados = await resposta.json().catch(function () {
+      return {};
+    });
+
+    redirecionarParaLoginComMensagem(
+      dados.erro ||
+        "Sua sessão expirou ou foi encerrada. Faça login novamente.",
+    );
+
+    throw new Error(dados.erro || "Sessão inválida.");
+  }
+
+  if (!resposta.ok) {
+    const dados = await resposta.json().catch(function () {
+      return {};
+    });
+
+    throw new Error(dados.erro || "Erro ao baixar arquivo.");
+  }
+
+  const blob = await resposta.blob();
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = nomeArquivoPadrao;
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
+}
