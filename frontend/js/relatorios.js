@@ -62,6 +62,20 @@ async function buscarApi(caminho) {
   return await apiFetch(caminho);
 }
 
+async function carregarHistoricoExportacoesRelatorios() {
+  try {
+    const exportacoes = await buscarApi("/api/relatorios/exportacoes");
+
+    historicoRelatorios = Array.isArray(exportacoes) ? exportacoes : [];
+
+    carregarCardsRelatorios();
+    carregarTabelaHistoricoRelatorios();
+  } catch (erro) {
+    console.error("Erro ao carregar histórico de exportações:", erro);
+    mostrarAlerta("Erro ao carregar histórico de exportações.", true);
+  }
+}
+
 function obterStatusEstoque(item) {
   if (item.statusEstoque) {
     return item.statusEstoque;
@@ -162,19 +176,6 @@ function obterNomeUsuario(item) {
     item.usuario_id ||
     "-"
   );
-}
-
-function registrarHistoricoRelatorio(tipo, formato, filtros) {
-  const usuario = obterUsuarioAtualRelatorio();
-
-  historicoRelatorios.push({
-    id: Date.now(),
-    dataHora: new Date().toISOString(),
-    tipo,
-    formato,
-    usuario: usuario?.nome || "Usuário",
-    filtros,
-  });
 }
 
 function carregarCardsRelatorios() {
@@ -283,15 +284,11 @@ async function carregarDadosRelatorios() {
 async function exportarRelatorioBackend({
   caminho,
   nomeArquivo,
-  tipo,
-  filtros,
   mensagemSucesso,
 }) {
   await apiDownload(caminho, nomeArquivo);
 
-  registrarHistoricoRelatorio(tipo, "CSV", filtros);
-  carregarCardsRelatorios();
-  carregarTabelaHistoricoRelatorios();
+  await carregarHistoricoExportacoesRelatorios();
 
   mostrarAlerta(mensagemSucesso);
 }
@@ -450,6 +447,7 @@ async function iniciarPaginaRelatorios() {
   }
 
   await carregarDadosRelatorios();
+  await carregarHistoricoExportacoesRelatorios();
 
   if (typeof aplicarPermissoesMenu === "function") {
     aplicarPermissoesMenu();

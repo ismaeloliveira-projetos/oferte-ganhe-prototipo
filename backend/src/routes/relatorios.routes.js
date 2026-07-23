@@ -15,6 +15,32 @@ function responderErro(res, erro) {
   });
 }
 
+function descreverFiltrosRelatorio(filtros) {
+  if (!filtros) {
+    return "-";
+  }
+
+  if (typeof filtros === "string") {
+    try {
+      const filtrosParseados = JSON.parse(filtros);
+
+      if (filtrosParseados.descricao) {
+        return filtrosParseados.descricao;
+      }
+
+      return filtros;
+    } catch {
+      return filtros;
+    }
+  }
+
+  if (filtros.descricao) {
+    return filtros.descricao;
+  }
+
+  return JSON.stringify(filtros);
+}
+
 async function enviarCsvRelatorio(req, res, configuracao) {
   const arquivo = await relatoriosService.exportarCsvComPython(
     configuracao.tipoPython,
@@ -307,6 +333,29 @@ router.get("/exportar/perfis", async function (req, res) {
       },
       dados: relatorio.dados,
     });
+  } catch (erro) {
+    return responderErro(res, erro);
+  }
+});
+
+router.get("/exportacoes", async function (req, res) {
+  try {
+    const exportacoes =
+      await relatoriosService.listarHistoricoExportacoesRelatorios();
+
+    const resposta = exportacoes.map(function (exportacao) {
+      return {
+        id: exportacao.id,
+        dataHora: exportacao.dataHoraExportacao,
+        tipo: exportacao.tipoExportacao,
+        formato: "CSV",
+        usuario: exportacao.usuarioNome || "Usuário",
+        filtros: descreverFiltrosRelatorio(exportacao.filtros),
+        arquivoGerado: exportacao.arquivoGerado,
+      };
+    });
+
+    return res.status(200).json(resposta);
   } catch (erro) {
     return responderErro(res, erro);
   }
