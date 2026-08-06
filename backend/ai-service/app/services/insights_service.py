@@ -10,6 +10,12 @@ from app.repositories.ia_repository import (
     registrar_feedback_resposta,
     registrar_insight,
 )
+
+from app.services.analises_service import (
+    obter_analise_preditiva_estoque,
+    obter_anomalias_operacionais,
+)
+
 from app.services.indicadores_service import obter_risco_estoque
 from app.services.llm_service import chamar_llm
 from app.services.logs_service import registrar_log_ia_seguro
@@ -206,6 +212,222 @@ def gerar_insight_risco_estoque(
                 "erro": str(erro),
                 "tempo_ms": tempo_ms,
             },
+        )
+
+        raise
+
+
+def montar_dados_insight_analise_operacional(
+    acesso_global: bool,
+    lojas_ids: list[int],
+) -> dict:
+    previsao = obter_analise_preditiva_estoque(
+        acesso_global=acesso_global,
+        lojas_ids=lojas_ids,
+    )
+
+    anomalias = obter_anomalias_operacionais(
+        acesso_global=acesso_global,
+        lojas_ids=lojas_ids,
+    )
+
+    ordem_status = {
+        "JA_CRITICO": 1,
+        "RISCO_EM_30_DIAS": 2,
+        "SEM_RISCO_IMEDIATO": 3,
+        "SEM_CONSUMO_REGISTRADO": 4,
+    }
+
+    lojas_prioritarias = sorted(
+        previsao["dados"],
+        key=lambda loja: (
+            ordem_status.get(loja["status_previsao"], 99),
+            (
+                loja["dias_ate_estoque_minimo"]
+                if loja["dias_ate_estoque_minimo"] is not None
+                else float("inf")
+            ),
+        ),
+    )[:5]
+
+    return {
+        "previsao": {
+            "total_lojas_analisadas": previsao["total_lojas_analisadas"],
+            "resumo_por_status": previsao["resumo_por_status"],
+            "lojas_prioritarias": [
+                {
+                    "codigo_loja": loja["codigo_loja"],
+                    "nome_loja": loja["nome_loja"],
+                    "estoque_atual": loja["estoque_atual"],
+                    "quantidade_minima": loja["quantidade_minima"],
+                    "consumo_medio_diario": loja["consumo_medio_diario"],
+                    "dias_ate_estoque_minimo": (loja["dias_ate_estoque_minimo"]),
+                    "data_prevista_estoque_minimo": (
+                        loja["data_prevista_estoque_minimo"]
+                    ),
+                    "status_previsao": loja["status_previsao"],
+                    "confianca": loja["confianca"],
+                }
+                for loja in lojas_prioritarias
+            ],
+        },
+        "anomalias": {
+            "total_anomalias": anomalias["total_anomalias"],
+            "resumo_por_severidade": (anomalias["resumo_por_severidade"]),
+            "itens_prioritarios": [
+                {
+                    "tipo": anomalia["tipo"],
+                    "severidade": anomalia["severidade"],
+                    "titulo": anomalia["titulo"],
+                    "evidencia": {
+                        **anomalia["evidencia"],
+                        "data_envio": (
+                            anomalia["evidencia"]["data_envio"].isoformat()
+                            if anomalia["evidencia"]["data_envio"]
+                            else None
+                        ),
+                    },
+                    "recomendacao": anomalia["recomendacao"],
+                }
+                for anomalia in anomalias["dados"][:5]
+            ],
+        },
+    }
+
+
+def gerar_insight_analise_operacional(
+    contexto_usuario: dict | None = None,
+) -> dict:
+    contexto_usuario = contexto_usuario or {}
+
+    usuario_id = contexto_usuario.get("usuario_id")
+    acesso_global = contexto_usuario.get("acesso_global", False)
+    lojas_ids = contexto_usuario.get("lojas_ids", [])
+
+    consulta_id = criar_consulta_ia(
+        tipo_consulta="insight_analise_operacional",
+        pergunta=(
+            "Gerar insight executivo sobre previsão de estoque "
+            "e anomalias operacionais."
+        ),
+        usuario_id=usuario_id,
+        contexto={
+            "origem": "endpoint /insights/analises/operacional",
+            "acesso_global": acesso_global,
+            "lojas_ids": lojas_ids,
+        },
+    )
+
+    inicio = time.perf_counter()
+    prompt_id_usado = None
+    prompt_versao_usada = None
+
+    try:
+        dados_compactados = montar_dados_insight_analise_operacional(
+            acesso_global=acesso_global,
+            lojas_ids=lojas_ids,
+        )
+
+        prompt = buscar_prompt_ativo_por_nome("insight_analise_operacional")
+
+        if not prompt:
+            raise RuntimeError(
+                "Prompt ativo 'insight_analise_operacional' não encontrado."
+            )
+
+        prompt_id_usado = prompt["id"]
+        prompt_versao_usada = prompt["versao"]
+
+        mensagens = [
+            {
+                "role": "system",
+                "content": (
+                    "Você é um analista de operações do sistema Oferte e Ganhe. "
+                    "Explique previsão de estoque e anomalias de forma clara, "
+                    "objetiva e executiva. Use exclusivamente os dados fornecidos. "
+                    "Não invente números, causas ou eventos. Responda em português "
+                    "do Brasil."
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"{prompt['conteudo']}\n\n"
+                    "Regras adicionais:\n"
+                    "- Responda em no máximo 5 tópicos.\n"
+                    "- Priorize JA_CRITICO, RISCO_EM_30_DIAS e anomalias ALTA.\n"
+                    "- Diferencie estoque crítico atual de previsão futura.\n"
+                    "- Se a confiança for SEM_HISTORICO ou BAIXA, informe essa limitação.\n"
+                    "- Um envio pendente atrasado precisa de investigação; não afirme que foi perdido.\n"
+                    "- Não invente números, lojas ou recomendações já executadas.\n\n"
+                    "Dados da análise:\n"
+                    f"{json.dumps(dados_compactados, ensure_ascii=False, indent=2)}"
+                ),
+            },
+        ]
+
+        resposta_llm = chamar_llm(
+            mensagens=mensagens,
+            temperature=0.2,
+            max_tokens=500,
+        )
+
+        tempo_ms = int((time.perf_counter() - inicio) * 1000)
+
+        execucao_id = registrar_execucao_llm(
+            consulta_ia_id=consulta_id,
+            modelo=resposta_llm["modelo"],
+            usage=resposta_llm["usage"],
+            tempo_ms=tempo_ms,
+            status="SUCESSO",
+            prompt_id=prompt_id_usado,
+            prompt_versao=prompt_versao_usada,
+        )
+
+        insight_id = registrar_insight(
+            consulta_ia_id=consulta_id,
+            tipo_insight="analise_operacional",
+            titulo="Insight executivo de previsão e anomalias",
+            dados_base=dados_compactados,
+            resposta=resposta_llm["conteudo"],
+            modelo_utilizado=resposta_llm["modelo"],
+            nivel_confianca="MEDIO",
+        )
+
+        finalizar_consulta_ia(
+            consulta_ia_id=consulta_id,
+            status="SUCESSO",
+        )
+
+        return {
+            "tipo": "insight_analise_operacional",
+            "consulta_ia_id": consulta_id,
+            "execucao_llm_id": execucao_id,
+            "insight_id": insight_id,
+            "dados_base": dados_compactados,
+            "insight": resposta_llm["conteudo"],
+            "modelo": resposta_llm["modelo"],
+            "usage": resposta_llm["usage"],
+            "tempo_ms": tempo_ms,
+        }
+
+    except Exception as erro:
+        tempo_ms = int((time.perf_counter() - inicio) * 1000)
+
+        registrar_execucao_llm(
+            consulta_ia_id=consulta_id,
+            modelo="desconhecido",
+            usage={},
+            tempo_ms=tempo_ms,
+            status="ERRO",
+            erro=str(erro),
+            prompt_id=prompt_id_usado,
+            prompt_versao=prompt_versao_usada,
+        )
+
+        finalizar_consulta_ia(
+            consulta_ia_id=consulta_id,
+            status="ERRO",
         )
 
         raise

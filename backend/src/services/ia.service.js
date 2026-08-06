@@ -194,6 +194,17 @@ async function obterAnomaliasEnvios(contextoUsuarioIa, limiteDias = 3) {
   });
 }
 
+async function gerarInsightAnaliseOperacional(contextoUsuarioIa) {
+  return chamarAiService("/insights/analises/operacional", {
+    method: "POST",
+    body: {
+      usuario_id: contextoUsuarioIa.usuario_id,
+      acesso_global: contextoUsuarioIa.acesso_global,
+      lojas_ids: contextoUsuarioIa.lojas_ids,
+    },
+  });
+}
+
 module.exports = {
   verificarSaudeIa,
   gerarInsightRiscoEstoque,
@@ -206,6 +217,7 @@ module.exports = {
   listarPromptsIa,
   criarVersaoPromptIa,
   obterIndicadorRiscoEstoque,
+  gerarInsightAnaliseOperacional,
   enviarMensagemChatIa,
   montarContextoUsuarioIa,
 };

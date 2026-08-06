@@ -3,9 +3,12 @@ from fastapi import APIRouter, HTTPException
 from app.schemas.insights_schemas import (
     FeedbackInsightRequest,
     HistoricoInsightsRequest,
+    InsightAnaliseOperacionalRequest,
     InsightRiscoEstoqueRequest,
 )
+
 from app.services.insights_service import (
+    gerar_insight_analise_operacional,
     gerar_insight_risco_estoque,
     obter_historico_insights_usuario,
     registrar_feedback_insight_usuario,
@@ -36,6 +39,19 @@ def insight_risco_estoque_post(request: InsightRiscoEstoqueRequest):
         raise HTTPException(
             status_code=500,
             detail=f"Erro ao gerar insight de risco de estoque: {erro}",
+        )
+
+
+@router.post("/analises/operacional")
+def insight_analise_operacional(
+    request: InsightAnaliseOperacionalRequest,
+):
+    try:
+        return gerar_insight_analise_operacional(contexto_usuario=request.model_dump())
+    except Exception as erro:
+        raise HTTPException(
+            status_code=500,
+            detail=("Erro ao gerar insight de previsão e anomalias: " f"{erro}"),
         )
 
 

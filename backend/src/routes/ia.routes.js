@@ -323,4 +323,22 @@ router.get("/analises/envios/anomalias", async function (req, res) {
   }
 });
 
+router.post("/insights/analises/operacional", async function (req, res) {
+  try {
+    const contextoUsuarioIa = iaService.montarContextoUsuarioIa(
+      req.usuarioContexto,
+    );
+
+    const resultado =
+      await iaService.gerarInsightAnaliseOperacional(contextoUsuarioIa);
+
+    return res.status(201).json(resultado);
+  } catch (erro) {
+    return res.status(502).json({
+      mensagem: "Erro ao gerar insight de previsão e anomalias na IA.",
+      detalhe: erro.message,
+    });
+  }
+});
+
 module.exports = router;
