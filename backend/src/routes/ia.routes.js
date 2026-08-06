@@ -259,4 +259,68 @@ router.post("/prompts/versao", async function (req, res) {
   }
 });
 
+router.get("/analises/estoque/previsao", async function (req, res) {
+  try {
+    const periodoDias =
+      req.query.periodo_dias === undefined
+        ? 90
+        : Number(req.query.periodo_dias);
+
+    if (
+      !Number.isInteger(periodoDias) ||
+      periodoDias < 30 ||
+      periodoDias > 365
+    ) {
+      return res.status(400).json({
+        mensagem: "periodo_dias deve ser um número inteiro entre 30 e 365.",
+      });
+    }
+
+    const contextoUsuarioIa = iaService.montarContextoUsuarioIa(
+      req.usuarioContexto,
+    );
+
+    const resultado = await iaService.obterPrevisaoEstoque(
+      contextoUsuarioIa,
+      periodoDias,
+    );
+
+    return res.status(200).json(resultado);
+  } catch (erro) {
+    return res.status(502).json({
+      mensagem: "Erro ao buscar previsão de estoque na IA.",
+      detalhe: erro.message,
+    });
+  }
+});
+
+router.get("/analises/envios/anomalias", async function (req, res) {
+  try {
+    const limiteDias =
+      req.query.limite_dias === undefined ? 3 : Number(req.query.limite_dias);
+
+    if (!Number.isInteger(limiteDias) || limiteDias < 1 || limiteDias > 30) {
+      return res.status(400).json({
+        mensagem: "limite_dias deve ser um número inteiro entre 1 e 30.",
+      });
+    }
+
+    const contextoUsuarioIa = iaService.montarContextoUsuarioIa(
+      req.usuarioContexto,
+    );
+
+    const resultado = await iaService.obterAnomaliasEnvios(
+      contextoUsuarioIa,
+      limiteDias,
+    );
+
+    return res.status(200).json(resultado);
+  } catch (erro) {
+    return res.status(502).json({
+      mensagem: "Erro ao buscar anomalias de envios na IA.",
+      detalhe: erro.message,
+    });
+  }
+});
+
 module.exports = router;
