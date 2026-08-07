@@ -17,21 +17,21 @@ def buscar_base_previsao_estoque(
             l.quantidade_minima,
             l.quantidade_recomendada,
 
-            COALESCE(SUM(m.quantidade), 0) AS total_consumido_periodo,
+            COALESCE(SUM(c.quantidade), 0) AS total_consumido_periodo,
 
-            COUNT(DISTINCT m.criado_em::date) AS dias_com_saida,
+            COUNT(DISTINCT c.data_consumo) AS dias_com_consumo,
 
-            MAX(m.criado_em) AS ultima_saida_em
+            MAX(c.data_consumo) AS ultimo_consumo_em
 
         FROM lojas l
 
         INNER JOIN estoques_lojas e
             ON e.loja_id = l.id
 
-        LEFT JOIN movimentacoes_estoque m
-            ON m.loja_id = l.id
-            AND m.tipo_movimentacao = 'MANUTENCAO_SAIDA'
-            AND m.criado_em >= CURRENT_DATE - (%s * INTERVAL '1 day')
+        LEFT JOIN consumos_taloes c
+             ON c.loja_id = l.id
+            AND c.data_consumo >= CURRENT_DATE - %s
+           
 
         WHERE l.ativo = true
           AND (
@@ -66,8 +66,8 @@ def buscar_base_previsao_estoque(
                 "quantidade_minima": linha[4],
                 "quantidade_recomendada": linha[5],
                 "total_consumido_periodo": linha[6],
-                "dias_com_saida": linha[7],
-                "ultima_saida_em": linha[8],
+                "dias_com_consumo": linha[7],
+                "ultimo_consumo_em": linha[8],
             }
             for linha in resultados
         ]

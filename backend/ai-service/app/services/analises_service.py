@@ -9,14 +9,14 @@ from app.repositories.analises_repository import (
 DIAS_PROJECAO = 30
 
 
-def definir_confianca(dias_com_saida: int) -> str:
-    if dias_com_saida == 0:
+def definir_confianca(dias_com_consumo: int) -> str:
+    if dias_com_consumo == 0:
         return "SEM_HISTORICO"
 
-    if dias_com_saida < 3:
+    if dias_com_consumo < 3:
         return "BAIXA"
 
-    if dias_com_saida < 10:
+    if dias_com_consumo < 10:
         return "MEDIA"
 
     return "ALTA"
@@ -29,7 +29,7 @@ def calcular_previsao_por_loja(
     estoque_atual = float(loja["estoque_atual"])
     quantidade_minima = float(loja["quantidade_minima"])
     total_consumido = float(loja["total_consumido_periodo"])
-    dias_com_saida = int(loja["dias_com_saida"])
+    dias_com_consumo = int(loja["dias_com_consumo"])
 
     consumo_medio_diario = total_consumido / periodo_dias
 
@@ -69,8 +69,8 @@ def calcular_previsao_por_loja(
         "quantidade_recomendada": float(loja["quantidade_recomendada"]),
         "periodo_analisado_dias": periodo_dias,
         "total_consumido_periodo": total_consumido,
-        "dias_com_saida": dias_com_saida,
-        "ultima_saida_em": loja["ultima_saida_em"],
+        "dias_com_consumo": dias_com_consumo,
+        "ultimo_consumo_em": loja["ultimo_consumo_em"],
         "consumo_medio_diario": round(consumo_medio_diario, 2),
         "estoque_estimado_30_dias": round(estoque_estimado_30_dias, 2),
         "dias_ate_estoque_minimo": dias_ate_estoque_minimo,
@@ -80,7 +80,7 @@ def calcular_previsao_por_loja(
             else None
         ),
         "status_previsao": status_previsao,
-        "confianca": definir_confianca(dias_com_saida),
+        "confianca": definir_confianca(dias_com_consumo),
     }
 
 
@@ -118,8 +118,8 @@ def obter_analise_preditiva_estoque(
     return {
         "analise": "previsao_baixa_estoque",
         "descricao": (
-            "Previsão de baixa de estoque baseada no consumo de "
-            "MANUTENCAO_SAIDA do período analisado."
+            "Previsão de baixa de estoque baseada no consumo real de "
+            "talões registrado no período analisado."
         ),
         "escopo": {
             "acesso_global": acesso_global,
