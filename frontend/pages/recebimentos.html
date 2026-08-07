@@ -160,8 +160,29 @@
         <div id="alertaSistema" class="alert-system hidden"></div>
 
         <div id="alertaAnomalias" class="anomalia-banner hidden">
-          ⚠️ <strong>Detecção de Anomalias (IA):</strong>
-          <span id="mensagemAnomalias"></span>
+          <div class="alerta-operacional-cabecalho">
+            <div class="alerta-operacional-conteudo">
+              <span class="alerta-operacional-icone">⚠️</span>
+
+              <div>
+                <strong>Alerta de anomalia operacional</strong>
+                <span id="mensagemAnomalias"></span>
+              </div>
+            </div>
+
+            <button
+              id="btnGerarAnaliseOperacionalIA"
+              type="button"
+              class="btn-analisar-alerta"
+            >
+              ✨ Analisar com IA
+            </button>
+          </div>
+
+          <div
+            id="resultadoAnaliseOperacionalIA"
+            class="insights-list resultado-analise-operacional"
+          ></div>
         </div>
 
         <div
@@ -285,6 +306,7 @@
 
     <script src="../js/api.js"></script>
     <script src="../js/ui.js"></script>
+    <script src="../js/analise-operacional.js"></script>
     <script src="../js/recebimentos.js"></script>
   </body>
 </html>

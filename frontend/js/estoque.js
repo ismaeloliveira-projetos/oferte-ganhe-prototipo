@@ -395,7 +395,7 @@ async function exibirRanqueamentoPrioridade() {
       return;
     }
 
-    const criticas = estoques
+    const criticasOrdenadas = estoques
       .filter(function (estoque) {
         return estoque.statusEstoque === "Crítico";
       })
@@ -403,18 +403,25 @@ async function exibirRanqueamentoPrioridade() {
         return obterReposicaoSugerida(b) - obterReposicaoSugerida(a);
       });
 
-    if (criticas.length === 0) {
+    const prioridades = criticasOrdenadas.slice(0, 5);
+
+    if (prioridades.length === 0) {
       banner.classList.add("hidden");
       return;
     }
 
-    const nomes = criticas
+    const nomes = prioridades
       .map(function (estoque) {
         return `${estoque.codigoLoja} - ${estoque.nomeLoja}`;
       })
       .join(", ");
 
-    mensagem.textContent = `Prioridade de envio sugerida: ${nomes}. Lojas com maior necessidade de reposição.`;
+    const existemMaisLojas = criticasOrdenadas.length > prioridades.length;
+
+    mensagem.textContent =
+      `Prioridade de envio sugerida: ${nomes}. ` +
+      `Lojas com maior necessidade de reposição.` +
+      (existemMaisLojas ? " Exibindo as 5 maiores prioridades." : "");
 
     banner.classList.remove("hidden");
   } catch (erro) {
@@ -523,6 +530,11 @@ async function iniciarPaginaEstoque() {
   await carregarCardsEstoque();
   await carregarTabelaEstoque();
   await exibirRanqueamentoPrioridade();
+
+  configurarBotaoAnaliseOperacionalIA(
+    "btnGerarAnaliseOperacionalIA",
+    "resultadoAnaliseOperacionalIA",
+  );
 
   if (typeof aplicarPermissoesMenu === "function") {
     aplicarPermissoesMenu();

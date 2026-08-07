@@ -143,8 +143,29 @@
           </div>
 
           <div id="alertaRanqueamento" class="anomalia-banner hidden">
-            🤖 <strong>Ranqueamento IA:</strong>
-            <span id="mensagemRanqueamento"></span>
+            <div class="alerta-operacional-cabecalho">
+              <div class="alerta-operacional-conteudo">
+                <span class="alerta-operacional-icone">⚠️</span>
+
+                <div>
+                  <strong>Ranqueamento de reposição</strong>
+                  <span id="mensagemRanqueamento"></span>
+                </div>
+              </div>
+
+              <button
+                id="btnGerarAnaliseOperacionalIA"
+                type="button"
+                class="btn-analisar-alerta"
+              >
+                ✨ Analisar com IA
+              </button>
+            </div>
+
+            <div
+              id="resultadoAnaliseOperacionalIA"
+              class="insights-list resultado-analise-operacional"
+            ></div>
           </div>
         </header>
 
@@ -233,6 +254,7 @@
 
     <script src="../js/api.js"></script>
     <script src="../js/ui.js"></script>
+    <script src="../js/analise-operacional.js"></script>
     <script src="../js/estoque.js"></script>
   </body>
 </html>
