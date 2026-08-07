@@ -181,6 +181,7 @@ function formatarTipoMovimentacao(tipo) {
   if (tipo === "CORRECAO") return "Correção";
   if (tipo === "AJUSTE_ENTRADA") return "Ajuste de Entrada";
   if (tipo === "AJUSTE_SAIDA") return "Ajuste de Saída";
+  if (tipo === "CONSUMO_UTILIZACAO") return "Consumo de Talões";
 
   return tipo || "-";
 }
@@ -323,24 +324,35 @@ async function carregarTabelaEstoque() {
             </span>
           </td>
           <td>${formatarDataHora(estoque.atualizadoEm)}</td>
-          <td>
-            <div class="table-actions estoque-actions">
-              <button
-                class="btn-primary btn-solicitar"
-                onclick="solicitarTalao(${estoque.lojaId}, ${reposicaoSugerida}, this)"
-                ${reposicaoSugerida === 0 ? "disabled" : ""}
-              >
-                Solicitar
-              </button>
+       <td data-label="Ações">
+  <details class="acoes-menu">
+    <summary class="btn-table-action">Ações</summary>
 
-              <button
-                class="btn-table-action btn-sm"
-                onclick="verHistoricoEstoque(${estoque.lojaId})"
-              >
-                Histórico
-              </button>
-            </div>
-          </td>
+    <div class="acoes-menu-list">
+      <button
+        class="btn-table-action btn-sm"
+        onclick="solicitarTalao(${estoque.lojaId}, ${reposicaoSugerida}, this)"
+        ${reposicaoSugerida === 0 ? "disabled" : ""}
+      >
+        Solicitar
+      </button>
+
+      <button
+        class="btn-table-action btn-sm"
+        onclick="verHistoricoEstoque(${estoque.lojaId})"
+      >
+        Histórico
+      </button>
+
+      <button
+        class="btn-table-action btn-sm"
+        onclick="abrirRegistroConsumo(${estoque.lojaId})"
+      >
+        Registrar consumo
+      </button>
+    </div>
+  </details>
+</td>
         </tr>
       `;
     });
@@ -520,6 +532,133 @@ function fecharHistoricoEstoque() {
   }
 }
 
+function obterDataHojeParaInput() {
+  const hoje = new Date();
+
+  const ano = hoje.getFullYear();
+  const mes = String(hoje.getMonth() + 1).padStart(2, "0");
+  const dia = String(hoje.getDate()).padStart(2, "0");
+
+  return `${ano}-${mes}-${dia}`;
+}
+
+function abrirRegistroConsumo(lojaId) {
+  const estoque = estoquesCarregados.find(function (item) {
+    return Number(item.lojaId) === Number(lojaId);
+  });
+
+  if (!estoque) {
+    mostrarMensagem("Loja não encontrada.", true);
+    return;
+  }
+
+  const formulario = document.getElementById("formRegistroConsumo");
+  const campoLojaId = document.getElementById("consumoLojaId");
+  const campoLoja = document.getElementById("consumoLojaSelecionada");
+  const campoQuantidade = document.getElementById("consumoQuantidade");
+  const campoData = document.getElementById("consumoData");
+  const container = document.getElementById("consumoContainer");
+  const overlay = document.getElementById("consumoOverlay");
+
+  if (
+    !formulario ||
+    !campoLojaId ||
+    !campoLoja ||
+    !campoQuantidade ||
+    !campoData
+  ) {
+    mostrarMensagem("Formulário de consumo não encontrado.", true);
+    return;
+  }
+
+  formulario.reset();
+
+  campoLojaId.value = estoque.lojaId;
+  campoLoja.textContent = `${estoque.codigoLoja} - ${estoque.nomeLoja} | Saldo atual: ${estoque.estoqueAtual}`;
+
+  campoQuantidade.max = Math.floor(estoque.estoqueAtual);
+  campoData.value = obterDataHojeParaInput();
+
+  container.classList.remove("hidden");
+  overlay.classList.remove("hidden");
+
+  campoQuantidade.focus();
+}
+
+function fecharRegistroConsumo() {
+  const container = document.getElementById("consumoContainer");
+  const overlay = document.getElementById("consumoOverlay");
+
+  if (container) {
+    container.classList.add("hidden");
+  }
+
+  if (overlay) {
+    overlay.classList.add("hidden");
+  }
+}
+
+async function registrarConsumo(evento) {
+  evento.preventDefault();
+
+  const lojaId = Number(document.getElementById("consumoLojaId").value);
+  const quantidade = Number(document.getElementById("consumoQuantidade").value);
+  const dataConsumo = document.getElementById("consumoData").value;
+  const observacao = document.getElementById("consumoObservacao").value.trim();
+  const botaoSalvar = document.getElementById("btnSalvarConsumo");
+
+  if (!Number.isInteger(lojaId) || lojaId <= 0) {
+    mostrarMensagem("Loja inválida para registrar o consumo.", true);
+    return;
+  }
+
+  if (!Number.isInteger(quantidade) || quantidade <= 0) {
+    mostrarMensagem("Informe uma quantidade inteira maior que zero.", true);
+    return;
+  }
+
+  if (!dataConsumo) {
+    mostrarMensagem("Informe a data do consumo.", true);
+    return;
+  }
+
+  try {
+    if (botaoSalvar) {
+      botaoSalvar.disabled = true;
+      botaoSalvar.textContent = "Registrando...";
+    }
+
+    await apiFetch("/api/consumos", {
+      method: "POST",
+      body: JSON.stringify({
+        lojaId,
+        quantidade,
+        dataConsumo,
+        observacao: observacao || null,
+      }),
+    });
+
+    mostrarMensagem("Consumo registrado e estoque atualizado com sucesso.");
+
+    fecharRegistroConsumo();
+
+    await carregarCardsEstoque();
+    await carregarTabelaEstoque();
+    await exibirRanqueamentoPrioridade();
+  } catch (erro) {
+    console.error("Erro ao registrar consumo:", erro);
+    mostrarMensagem(
+      erro.message || "Não foi possível registrar o consumo.",
+      true,
+    );
+  } finally {
+    if (botaoSalvar) {
+      botaoSalvar.disabled = false;
+      botaoSalvar.textContent = "Registrar consumo";
+    }
+  }
+}
+
 async function iniciarPaginaEstoque() {
   const usuarioLogado = carregarUsuarioPaginaEstoque();
 
@@ -535,6 +674,12 @@ async function iniciarPaginaEstoque() {
     "btnGerarAnaliseOperacionalIA",
     "resultadoAnaliseOperacionalIA",
   );
+
+  const formularioConsumo = document.getElementById("formRegistroConsumo");
+
+  if (formularioConsumo) {
+    formularioConsumo.addEventListener("submit", registrarConsumo);
+  }
 
   if (typeof aplicarPermissoesMenu === "function") {
     aplicarPermissoesMenu();

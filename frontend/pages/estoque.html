@@ -252,6 +252,67 @@
       </div>
     </section>
 
+    <div
+      id="consumoOverlay"
+      class="bottom-sheet-overlay hidden"
+      onclick="fecharRegistroConsumo()"
+    ></div>
+
+    <section
+      id="consumoContainer"
+      class="bottom-sheet form-bottom-sheet hidden"
+    >
+      <div class="bottom-sheet-header">
+        <div>
+          <h2>Registrar consumo de talões</h2>
+          <span id="consumoLojaSelecionada"></span>
+        </div>
+      </div>
+
+      <form id="formRegistroConsumo" class="bottom-sheet-content">
+        <input id="consumoLojaId" type="hidden" />
+
+        <div class="form-group">
+          <label for="consumoQuantidade">Quantidade consumida</label>
+          <input
+            id="consumoQuantidade"
+            type="number"
+            min="1"
+            step="1"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="consumoData">Data do consumo</label>
+          <input id="consumoData" type="date" required />
+        </div>
+
+        <div class="form-group">
+          <label for="consumoObservacao">Observação</label>
+          <textarea
+            id="consumoObservacao"
+            rows="3"
+            placeholder="Ex.: Talões utilizados em atendimento."
+          ></textarea>
+        </div>
+
+        <div class="bottom-sheet-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            onclick="fecharRegistroConsumo()"
+          >
+            Cancelar
+          </button>
+
+          <button id="btnSalvarConsumo" type="submit" class="btn-primary">
+            Registrar consumo
+          </button>
+        </div>
+      </form>
+    </section>
+
     <script src="../js/api.js"></script>
     <script src="../js/ui.js"></script>
     <script src="../js/analise-operacional.js"></script>

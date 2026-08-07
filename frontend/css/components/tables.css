@@ -166,3 +166,50 @@
   }
 }
 
+.acoes-menu {
+  position: relative;
+}
+
+.acoes-menu summary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  list-style: none;
+}
+
+.acoes-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.acoes-menu-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+
+  display: grid;
+  gap: 6px;
+  min-width: 155px;
+  padding: 8px;
+
+  background: #ffffff;
+  border: 1px solid var(--qq-border);
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+}
+
+.acoes-menu-list .btn-table-action {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .acoes-menu {
+    width: 100%;
+  }
+
+  .acoes-menu-list {
+    position: static;
+    margin-top: 6px;
+    box-shadow: none;
+  }
+}
