@@ -4,6 +4,7 @@ from math import ceil
 from app.repositories.analises_repository import (
     buscar_base_previsao_estoque,
     listar_envios_pendentes_atrasados,
+    listar_consumos_fora_do_padrao,
 )
 
 DIAS_PROJECAO = 30
@@ -139,6 +140,13 @@ def definir_severidade_envio_atrasado(dias_pendente: int) -> str:
 
     return "MEDIA"
 
+def definir_severidade_consumo_fora_do_padrao(
+    fator_acima_media: float,
+) -> str:
+    if fator_acima_media >= 3:
+        return "ALTA"
+
+    return "MEDIA"
 
 def obter_anomalias_operacionais(
     acesso_global: bool = True,
@@ -153,10 +161,17 @@ def obter_anomalias_operacionais(
         limite_dias=limite_dias,
     )
 
-    anomalias = [
+    consumos_fora_do_padrao = listar_consumos_fora_do_padrao(
+        acesso_global=acesso_global,
+        lojas_ids=lojas_ids,
+    )
+
+    anomalias_envios = [
         {
             "tipo": "ENVIO_PENDENTE_ATRASADO",
-            "severidade": definir_severidade_envio_atrasado(envio["dias_pendente"]),
+            "severidade": definir_severidade_envio_atrasado(
+                envio["dias_pendente"],
+            ),
             "titulo": (
                 f"Envio {envio['codigo_remessa']} pendente há "
                 f"{envio['dias_pendente']} dias."
@@ -179,6 +194,41 @@ def obter_anomalias_operacionais(
         for envio in envios_atrasados
     ]
 
+    anomalias_consumo = [
+        {
+            "tipo": "CONSUMO_FORA_DO_PADRAO",
+            "severidade": definir_severidade_consumo_fora_do_padrao(
+                consumo["fator_acima_media"],
+            ),
+            "titulo": (
+                f"Consumo de {consumo['consumo_hoje']:.0f} talões na loja "
+                f"{consumo['codigo_loja']} está "
+                f"{consumo['fator_acima_media']:.1f}x acima da média."
+            ),
+            "evidencia": {
+                "loja_id": consumo["loja_id"],
+                "codigo_loja": consumo["codigo_loja"],
+                "nome_loja": consumo["nome_loja"],
+                "data_consumo": date.today().isoformat(),
+                "consumo_hoje": consumo["consumo_hoje"],
+                "consumo_medio_historico": consumo[
+                    "consumo_medio_historico"
+                ],
+                "dias_com_consumo_historico": consumo[
+                    "dias_com_consumo_historico"
+                ],
+                "fator_acima_media": consumo["fator_acima_media"],
+            },
+            "recomendacao": (
+                "Verificar se houve demanda incomum, perda de talões ou "
+                "erro no lançamento do consumo."
+            ),
+        }
+        for consumo in consumos_fora_do_padrao
+    ]
+
+    anomalias = anomalias_envios + anomalias_consumo
+
     resumo_por_severidade = {
         "MEDIA": 0,
         "ALTA": 0,
@@ -190,14 +240,19 @@ def obter_anomalias_operacionais(
     return {
         "analise": "anomalias_operacionais",
         "descricao": (
-            "Identificação de envios de talões que permanecem pendentes "
-            "acima do prazo configurado."
+            "Identificação de envios de talões pendentes acima do prazo e "
+            "de consumos fora do padrão histórico."
         ),
         "escopo": {
             "acesso_global": acesso_global,
             "lojas_ids": lojas_ids,
         },
         "limite_dias_pendente": limite_dias,
+        "criterios_consumo_fora_do_padrao": {
+            "periodo_historico_dias": 30,
+            "minimo_dias_historico": 7,
+            "multiplicador_media": 2,
+        },
         "total_anomalias": len(anomalias),
         "resumo_por_severidade": resumo_por_severidade,
         "dados": anomalias,
