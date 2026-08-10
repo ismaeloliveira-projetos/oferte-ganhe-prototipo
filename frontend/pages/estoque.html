@@ -313,6 +313,74 @@
       </form>
     </section>
 
+    <div
+      id="formEnvioEstoqueOverlay"
+      class="bottom-sheet-overlay hidden"
+      onclick="fecharFormularioEnvioEstoque()"
+    ></div>
+
+    <section
+      id="formEnvioEstoqueContainer"
+      class="bottom-sheet form-bottom-sheet hidden"
+    >
+      <div class="bottom-sheet-header">
+        <div>
+          <h2>Registrar envio de reposição</h2>
+          <span>Envio de talões para a loja selecionada</span>
+        </div>
+      </div>
+
+      <form id="formEnvioEstoque" class="bottom-sheet-content">
+        <input id="envioEstoqueLojaId" type="hidden" />
+
+        <div class="form-group">
+          <label for="envioEstoqueLoja">Loja de destino</label>
+          <input
+            id="envioEstoqueLoja"
+            class="form-input"
+            type="text"
+            readonly
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="envioEstoqueQuantidade">Quantidade de talões</label>
+          <input
+            id="envioEstoqueQuantidade"
+            class="form-input"
+            type="number"
+            min="1"
+            step="1"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="envioEstoqueRemessa">Código da remessa</label>
+          <input
+            id="envioEstoqueRemessa"
+            class="form-input"
+            type="text"
+            maxlength="100"
+            placeholder="Ex.: REM-2026-001"
+            required
+          />
+        </div>
+
+        <div class="bottom-sheet-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            onclick="fecharFormularioEnvioEstoque()"
+          >
+            Cancelar
+          </button>
+
+          <button type="submit" class="btn-primary">Registrar envio</button>
+        </div>
+      </form>
+    </section>
+
     <script src="../js/api.js"></script>
     <script src="../js/ui.js"></script>
     <script src="../js/analise-operacional.js"></script>

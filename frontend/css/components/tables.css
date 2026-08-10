@@ -213,3 +213,8 @@
     box-shadow: none;
   }
 }
+
+.btn-table-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

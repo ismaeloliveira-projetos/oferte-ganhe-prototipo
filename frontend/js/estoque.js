@@ -328,21 +328,27 @@ async function carregarTabelaEstoque() {
   <details class="acoes-menu">
     <summary class="btn-table-action">Ações</summary>
 
-    <div class="acoes-menu-list">
-      <button
-        class="btn-table-action btn-sm"
-        onclick="solicitarTalao(${estoque.lojaId}, ${reposicaoSugerida}, this)"
-        ${reposicaoSugerida === 0 ? "disabled" : ""}
-      >
-        Solicitar
-      </button>
+    
 
-      <button
+    <div class="acoes-menu-list">
+
+    <button
         class="btn-table-action btn-sm"
         onclick="verHistoricoEstoque(${estoque.lojaId})"
       >
         Histórico
       </button>
+      <button
+        class="btn-table-action btn-sm"
+        onclick="solicitarTalao(${estoque.lojaId}, ${reposicaoSugerida}, this)"
+        ${reposicaoSugerida === 0 ? "disabled" : ""}
+
+      >
+      
+        Solicitar reposição
+      </button>
+
+     
 
       <button
         class="btn-table-action btn-sm"
@@ -366,28 +372,105 @@ async function carregarTabelaEstoque() {
   }
 }
 
-function solicitarTalao(lojaId, quantidade, botao) {
+function solicitarTalao(lojaId, quantidadeSugerida) {
+  fecharMenusAcoes();
+
   const estoque = estoquesCarregados.find(function (item) {
     return Number(item.lojaId) === Number(lojaId);
   });
 
   if (!estoque) {
-    mostrarMensagem("Loja não encontrada.", true);
+    mostrarMensagem("Loja não encontrada para registrar o envio.", true);
     return;
   }
 
-  if (quantidade <= 0) {
-    mostrarMensagem("Esta loja não precisa de reposição no momento.");
-    return;
+  const form = document.getElementById("formEnvioEstoque");
+
+  if (form) {
+    form.reset();
   }
 
-  mostrarMensagem(
-    `Reposição sugerida de ${quantidade} talões para a loja ${estoque.codigoLoja} - ${estoque.nomeLoja}.`,
+  document.getElementById("envioEstoqueLojaId").value = estoque.lojaId;
+
+  document.getElementById("envioEstoqueLoja").value =
+    `${estoque.codigoLoja} - ${estoque.nomeLoja}`;
+
+  document.getElementById("envioEstoqueQuantidade").value = quantidadeSugerida;
+
+  document
+    .getElementById("formEnvioEstoqueContainer")
+    .classList.remove("hidden");
+
+  document.getElementById("formEnvioEstoqueOverlay").classList.remove("hidden");
+}
+
+function fecharFormularioEnvioEstoque() {
+  document.getElementById("formEnvioEstoqueContainer").classList.add("hidden");
+
+  document.getElementById("formEnvioEstoqueOverlay").classList.add("hidden");
+}
+
+async function salvarEnvioEstoque(event) {
+  event.preventDefault();
+
+  const lojaId = Number(document.getElementById("envioEstoqueLojaId").value);
+
+  const quantidadeEnviada = Number(
+    document.getElementById("envioEstoqueQuantidade").value,
   );
 
-  if (botao) {
-    botao.disabled = true;
-    botao.textContent = "Sugerido";
+  const codigoRemessa = document
+    .getElementById("envioEstoqueRemessa")
+    .value.trim();
+
+  const usuario = obterUsuarioLogado();
+
+  if (!usuario?.id) {
+    mostrarMensagem("Usuário não autenticado.", true);
+    return;
+  }
+
+  if (!Number.isInteger(lojaId) || lojaId <= 0) {
+    mostrarMensagem("Loja de destino inválida.", true);
+    return;
+  }
+
+  if (!Number.isInteger(quantidadeEnviada) || quantidadeEnviada <= 0) {
+    mostrarMensagem("Informe uma quantidade válida.", true);
+    return;
+  }
+
+  if (!codigoRemessa) {
+    mostrarMensagem("Informe o código da remessa.", true);
+    return;
+  }
+
+  const botaoSalvar = event.submitter;
+  botaoSalvar.disabled = true;
+  botaoSalvar.textContent = "Registrando...";
+
+  try {
+    await apiFetch("/api/envios", {
+      method: "POST",
+      body: JSON.stringify({
+        codigoRemessa,
+        lojaId,
+        usuarioEnvioId: usuario.id,
+        quantidadeEnviada,
+      }),
+    });
+
+    fecharFormularioEnvioEstoque();
+
+    mostrarMensagem(
+      "Envio de reposição registrado. Aguarde a confirmação de recebimento.",
+    );
+  } catch (erro) {
+    console.error("Erro ao registrar envio de reposição:", erro);
+    mostrarMensagem(erro.message, true);
+  } finally {
+    botaoSalvar.disabled = false;
+    botaoSalvar.textContent = "Registrar envio";
   }
 }
 
@@ -442,6 +525,7 @@ async function exibirRanqueamentoPrioridade() {
 }
 
 async function verHistoricoEstoque(lojaId) {
+  fecharMenusAcoes();
   const conteudo = document.getElementById("historicoEstoqueConteudo");
 
   if (!conteudo) {
@@ -520,6 +604,7 @@ async function verHistoricoEstoque(lojaId) {
 }
 
 function fecharHistoricoEstoque() {
+  fecharMenusAcoes();
   const container = document.getElementById("historicoEstoqueContainer");
   const overlay = document.getElementById("historicoEstoqueOverlay");
 
@@ -597,6 +682,22 @@ function fecharRegistroConsumo() {
     overlay.classList.add("hidden");
   }
 }
+
+function fecharMenusAcoes() {
+  document.querySelectorAll(".acoes-menu[open]").forEach(function (menu) {
+    menu.removeAttribute("open");
+  });
+}
+
+document.addEventListener("click", function (evento) {
+  const menuClicado = evento.target.closest(".acoes-menu");
+
+  document.querySelectorAll(".acoes-menu[open]").forEach(function (menu) {
+    if (menu !== menuClicado) {
+      menu.removeAttribute("open");
+    }
+  });
+});
 
 async function registrarConsumo(evento) {
   evento.preventDefault();
@@ -683,6 +784,12 @@ async function iniciarPaginaEstoque() {
 
   if (typeof aplicarPermissoesMenu === "function") {
     aplicarPermissoesMenu();
+  }
+
+  const formEnvioEstoque = document.getElementById("formEnvioEstoque");
+
+  if (formEnvioEstoque) {
+    formEnvioEstoque.addEventListener("submit", salvarEnvioEstoque);
   }
 }
 
