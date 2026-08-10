@@ -143,8 +143,29 @@
           </div>
 
           <div id="alertaRanqueamento" class="anomalia-banner hidden">
-            🤖 <strong>Ranqueamento IA:</strong>
-            <span id="mensagemRanqueamento"></span>
+            <div class="alerta-operacional-cabecalho">
+              <div class="alerta-operacional-conteudo">
+                <span class="alerta-operacional-icone">⚠️</span>
+
+                <div>
+                  <strong>Ranqueamento de reposição</strong>
+                  <span id="mensagemRanqueamento"></span>
+                </div>
+              </div>
+
+              <button
+                id="btnGerarAnaliseOperacionalIA"
+                type="button"
+                class="btn-analisar-alerta"
+              >
+                ✨ Analisar com IA
+              </button>
+            </div>
+
+            <div
+              id="resultadoAnaliseOperacionalIA"
+              class="insights-list resultado-analise-operacional"
+            ></div>
           </div>
         </header>
 
@@ -231,8 +252,138 @@
       </div>
     </section>
 
+    <div
+      id="consumoOverlay"
+      class="bottom-sheet-overlay hidden"
+      onclick="fecharRegistroConsumo()"
+    ></div>
+
+    <section
+      id="consumoContainer"
+      class="bottom-sheet form-bottom-sheet hidden"
+    >
+      <div class="bottom-sheet-header">
+        <div>
+          <h2>Registrar consumo de talões</h2>
+          <span id="consumoLojaSelecionada"></span>
+        </div>
+      </div>
+
+      <form id="formRegistroConsumo" class="bottom-sheet-content">
+        <input id="consumoLojaId" type="hidden" />
+
+        <div class="form-group">
+          <label for="consumoQuantidade">Quantidade consumida</label>
+          <input
+            id="consumoQuantidade"
+            type="number"
+            min="1"
+            step="1"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="consumoData">Data do consumo</label>
+          <input id="consumoData" type="date" required />
+        </div>
+
+        <div class="form-group">
+          <label for="consumoObservacao">Observação</label>
+          <textarea
+            id="consumoObservacao"
+            rows="3"
+            placeholder="Ex.: Talões utilizados em atendimento."
+          ></textarea>
+        </div>
+
+        <div class="bottom-sheet-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            onclick="fecharRegistroConsumo()"
+          >
+            Cancelar
+          </button>
+
+          <button id="btnSalvarConsumo" type="submit" class="btn-primary">
+            Registrar consumo
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <div
+      id="formEnvioEstoqueOverlay"
+      class="bottom-sheet-overlay hidden"
+      onclick="fecharFormularioEnvioEstoque()"
+    ></div>
+
+    <section
+      id="formEnvioEstoqueContainer"
+      class="bottom-sheet form-bottom-sheet hidden"
+    >
+      <div class="bottom-sheet-header">
+        <div>
+          <h2>Registrar envio de reposição</h2>
+          <span>Envio de talões para a loja selecionada</span>
+        </div>
+      </div>
+
+      <form id="formEnvioEstoque" class="bottom-sheet-content">
+        <input id="envioEstoqueLojaId" type="hidden" />
+
+        <div class="form-group">
+          <label for="envioEstoqueLoja">Loja de destino</label>
+          <input
+            id="envioEstoqueLoja"
+            class="form-input"
+            type="text"
+            readonly
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="envioEstoqueQuantidade">Quantidade de talões</label>
+          <input
+            id="envioEstoqueQuantidade"
+            class="form-input"
+            type="number"
+            min="1"
+            step="1"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="envioEstoqueRemessa">Código da remessa</label>
+          <input
+            id="envioEstoqueRemessa"
+            class="form-input"
+            type="text"
+            maxlength="100"
+            placeholder="Ex.: REM-2026-001"
+            required
+          />
+        </div>
+
+        <div class="bottom-sheet-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            onclick="fecharFormularioEnvioEstoque()"
+          >
+            Cancelar
+          </button>
+
+          <button type="submit" class="btn-primary">Registrar envio</button>
+        </div>
+      </form>
+    </section>
+
     <script src="../js/api.js"></script>
     <script src="../js/ui.js"></script>
+    <script src="../js/analise-operacional.js"></script>
     <script src="../js/estoque.js"></script>
   </body>
 </html>

@@ -414,7 +414,7 @@ function criarAssistenteGlobal() {
 
  <div id="chatMessages" class="chat-messages">
   <div class="chat-message assistant">
-    Olá! Posso responder sobre risco de estoque, histórico de insights e uso da IA.
+    Olá! como posso te ajudar?
   </div>
 </div>
 

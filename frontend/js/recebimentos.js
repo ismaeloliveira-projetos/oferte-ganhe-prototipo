@@ -574,6 +574,11 @@ async function iniciarPaginaRecebimentos() {
   await atualizarSininhoRecebimentos();
   await detectarAnomalias();
 
+  configurarBotaoAnaliseOperacionalIA(
+    "btnGerarAnaliseOperacionalIA",
+    "resultadoAnaliseOperacionalIA",
+  );
+
   if (typeof aplicarPermissoesMenu === "function") {
     aplicarPermissoesMenu();
   }

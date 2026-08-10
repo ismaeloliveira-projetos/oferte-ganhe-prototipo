@@ -181,6 +181,7 @@ function formatarTipoMovimentacao(tipo) {
   if (tipo === "CORRECAO") return "Correção";
   if (tipo === "AJUSTE_ENTRADA") return "Ajuste de Entrada";
   if (tipo === "AJUSTE_SAIDA") return "Ajuste de Saída";
+  if (tipo === "CONSUMO_UTILIZACAO") return "Consumo de Talões";
 
   return tipo || "-";
 }
@@ -323,24 +324,41 @@ async function carregarTabelaEstoque() {
             </span>
           </td>
           <td>${formatarDataHora(estoque.atualizadoEm)}</td>
-          <td>
-            <div class="table-actions estoque-actions">
-              <button
-                class="btn-primary btn-solicitar"
-                onclick="solicitarTalao(${estoque.lojaId}, ${reposicaoSugerida}, this)"
-                ${reposicaoSugerida === 0 ? "disabled" : ""}
-              >
-                Solicitar
-              </button>
+       <td data-label="Ações">
+  <details class="acoes-menu">
+    <summary class="btn-table-action">Ações</summary>
 
-              <button
-                class="btn-table-action btn-sm"
-                onclick="verHistoricoEstoque(${estoque.lojaId})"
-              >
-                Histórico
-              </button>
-            </div>
-          </td>
+    
+
+    <div class="acoes-menu-list">
+
+    <button
+        class="btn-table-action btn-sm"
+        onclick="verHistoricoEstoque(${estoque.lojaId})"
+      >
+        Histórico
+      </button>
+      <button
+        class="btn-table-action btn-sm"
+        onclick="solicitarTalao(${estoque.lojaId}, ${reposicaoSugerida}, this)"
+        ${reposicaoSugerida === 0 ? "disabled" : ""}
+
+      >
+      
+        Solicitar reposição
+      </button>
+
+     
+
+      <button
+        class="btn-table-action btn-sm"
+        onclick="abrirRegistroConsumo(${estoque.lojaId})"
+      >
+        Registrar consumo
+      </button>
+    </div>
+  </details>
+</td>
         </tr>
       `;
     });
@@ -354,28 +372,105 @@ async function carregarTabelaEstoque() {
   }
 }
 
-function solicitarTalao(lojaId, quantidade, botao) {
+function solicitarTalao(lojaId, quantidadeSugerida) {
+  fecharMenusAcoes();
+
   const estoque = estoquesCarregados.find(function (item) {
     return Number(item.lojaId) === Number(lojaId);
   });
 
   if (!estoque) {
-    mostrarMensagem("Loja não encontrada.", true);
+    mostrarMensagem("Loja não encontrada para registrar o envio.", true);
     return;
   }
 
-  if (quantidade <= 0) {
-    mostrarMensagem("Esta loja não precisa de reposição no momento.");
-    return;
+  const form = document.getElementById("formEnvioEstoque");
+
+  if (form) {
+    form.reset();
   }
 
-  mostrarMensagem(
-    `Reposição sugerida de ${quantidade} talões para a loja ${estoque.codigoLoja} - ${estoque.nomeLoja}.`,
+  document.getElementById("envioEstoqueLojaId").value = estoque.lojaId;
+
+  document.getElementById("envioEstoqueLoja").value =
+    `${estoque.codigoLoja} - ${estoque.nomeLoja}`;
+
+  document.getElementById("envioEstoqueQuantidade").value = quantidadeSugerida;
+
+  document
+    .getElementById("formEnvioEstoqueContainer")
+    .classList.remove("hidden");
+
+  document.getElementById("formEnvioEstoqueOverlay").classList.remove("hidden");
+}
+
+function fecharFormularioEnvioEstoque() {
+  document.getElementById("formEnvioEstoqueContainer").classList.add("hidden");
+
+  document.getElementById("formEnvioEstoqueOverlay").classList.add("hidden");
+}
+
+async function salvarEnvioEstoque(event) {
+  event.preventDefault();
+
+  const lojaId = Number(document.getElementById("envioEstoqueLojaId").value);
+
+  const quantidadeEnviada = Number(
+    document.getElementById("envioEstoqueQuantidade").value,
   );
 
-  if (botao) {
-    botao.disabled = true;
-    botao.textContent = "Sugerido";
+  const codigoRemessa = document
+    .getElementById("envioEstoqueRemessa")
+    .value.trim();
+
+  const usuario = obterUsuarioLogado();
+
+  if (!usuario?.id) {
+    mostrarMensagem("Usuário não autenticado.", true);
+    return;
+  }
+
+  if (!Number.isInteger(lojaId) || lojaId <= 0) {
+    mostrarMensagem("Loja de destino inválida.", true);
+    return;
+  }
+
+  if (!Number.isInteger(quantidadeEnviada) || quantidadeEnviada <= 0) {
+    mostrarMensagem("Informe uma quantidade válida.", true);
+    return;
+  }
+
+  if (!codigoRemessa) {
+    mostrarMensagem("Informe o código da remessa.", true);
+    return;
+  }
+
+  const botaoSalvar = event.submitter;
+  botaoSalvar.disabled = true;
+  botaoSalvar.textContent = "Registrando...";
+
+  try {
+    await apiFetch("/api/envios", {
+      method: "POST",
+      body: JSON.stringify({
+        codigoRemessa,
+        lojaId,
+        usuarioEnvioId: usuario.id,
+        quantidadeEnviada,
+      }),
+    });
+
+    fecharFormularioEnvioEstoque();
+
+    mostrarMensagem(
+      "Envio de reposição registrado. Aguarde a confirmação de recebimento.",
+    );
+  } catch (erro) {
+    console.error("Erro ao registrar envio de reposição:", erro);
+    mostrarMensagem(erro.message, true);
+  } finally {
+    botaoSalvar.disabled = false;
+    botaoSalvar.textContent = "Registrar envio";
   }
 }
 
@@ -395,7 +490,7 @@ async function exibirRanqueamentoPrioridade() {
       return;
     }
 
-    const criticas = estoques
+    const criticasOrdenadas = estoques
       .filter(function (estoque) {
         return estoque.statusEstoque === "Crítico";
       })
@@ -403,18 +498,25 @@ async function exibirRanqueamentoPrioridade() {
         return obterReposicaoSugerida(b) - obterReposicaoSugerida(a);
       });
 
-    if (criticas.length === 0) {
+    const prioridades = criticasOrdenadas.slice(0, 5);
+
+    if (prioridades.length === 0) {
       banner.classList.add("hidden");
       return;
     }
 
-    const nomes = criticas
+    const nomes = prioridades
       .map(function (estoque) {
         return `${estoque.codigoLoja} - ${estoque.nomeLoja}`;
       })
       .join(", ");
 
-    mensagem.textContent = `Prioridade de envio sugerida: ${nomes}. Lojas com maior necessidade de reposição.`;
+    const existemMaisLojas = criticasOrdenadas.length > prioridades.length;
+
+    mensagem.textContent =
+      `Prioridade de envio sugerida: ${nomes}. ` +
+      `Lojas com maior necessidade de reposição.` +
+      (existemMaisLojas ? " Exibindo as 5 maiores prioridades." : "");
 
     banner.classList.remove("hidden");
   } catch (erro) {
@@ -423,6 +525,7 @@ async function exibirRanqueamentoPrioridade() {
 }
 
 async function verHistoricoEstoque(lojaId) {
+  fecharMenusAcoes();
   const conteudo = document.getElementById("historicoEstoqueConteudo");
 
   if (!conteudo) {
@@ -501,6 +604,7 @@ async function verHistoricoEstoque(lojaId) {
 }
 
 function fecharHistoricoEstoque() {
+  fecharMenusAcoes();
   const container = document.getElementById("historicoEstoqueContainer");
   const overlay = document.getElementById("historicoEstoqueOverlay");
 
@@ -510,6 +614,149 @@ function fecharHistoricoEstoque() {
 
   if (overlay) {
     overlay.classList.add("hidden");
+  }
+}
+
+function obterDataHojeParaInput() {
+  const hoje = new Date();
+
+  const ano = hoje.getFullYear();
+  const mes = String(hoje.getMonth() + 1).padStart(2, "0");
+  const dia = String(hoje.getDate()).padStart(2, "0");
+
+  return `${ano}-${mes}-${dia}`;
+}
+
+function abrirRegistroConsumo(lojaId) {
+  const estoque = estoquesCarregados.find(function (item) {
+    return Number(item.lojaId) === Number(lojaId);
+  });
+
+  if (!estoque) {
+    mostrarMensagem("Loja não encontrada.", true);
+    return;
+  }
+
+  const formulario = document.getElementById("formRegistroConsumo");
+  const campoLojaId = document.getElementById("consumoLojaId");
+  const campoLoja = document.getElementById("consumoLojaSelecionada");
+  const campoQuantidade = document.getElementById("consumoQuantidade");
+  const campoData = document.getElementById("consumoData");
+  const container = document.getElementById("consumoContainer");
+  const overlay = document.getElementById("consumoOverlay");
+
+  if (
+    !formulario ||
+    !campoLojaId ||
+    !campoLoja ||
+    !campoQuantidade ||
+    !campoData
+  ) {
+    mostrarMensagem("Formulário de consumo não encontrado.", true);
+    return;
+  }
+
+  formulario.reset();
+
+  campoLojaId.value = estoque.lojaId;
+  campoLoja.textContent = `${estoque.codigoLoja} - ${estoque.nomeLoja} | Saldo atual: ${estoque.estoqueAtual}`;
+
+  campoQuantidade.max = Math.floor(estoque.estoqueAtual);
+  campoData.value = obterDataHojeParaInput();
+
+  container.classList.remove("hidden");
+  overlay.classList.remove("hidden");
+
+  campoQuantidade.focus();
+}
+
+function fecharRegistroConsumo() {
+  const container = document.getElementById("consumoContainer");
+  const overlay = document.getElementById("consumoOverlay");
+
+  if (container) {
+    container.classList.add("hidden");
+  }
+
+  if (overlay) {
+    overlay.classList.add("hidden");
+  }
+}
+
+function fecharMenusAcoes() {
+  document.querySelectorAll(".acoes-menu[open]").forEach(function (menu) {
+    menu.removeAttribute("open");
+  });
+}
+
+document.addEventListener("click", function (evento) {
+  const menuClicado = evento.target.closest(".acoes-menu");
+
+  document.querySelectorAll(".acoes-menu[open]").forEach(function (menu) {
+    if (menu !== menuClicado) {
+      menu.removeAttribute("open");
+    }
+  });
+});
+
+async function registrarConsumo(evento) {
+  evento.preventDefault();
+
+  const lojaId = Number(document.getElementById("consumoLojaId").value);
+  const quantidade = Number(document.getElementById("consumoQuantidade").value);
+  const dataConsumo = document.getElementById("consumoData").value;
+  const observacao = document.getElementById("consumoObservacao").value.trim();
+  const botaoSalvar = document.getElementById("btnSalvarConsumo");
+
+  if (!Number.isInteger(lojaId) || lojaId <= 0) {
+    mostrarMensagem("Loja inválida para registrar o consumo.", true);
+    return;
+  }
+
+  if (!Number.isInteger(quantidade) || quantidade <= 0) {
+    mostrarMensagem("Informe uma quantidade inteira maior que zero.", true);
+    return;
+  }
+
+  if (!dataConsumo) {
+    mostrarMensagem("Informe a data do consumo.", true);
+    return;
+  }
+
+  try {
+    if (botaoSalvar) {
+      botaoSalvar.disabled = true;
+      botaoSalvar.textContent = "Registrando...";
+    }
+
+    await apiFetch("/api/consumos", {
+      method: "POST",
+      body: JSON.stringify({
+        lojaId,
+        quantidade,
+        dataConsumo,
+        observacao: observacao || null,
+      }),
+    });
+
+    mostrarMensagem("Consumo registrado e estoque atualizado com sucesso.");
+
+    fecharRegistroConsumo();
+
+    await carregarCardsEstoque();
+    await carregarTabelaEstoque();
+    await exibirRanqueamentoPrioridade();
+  } catch (erro) {
+    console.error("Erro ao registrar consumo:", erro);
+    mostrarMensagem(
+      erro.message || "Não foi possível registrar o consumo.",
+      true,
+    );
+  } finally {
+    if (botaoSalvar) {
+      botaoSalvar.disabled = false;
+      botaoSalvar.textContent = "Registrar consumo";
+    }
   }
 }
 
@@ -524,8 +771,25 @@ async function iniciarPaginaEstoque() {
   await carregarTabelaEstoque();
   await exibirRanqueamentoPrioridade();
 
+  configurarBotaoAnaliseOperacionalIA(
+    "btnGerarAnaliseOperacionalIA",
+    "resultadoAnaliseOperacionalIA",
+  );
+
+  const formularioConsumo = document.getElementById("formRegistroConsumo");
+
+  if (formularioConsumo) {
+    formularioConsumo.addEventListener("submit", registrarConsumo);
+  }
+
   if (typeof aplicarPermissoesMenu === "function") {
     aplicarPermissoesMenu();
+  }
+
+  const formEnvioEstoque = document.getElementById("formEnvioEstoque");
+
+  if (formEnvioEstoque) {
+    formEnvioEstoque.addEventListener("submit", salvarEnvioEstoque);
   }
 }
 

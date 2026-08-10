@@ -649,6 +649,20 @@ async function gerarInsightRiscoEstoqueIA() {
   return await apiFetch("/api/ia/insights/estoque/risco");
 }
 
+async function buscarPrevisaoEstoqueIA() {
+  return await apiFetch("/api/ia/analises/estoque/previsao?periodo_dias=90");
+}
+
+async function buscarAnomaliasEnviosIA() {
+  return await apiFetch("/api/ia/analises/envios/anomalias?limite_dias=3");
+}
+
+async function gerarInsightAnaliseOperacionalIA() {
+  return await apiFetch("/api/ia/insights/analises/operacional", {
+    method: "POST",
+  });
+}
+
 function traduzirStatusRiscoIA(status) {
   const mapa = {
     SEM_ESTOQUE_CADASTRADO: "sem estoque cadastrado",
@@ -827,29 +841,154 @@ function renderizarInsightGeradoDashboardIA(resultado) {
   configurarBotoesFeedbackIA();
 }
 
+function renderizarAnaliseOperacionalDashboardIA(previsao, anomalias) {
+  const lista = document.getElementById("listaInsights");
+
+  if (!lista) {
+    return;
+  }
+
+  const resumoPrevisao = previsao?.resumo_por_status || {};
+  const dadosPrevisao = Array.isArray(previsao?.dados) ? previsao.dados : [];
+
+  const dadosAnomalias = Array.isArray(anomalias?.dados) ? anomalias.dados : [];
+
+  const ordemStatus = {
+    JA_CRITICO: 1,
+    RISCO_EM_30_DIAS: 2,
+    SEM_RISCO_IMEDIATO: 3,
+    SEM_CONSUMO_REGISTRADO: 4,
+  };
+
+  const lojasPrioritarias = [...dadosPrevisao]
+    .filter(function (loja) {
+      return (
+        loja.status_previsao === "JA_CRITICO" ||
+        loja.status_previsao === "RISCO_EM_30_DIAS"
+      );
+    })
+    .sort(function (a, b) {
+      const ordemA = ordemStatus[a.status_previsao] || 99;
+      const ordemB = ordemStatus[b.status_previsao] || 99;
+
+      if (ordemA !== ordemB) {
+        return ordemA - ordemB;
+      }
+
+      const diasA =
+        a.dias_ate_estoque_minimo === null
+          ? Infinity
+          : a.dias_ate_estoque_minimo;
+
+      const diasB =
+        b.dias_ate_estoque_minimo === null
+          ? Infinity
+          : b.dias_ate_estoque_minimo;
+
+      return diasA - diasB;
+    })
+    .slice(0, 3);
+
+  let html = `
+    <div class="insight-item">
+      <strong>Monitoramento preditivo:</strong>
+      ${normalizarNumero(previsao?.total_lojas_analisadas)} loja(s) analisada(s).
+      ${normalizarNumero(resumoPrevisao.JA_CRITICO)} já está(ão) crítica(s) e
+      ${normalizarNumero(resumoPrevisao.RISCO_EM_30_DIAS)} pode(m) atingir
+      o estoque mínimo nos próximos 30 dias.
+    </div>
+  `;
+
+  if (lojasPrioritarias.length > 0) {
+    html += `
+      <div class="insight-item">
+        <strong>Prioridades de reposição:</strong>
+        <ul>
+          ${lojasPrioritarias
+            .map(function (loja) {
+              const status =
+                loja.status_previsao === "JA_CRITICO"
+                  ? "já está crítica"
+                  : `pode atingir o mínimo em ${loja.dias_ate_estoque_minimo} dia(s)`;
+
+              return `
+                <li>
+                  ${escaparHtmlDashboardIA(loja.codigo_loja)} -
+                  ${escaparHtmlDashboardIA(loja.nome_loja)}:
+                  ${status}.
+                </li>
+              `;
+            })
+            .join("")}
+        </ul>
+      </div>
+    `;
+  } else {
+    html += `
+      <div class="insight-item">
+        <strong>Previsão:</strong>
+        Não há lojas com risco previsto para os próximos 30 dias.
+      </div>
+    `;
+  }
+
+  if (dadosAnomalias.length > 0) {
+    html += `
+      <div class="insight-item">
+        <strong>Anomalias operacionais:</strong>
+        <ul>
+          ${dadosAnomalias
+            .slice(0, 3)
+            .map(function (anomalia) {
+              return `
+                <li>
+                  ${escaparHtmlDashboardIA(anomalia.titulo)}
+                  Severidade: ${escaparHtmlDashboardIA(anomalia.severidade)}.
+                </li>
+              `;
+            })
+            .join("")}
+        </ul>
+      </div>
+    `;
+  } else {
+    html += `
+      <div class="insight-item">
+        <strong>Anomalias:</strong>
+        Nenhum envio pendente acima do prazo configurado.
+      </div>
+    `;
+  }
+
+  lista.innerHTML = html;
+}
+
 async function carregarPainelInsightsIA() {
   const lista = document.getElementById("listaInsights");
 
   try {
-    const indicador = await buscarIndicadorRiscoEstoqueIA();
+    const [previsao, anomalias] = await Promise.all([
+      buscarPrevisaoEstoqueIA(),
+      buscarAnomaliasEnviosIA(),
+    ]);
 
-    console.log("INDICADOR IA DASHBOARD:", indicador);
+    console.log("PREVISAO IA DASHBOARD:", previsao);
+    console.log("ANOMALIAS IA DASHBOARD:", anomalias);
 
-    renderizarIndicadorIA(indicador);
+    renderizarAnaliseOperacionalDashboardIA(previsao, anomalias);
   } catch (erro) {
-    console.error("Erro ao carregar indicador da IA:", erro);
+    console.error("Erro ao carregar análises da IA:", erro);
 
     if (lista) {
       lista.innerHTML = `
         <div class="insight-item">
           <strong>Erro na IA:</strong>
-          Não foi possível carregar o indicador inteligente.
+          Não foi possível carregar previsão e anomalias.
         </div>
       `;
     }
   }
 }
-
 async function aoClicarGerarInsightDashboardIA() {
   const botao = document.getElementById("btnGerarInsightDashboard");
   const lista = document.getElementById("listaInsights");
@@ -866,12 +1005,12 @@ async function aoClicarGerarInsightDashboardIA() {
       lista.innerHTML = `
         <div class="insight-item">
           <strong>Gerando insight:</strong>
-          A IA está calculando o indicador, buscando o prompt versionado e chamando a LLM.
+        A IA está consolidando a previsão de estoque e as anomalias operacionais.
         </div>
       `;
     }
 
-    const resultado = await gerarInsightRiscoEstoqueIA();
+    const resultado = await gerarInsightAnaliseOperacionalIA();
 
     console.log("INSIGHT IA DASHBOARD:", resultado);
 

@@ -170,16 +170,54 @@ async function criarVersaoPromptIa(contextoUsuarioIa, dadosPrompt) {
   });
 }
 
+async function obterPrevisaoEstoque(contextoUsuarioIa, periodoDias = 90) {
+  return chamarAiService("/analises/estoque/previsao", {
+    method: "POST",
+    body: {
+      usuario_id: contextoUsuarioIa.usuario_id,
+      acesso_global: contextoUsuarioIa.acesso_global,
+      lojas_ids: contextoUsuarioIa.lojas_ids,
+      periodo_dias: periodoDias,
+    },
+  });
+}
+
+async function obterAnomaliasEnvios(contextoUsuarioIa, limiteDias = 3) {
+  return chamarAiService("/analises/envios/anomalias", {
+    method: "POST",
+    body: {
+      usuario_id: contextoUsuarioIa.usuario_id,
+      acesso_global: contextoUsuarioIa.acesso_global,
+      lojas_ids: contextoUsuarioIa.lojas_ids,
+      limite_dias: limiteDias,
+    },
+  });
+}
+
+async function gerarInsightAnaliseOperacional(contextoUsuarioIa) {
+  return chamarAiService("/insights/analises/operacional", {
+    method: "POST",
+    body: {
+      usuario_id: contextoUsuarioIa.usuario_id,
+      acesso_global: contextoUsuarioIa.acesso_global,
+      lojas_ids: contextoUsuarioIa.lojas_ids,
+    },
+  });
+}
+
 module.exports = {
   verificarSaudeIa,
   gerarInsightRiscoEstoque,
   listarHistoricoInsights,
   registrarFeedbackInsight,
   obterResumoUsoIa,
+  obterAnomaliasEnvios,
+  obterPrevisaoEstoque,
   listarLogsIa,
   listarPromptsIa,
   criarVersaoPromptIa,
   obterIndicadorRiscoEstoque,
+  gerarInsightAnaliseOperacional,
   enviarMensagemChatIa,
   montarContextoUsuarioIa,
 };
