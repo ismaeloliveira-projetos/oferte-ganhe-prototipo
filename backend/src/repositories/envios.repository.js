@@ -16,17 +16,28 @@ async function listarEnvios(contextoUsuario) {
       SELECT
         e.id,
         e.codigo_remessa AS "codigoRemessa",
+
+        e.loja_origem_id AS "lojaOrigemId",
+        origem.codigo_loja AS "codigoLojaOrigem",
+        origem.nome_loja AS "nomeLojaOrigem",
+
         e.loja_id AS "lojaId",
-        l.codigo_loja AS "codigoLoja",
-        l.nome_loja AS "nomeLoja",
+        destino.codigo_loja AS "codigoLoja",
+        destino.nome_loja AS "nomeLoja",
+
         e.usuario_envio_id AS "usuarioEnvioId",
         u.nome AS "usuarioEnvioNome",
+
         e.quantidade_enviada AS "quantidadeEnviada",
         e.status,
         e.criado_em AS "criadoEm"
       FROM envios_taloes e
-      INNER JOIN lojas l ON l.id = e.loja_id
-      LEFT JOIN usuarios u ON u.id = e.usuario_envio_id
+      INNER JOIN lojas destino
+        ON destino.id = e.loja_id
+     LEFT JOIN lojas origem
+  ON origem.id = e.loja_origem_id
+      LEFT JOIN usuarios u
+        ON u.id = e.usuario_envio_id
       ${where}
       ORDER BY e.criado_em DESC
     `,
@@ -63,11 +74,49 @@ async function buscarEnvioPorCodigoRemessa(codigoRemessa) {
   return resultado.rows[0] || null;
 }
 
-async function criarEnvio(dados) {
-  const resultado = await query(
+async function buscarEstoqueParaAtualizacao(client, lojaId) {
+  const resultado = await client.query(
+    `
+      SELECT
+        e.loja_id AS "lojaId",
+        e.estoque_atual AS "estoqueAtual"
+      FROM estoques_lojas e
+      INNER JOIN lojas l
+        ON l.id = e.loja_id
+      WHERE e.loja_id = $1
+        AND l.ativo = true
+      FOR UPDATE
+    `,
+    [lojaId],
+  );
+
+  return resultado.rows[0] || null;
+}
+
+async function atualizarEstoqueLoja(client, lojaId, estoqueAtualizado) {
+  const resultado = await client.query(
+    `
+      UPDATE estoques_lojas
+      SET
+        estoque_atual = $2,
+        atualizado_em = NOW()
+      WHERE loja_id = $1
+      RETURNING
+        loja_id AS "lojaId",
+        estoque_atual AS "estoqueAtual"
+    `,
+    [lojaId, estoqueAtualizado],
+  );
+
+  return resultado.rows[0] || null;
+}
+
+async function criarEnvio(client, dados) {
+  const resultado = await client.query(
     `
       INSERT INTO envios_taloes (
         codigo_remessa,
+        loja_origem_id,
         loja_id,
         usuario_envio_id,
         quantidade_enviada,
@@ -80,6 +129,7 @@ async function criarEnvio(dados) {
         $2,
         $3,
         $4,
+        $5,
         NOW(),
         'PENDENTE',
         NOW()
@@ -87,6 +137,7 @@ async function criarEnvio(dados) {
       RETURNING
         id,
         codigo_remessa,
+        loja_origem_id,
         loja_id,
         usuario_envio_id,
         quantidade_enviada,
@@ -96,9 +147,51 @@ async function criarEnvio(dados) {
     `,
     [
       dados.codigoRemessa,
+      dados.lojaOrigemId,
       dados.lojaId,
       dados.usuarioEnvioId,
       dados.quantidadeEnviada,
+    ],
+  );
+
+  return resultado.rows[0];
+}
+
+async function criarMovimentacaoEnvio(client, dados) {
+  const resultado = await client.query(
+    `
+      INSERT INTO movimentacoes_estoque (
+        loja_id,
+        usuario_id,
+        envio_id,
+        tipo_movimentacao,
+        quantidade,
+        saldo_anterior,
+        saldo_posterior,
+        observacao,
+        criado_em
+      )
+      VALUES (
+        $1,
+        $2,
+        $3,
+        'ENVIO_SAIDA',
+        $4,
+        $5,
+        $6,
+        $7,
+        NOW()
+      )
+      RETURNING id
+    `,
+    [
+      dados.lojaId,
+      dados.usuarioId,
+      dados.envioId,
+      dados.quantidade,
+      dados.saldoAnterior,
+      dados.saldoPosterior,
+      dados.observacao,
     ],
   );
 
@@ -109,5 +202,8 @@ module.exports = {
   listarEnvios,
   buscarLojaAtivaPorId,
   buscarEnvioPorCodigoRemessa,
+  buscarEstoqueParaAtualizacao,
+  atualizarEstoqueLoja,
   criarEnvio,
+  criarMovimentacaoEnvio,
 };
