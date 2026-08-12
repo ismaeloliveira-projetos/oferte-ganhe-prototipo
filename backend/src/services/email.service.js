@@ -100,7 +100,80 @@ Esse link expira em breve. Se você não solicitou essa alteração, ignore este
   });
 }
 
+function escaparHtml(valor) {
+  return String(valor ?? "").replace(/[&<>"']/g, function (caractere) {
+    const caracteresEscapados = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;",
+    };
+
+    return caracteresEscapados[caractere];
+  });
+}
+
+async function enviarEmailNotificacaoEnvio({
+  para,
+  nome,
+  codigoRemessa,
+  quantidadeEnviada,
+  lojaOrigem,
+  lojaDestino,
+}) {
+  const assunto = `Nova remessa ${codigoRemessa} em trânsito | Oferte e Ganhe`;
+
+  const texto = `
+Olá, ${nome || "responsável pela loja"}.
+
+Uma nova remessa foi enviada para a sua loja e está aguardando confirmação de recebimento.
+
+Remessa: ${codigoRemessa}
+Origem: ${lojaOrigem}
+Destino: ${lojaDestino}
+Quantidade enviada: ${quantidadeEnviada}
+Status: PENDENTE
+
+Acesse o sistema Oferte e Ganhe para confirmar o recebimento quando os talões chegarem.
+  `.trim();
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.5;">
+      <h2>Nova remessa em trânsito</h2>
+
+      <p>Olá, <strong>${escaparHtml(nome || "responsável pela loja")}</strong>.</p>
+
+      <p>
+        Uma nova remessa foi enviada para a sua loja e está aguardando
+        confirmação de recebimento.
+      </p>
+
+      <ul>
+        <li><strong>Remessa:</strong> ${escaparHtml(codigoRemessa)}</li>
+        <li><strong>Origem:</strong> ${escaparHtml(lojaOrigem)}</li>
+        <li><strong>Destino:</strong> ${escaparHtml(lojaDestino)}</li>
+        <li><strong>Quantidade:</strong> ${quantidadeEnviada} talões</li>
+        <li><strong>Status:</strong> PENDENTE</li>
+      </ul>
+
+      <p>
+        Acesse o <strong>Oferte e Ganhe</strong> para confirmar o recebimento
+        quando os talões chegarem.
+      </p>
+    </div>
+  `;
+
+  return enviarEmail({
+    para,
+    assunto,
+    texto,
+    html,
+  });
+}
+
 module.exports = {
   enviarEmail,
   enviarEmailRedefinicaoSenha,
+  enviarEmailNotificacaoEnvio,
 };
