@@ -1,4 +1,5 @@
 let estoquesCarregados = [];
+const LOJA_SEDE_ID = 1;
 
 async function buscarEstoquesApi() {
   const estoques = await apiFetch("/api/estoques");
@@ -235,6 +236,50 @@ function mostrarMensagem(mensagem, erro = false) {
   alert(mensagem);
 }
 
+function formatarQuantidade(valor) {
+  return Number(valor || 0).toLocaleString("pt-BR");
+}
+
+function exibirResumoEstoqueMatriz(estoques) {
+  const resumo = document.getElementById("resumoEstoqueMatriz");
+
+  if (!resumo) {
+    return;
+  }
+
+  const matriz = estoques.find(function (estoque) {
+    return Number(estoque.lojaId) === LOJA_SEDE_ID;
+  });
+
+  if (!matriz) {
+    resumo.classList.add("hidden");
+    return;
+  }
+
+  const estoqueTotal = Number(matriz.estoqueAtual || 0);
+  const reservaUsoInterno = Math.max(0, Number(matriz.estoqueMinimo || 0));
+  const disponivelParaEnvio = Math.max(0, estoqueTotal - reservaUsoInterno);
+
+  atualizarTexto(
+    ["nomeLojaMatriz"],
+    `${matriz.codigoLoja} - ${matriz.nomeLoja}`,
+  );
+
+  atualizarTexto(["estoqueTotalMatriz"], formatarQuantidade(estoqueTotal));
+
+  atualizarTexto(
+    ["reservaUsoInternoMatriz"],
+    formatarQuantidade(reservaUsoInterno),
+  );
+
+  atualizarTexto(
+    ["disponivelParaEnvioMatriz"],
+    formatarQuantidade(disponivelParaEnvio),
+  );
+
+  resumo.classList.remove("hidden");
+}
+
 async function carregarCardsEstoque() {
   try {
     const estoques = await buscarEstoquesApi();
@@ -272,6 +317,7 @@ async function carregarCardsEstoque() {
     );
 
     atualizarTexto(["reposicaoSugerida"], reposicaoSugerida);
+    exibirResumoEstoqueMatriz(estoques);
   } catch (erro) {
     console.error("Erro ao carregar cards de estoque:", erro);
     mostrarMensagem(
@@ -279,6 +325,59 @@ async function carregarCardsEstoque() {
       true,
     );
   }
+}
+
+function normalizarTextoPesquisa(texto) {
+  return String(texto || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function aplicarPesquisaTabelaEstoque() {
+  const campoBusca = document.getElementById("buscaEstoque");
+  const tabela = document.getElementById("tabelaEstoque");
+  const resultadoBusca = document.getElementById("resultadoBuscaEstoque");
+
+  if (!campoBusca || !tabela) {
+    return;
+  }
+
+  const termo = normalizarTextoPesquisa(campoBusca.value);
+  const linhas = tabela.querySelectorAll("tr");
+  let quantidadeEncontrada = 0;
+
+  linhas.forEach(function (linha) {
+    const textoLinha = normalizarTextoPesquisa(linha.textContent);
+    const encontrada = !termo || textoLinha.includes(termo);
+
+    linha.hidden = !encontrada;
+
+    if (encontrada) {
+      quantidadeEncontrada += 1;
+    }
+  });
+
+  if (resultadoBusca) {
+    if (termo && quantidadeEncontrada === 0) {
+      resultadoBusca.textContent =
+        "Nenhuma loja encontrada para esta pesquisa.";
+      resultadoBusca.classList.remove("hidden");
+    } else {
+      resultadoBusca.classList.add("hidden");
+    }
+  }
+}
+
+function configurarPesquisaTabelaEstoque() {
+  const campoBusca = document.getElementById("buscaEstoque");
+
+  if (!campoBusca) {
+    return;
+  }
+
+  campoBusca.addEventListener("input", aplicarPesquisaTabelaEstoque);
 }
 
 async function carregarTabelaEstoque() {
@@ -370,6 +469,7 @@ async function carregarTabelaEstoque() {
     console.error("Erro ao carregar tabela de estoque:", erro);
     mostrarMensagem("Não foi possível carregar a tabela de estoque.", true);
   }
+  aplicarPesquisaTabelaEstoque();
 }
 
 function solicitarTalao(lojaId, quantidadeSugerida) {
@@ -766,6 +866,8 @@ async function iniciarPaginaEstoque() {
   if (!usuarioLogado) {
     return;
   }
+
+  configurarPesquisaTabelaEstoque();
 
   await carregarCardsEstoque();
   await carregarTabelaEstoque();

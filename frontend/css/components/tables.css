@@ -218,3 +218,28 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.busca-tabela {
+  max-width: 420px;
+  margin: 18px 0 14px;
+}
+
+.busca-tabela label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--qq-gray);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.resultado-busca {
+  margin: -4px 0 12px;
+  color: var(--qq-gray);
+  font-size: 13px;
+}
+
+@media (max-width: 768px) {
+  .busca-tabela {
+    max-width: none;
+  }
+}

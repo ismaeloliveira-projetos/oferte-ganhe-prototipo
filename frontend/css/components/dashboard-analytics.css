@@ -207,3 +207,95 @@
   }
 }
 
+.resumo-matriz {
+  margin-bottom: 24px;
+  padding: 22px;
+  background: var(--qq-white);
+  border-radius: 16px;
+  border-bottom: 4px solid var(--qq-green);
+}
+
+.resumo-matriz-header {
+  margin-bottom: 18px;
+}
+
+.resumo-matriz-eyebrow {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--qq-green);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.resumo-matriz h2 {
+  margin: 0 0 8px;
+  color: var(--qq-dark);
+  font-size: 20px;
+}
+
+.resumo-matriz p {
+  margin: 0;
+  color: var(--qq-gray);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.resumo-matriz-metricas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.resumo-matriz .metrica-card {
+  min-width: 0;
+  background: var(--qq-light);
+  border: 1px solid var(--qq-border);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.resumo-matriz .metrica-label {
+  display: block;
+  color: var(--qq-gray);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.resumo-matriz .metrica-valor {
+  display: block;
+  color: var(--qq-dark);
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+
+.resumo-matriz .metrica-descricao {
+  display: block;
+  color: var(--qq-gray);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.resumo-matriz .metrica-reserva {
+  border-bottom: 3px solid var(--qq-yellow);
+}
+
+.resumo-matriz .metrica-disponivel {
+  border-bottom: 3px solid var(--qq-green);
+}
+
+.resumo-matriz .metrica-disponivel .metrica-valor {
+  color: var(--qq-green-dark);
+}
+
+@media (max-width: 768px) {
+  .resumo-matriz {
+    padding: 16px;
+  }
+
+  .resumo-matriz-metricas {
+    grid-template-columns: 1fr;
+  }
+}

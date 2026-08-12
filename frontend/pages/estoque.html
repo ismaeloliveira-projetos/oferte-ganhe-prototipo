@@ -191,6 +191,47 @@
           </div>
         </section>
 
+        <section id="resumoEstoqueMatriz" class="resumo-matriz hidden">
+          <div class="resumo-matriz-header">
+            <div>
+              <span class="resumo-matriz-eyebrow">LOJA SEDE</span>
+              <h2 id="nomeLojaMatriz">Estoque operacional da Matriz</h2>
+              <p>
+                A reserva é protegida para uso interno. Apenas o saldo
+                disponível pode abastecer as demais lojas.
+              </p>
+            </div>
+          </div>
+
+          <div class="resumo-matriz-metricas">
+            <div class="metrica-card">
+              <span class="metrica-label">Estoque físico total</span>
+              <strong id="estoqueTotalMatriz" class="metrica-valor">0</strong>
+              <span class="metrica-descricao">Talões existentes na Matriz</span>
+            </div>
+
+            <div class="metrica-card metrica-reserva">
+              <span class="metrica-label">Reserva para uso interno</span>
+              <strong id="reservaUsoInternoMatriz" class="metrica-valor"
+                >0</strong
+              >
+              <span class="metrica-descricao"
+                >Saldo protegido para a própria Matriz</span
+              >
+            </div>
+
+            <div class="metrica-card metrica-disponivel">
+              <span class="metrica-label">Disponível para envios</span>
+              <strong id="disponivelParaEnvioMatriz" class="metrica-valor"
+                >0</strong
+              >
+              <span class="metrica-descricao"
+                >Quantidade máxima para outras lojas</span
+              >
+            </div>
+          </div>
+        </section>
+
         <section class="content-grid single-column">
           <div class="content-card table-card">
             <div class="content-card-header">
@@ -200,6 +241,18 @@
                 reposição</span
               >
             </div>
+
+            <div class="busca-tabela">
+              <label for="buscaEstoque">Pesquisar loja</label>
+              <input
+                id="buscaEstoque"
+                class="form-input"
+                type="search"
+                placeholder="Pesquise por código ou nome da loja"
+              />
+            </div>
+
+            <p id="resultadoBuscaEstoque" class="resultado-busca hidden"></p>
 
             <div class="table-wrapper">
               <table class="data-table responsive-table">
