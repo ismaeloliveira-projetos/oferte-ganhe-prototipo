@@ -80,15 +80,16 @@ async function buscarEnvioPorCodigoRemessa(codigoRemessa) {
 async function buscarEstoqueParaAtualizacao(client, lojaId) {
   const resultado = await client.query(
     `
-      SELECT
-        e.loja_id AS "lojaId",
-        e.estoque_atual AS "estoqueAtual"
-      FROM estoques_lojas e
-      INNER JOIN lojas l
-        ON l.id = e.loja_id
-      WHERE e.loja_id = $1
-        AND l.ativo = true
-      FOR UPDATE
+     SELECT
+  e.loja_id AS "lojaId",
+  e.estoque_atual AS "estoqueAtual",
+  l.quantidade_minima AS "quantidadeMinima"
+FROM estoques_lojas e
+INNER JOIN lojas l
+  ON l.id = e.loja_id
+WHERE e.loja_id = $1
+  AND l.ativo = true
+FOR UPDATE
     `,
     [lojaId],
   );

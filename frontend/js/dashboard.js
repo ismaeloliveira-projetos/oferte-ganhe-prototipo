@@ -1,6 +1,7 @@
 let lojasCriticasPaginadas = [];
 let paginaAtualLojasCriticas = 1;
 const ITENS_POR_PAGINA_LOJAS_CRITICAS = 10;
+let todasLojasMonitoradas = [];
 
 function obterClasseStatus(status) {
   if (status === "Crítico") {
@@ -261,11 +262,44 @@ function carregarCardsDashboard(dados) {
   preencherTexto("enviosMes", dados.enviosMes);
 }
 
-function carregarTabelaLojasCriticas(dados) {
-  lojasCriticasPaginadas = dados.lojasAtencao || [];
+function normalizarTextoPesquisaDashboard(texto) {
+  return String(texto || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function aplicarPesquisaLojasDashboard() {
+  const campoBusca = document.getElementById("buscaLojasDashboard");
+  const termo = normalizarTextoPesquisaDashboard(campoBusca?.value);
+
+  lojasCriticasPaginadas = todasLojasMonitoradas.filter(function (loja) {
+    const codigoLoja = normalizarTextoPesquisaDashboard(loja.codigoLoja);
+    const nomeLoja = normalizarTextoPesquisaDashboard(loja.nomeLoja);
+
+    return !termo || codigoLoja.includes(termo) || nomeLoja.includes(termo);
+  });
+
   paginaAtualLojasCriticas = 1;
 
   renderizarTabelaLojasCriticasPaginada();
+}
+
+function configurarPesquisaLojasDashboard() {
+  const campoBusca = document.getElementById("buscaLojasDashboard");
+
+  if (!campoBusca) {
+    return;
+  }
+
+  campoBusca.addEventListener("input", aplicarPesquisaLojasDashboard);
+}
+
+function carregarTabelaLojasCriticas(dados) {
+  todasLojasMonitoradas = dados.lojasAtencao || [];
+
+  aplicarPesquisaLojasDashboard();
 }
 
 function renderizarTabelaLojasCriticasPaginada() {
@@ -606,6 +640,8 @@ async function inicializarDashboard() {
   if (!usuario) {
     return;
   }
+
+  configurarPesquisaLojasDashboard();
 
   try {
     const resposta = await buscarResumoDashboard();

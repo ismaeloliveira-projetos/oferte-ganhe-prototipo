@@ -196,9 +196,19 @@ async function cadastrarEnvio(dados, contextoUsuario) {
 
     const saldoAnterior = Number(estoqueSede.estoqueAtual);
 
-    if (quantidadeEnviada > saldoAnterior) {
+    const reservaUsoInterno = Number(estoqueSede.quantidadeMinima);
+
+    if (!Number.isFinite(reservaUsoInterno) || reservaUsoInterno < 0) {
+      throw new AppError("Reserva de uso interno da Loja Sede inválida.", 500);
+    }
+
+    const disponivelParaEnvio = Math.max(0, saldoAnterior - reservaUsoInterno);
+
+    if (quantidadeEnviada > disponivelParaEnvio) {
       throw new AppError(
-        `Estoque insuficiente na Loja Sede. Saldo disponível: ${saldoAnterior}.`,
+        "Estoque insuficiente para envio. " +
+          `Disponível para abastecer lojas: ${disponivelParaEnvio}. ` +
+          `Reserva para uso interno da Matriz: ${reservaUsoInterno}.`,
         409,
       );
     }
