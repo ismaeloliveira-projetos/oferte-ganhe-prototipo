@@ -50,7 +50,10 @@ async function listarEnvios(contextoUsuario) {
 async function buscarLojaAtivaPorId(lojaId) {
   const resultado = await query(
     `
-      SELECT id
+      SELECT
+  id,
+  codigo_loja AS "codigoLoja",
+  nome_loja AS "nomeLoja"
       FROM lojas
       WHERE id = $1
         AND ativo = true
@@ -198,11 +201,33 @@ async function criarMovimentacaoEnvio(client, dados) {
   return resultado.rows[0];
 }
 
+async function listarDestinatariosAtivosPorLojaId(lojaId) {
+  const resultado = await query(
+    `
+      SELECT DISTINCT
+        u.id,
+        u.nome,
+        u.email
+      FROM usuarios_lojas ul
+      INNER JOIN usuarios u
+        ON u.id = ul.usuario_id
+      WHERE ul.loja_id = $1
+        AND u.ativo = true
+        AND NULLIF(TRIM(u.email), '') IS NOT NULL
+      ORDER BY u.nome ASC
+    `,
+    [lojaId],
+  );
+
+  return resultado.rows;
+}
+
 module.exports = {
   listarEnvios,
   buscarLojaAtivaPorId,
   buscarEnvioPorCodigoRemessa,
   buscarEstoqueParaAtualizacao,
+  listarDestinatariosAtivosPorLojaId,
   atualizarEstoqueLoja,
   criarEnvio,
   criarMovimentacaoEnvio,

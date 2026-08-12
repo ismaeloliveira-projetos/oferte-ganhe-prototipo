@@ -1,3 +1,4 @@
+const { enviarEmailNotificacaoEnvio } = require("./email.service");
 const enviosRepository = require("../repositories/envios.repository");
 const { pool } = require("../database/conexao");
 const AppError = require("../utils/AppError");
@@ -22,6 +23,72 @@ function mapearEnvioResposta(envio) {
     status: envio.status,
     criadoEm: envio.criado_em ?? envio.criadoEm,
   };
+}
+
+async function notificarDestinatariosDoEnvio({
+  envio,
+  lojaOrigem,
+  lojaDestino,
+}) {
+  try {
+    const destinatarios =
+      await enviosRepository.listarDestinatariosAtivosPorLojaId(envio.loja_id);
+
+    if (destinatarios.length === 0) {
+      return {
+        status: "SEM_DESTINATARIOS",
+        destinatariosEncontrados: 0,
+        emailsEnviados: 0,
+        emailsComFalha: 0,
+      };
+    }
+
+    const resultados = await Promise.allSettled(
+      destinatarios.map(function (destinatario) {
+        return enviarEmailNotificacaoEnvio({
+          para: destinatario.email,
+          nome: destinatario.nome,
+          codigoRemessa: envio.codigo_remessa,
+          quantidadeEnviada: Number(envio.quantidade_enviada),
+          lojaOrigem: `${lojaOrigem.codigoLoja} - ${lojaOrigem.nomeLoja}`,
+          lojaDestino: `${lojaDestino.codigoLoja} - ${lojaDestino.nomeLoja}`,
+        });
+      }),
+    );
+
+    const emailsEnviados = resultados.filter(function (resultado) {
+      return resultado.status === "fulfilled";
+    }).length;
+
+    const emailsComFalha = resultados.length - emailsEnviados;
+
+    if (emailsComFalha > 0) {
+      console.error(
+        `Falha ao enviar ${emailsComFalha} notificação(ões) de envio.`,
+      );
+    }
+
+    return {
+      status:
+        emailsEnviados === resultados.length
+          ? "ENVIADA"
+          : emailsEnviados === 0
+            ? "NAO_ENVIADA"
+            : "PARCIALMENTE_ENVIADA",
+      destinatariosEncontrados: destinatarios.length,
+      emailsEnviados,
+      emailsComFalha,
+    };
+  } catch (erro) {
+    console.error("Erro ao notificar envio por e-mail:", erro);
+
+    return {
+      status: "NAO_ENVIADA",
+      destinatariosEncontrados: 0,
+      emailsEnviados: 0,
+      emailsComFalha: 0,
+    };
+  }
 }
 
 async function listarEnvios(contextoUsuario) {
@@ -85,9 +152,15 @@ async function cadastrarEnvio(dados, contextoUsuario) {
     throw new AppError("A quantidade enviada deve ser maior que zero.", 400);
   }
 
-  const lojaDestinoExiste = await enviosRepository.buscarLojaAtivaPorId(lojaId);
+  const lojaOrigem = await enviosRepository.buscarLojaAtivaPorId(lojaSedeId);
 
-  if (!lojaDestinoExiste) {
+  if (!lojaOrigem) {
+    throw new AppError("Loja Sede não encontrada ou inativa.", 500);
+  }
+
+  const lojaDestino = await enviosRepository.buscarLojaAtivaPorId(lojaId);
+
+  if (!lojaDestino) {
     throw new AppError("Loja de destino não encontrada ou inativa.", 404);
   }
 
@@ -103,6 +176,7 @@ async function cadastrarEnvio(dados, contextoUsuario) {
 
   const client = await pool.connect();
   let transacaoAberta = false;
+  let envioCriado;
 
   try {
     await client.query("BEGIN");
@@ -131,7 +205,7 @@ async function cadastrarEnvio(dados, contextoUsuario) {
 
     const saldoPosterior = saldoAnterior - quantidadeEnviada;
 
-    const envioCriado = await enviosRepository.criarEnvio(client, {
+    envioCriado = await enviosRepository.criarEnvio(client, {
       codigoRemessa,
       lojaOrigemId: lojaSedeId,
       lojaId,
@@ -159,8 +233,6 @@ async function cadastrarEnvio(dados, contextoUsuario) {
 
     await client.query("COMMIT");
     transacaoAberta = false;
-
-    return mapearEnvioResposta(envioCriado);
   } catch (erro) {
     if (transacaoAberta) {
       await client.query("ROLLBACK");
@@ -170,6 +242,17 @@ async function cadastrarEnvio(dados, contextoUsuario) {
   } finally {
     client.release();
   }
+
+  const notificacaoEmail = await notificarDestinatariosDoEnvio({
+    envio: envioCriado,
+    lojaOrigem,
+    lojaDestino,
+  });
+
+  return {
+    ...mapearEnvioResposta(envioCriado),
+    notificacaoEmail,
+  };
 }
 
 module.exports = {
