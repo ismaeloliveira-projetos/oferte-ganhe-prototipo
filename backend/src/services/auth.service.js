@@ -4,7 +4,7 @@ const recuperacoesSenhaRepository = require("../repositories/recuperacoes-senha.
 const { enviarEmailRedefinicaoSenha } = require("./email.service");
 const sessoesRepository = require("../repositories/sessoes.repository");
 const authRepository = require("../repositories/auth.repository");
-const AppError = require("../utils/AppError");
+const AppError = require("../utils/appError");
 const { compararSenha, gerarHashSenha } = require("../utils/criptografia");
 const { gerarTokenUsuario } = require("../utils/jwt");
 

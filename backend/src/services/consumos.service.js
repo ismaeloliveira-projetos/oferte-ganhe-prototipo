@@ -1,6 +1,6 @@
 const { pool } = require("../database/conexao");
 const consumosRepository = require("../repositories/consumos.repository");
-const AppError = require("../utils/AppError");
+const AppError = require("../utils/appError");
 
 function validarAcessoLoja(contextoUsuario, lojaId) {
   if (!contextoUsuario) {

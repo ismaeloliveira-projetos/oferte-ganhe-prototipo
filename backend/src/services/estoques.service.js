@@ -1,5 +1,5 @@
 const estoquesRepository = require("../repositories/estoques.repository");
-const AppError = require("../utils/AppError");
+const AppError = require("../utils/appError");
 
 function calcularStatusEstoque(estoque) {
   const estoqueAtual = Number(estoque.estoqueAtual);

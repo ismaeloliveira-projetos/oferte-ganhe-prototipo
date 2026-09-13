@@ -1,11 +1,21 @@
 :root {
-  --qq-green: #009640;
-  --qq-green-dark: #006b2e;
-  --qq-yellow: #ffd500;
-  --qq-dark: #1f2937;
-  --qq-gray: #6b7280;
-  --qq-border: #e5e7eb;
-  --qq-light: #f4f6f9;
-  --qq-white: #ffffff;
+  --brand-primary: #2563eb;
+  --brand-primary-dark: #1e3a8a;
+  --brand-accent: #38bdf8;
+  --text-primary: #172033;
+  --text-secondary: #64748b;
+  --border-subtle: #e2e8f0;
+  --surface-muted: #f8fafc;
+  --surface: #ffffff;
   --danger: #dc2626;
+
+  /* Aliases temporários para os componentes legados. */
+  --qq-green: var(--brand-primary);
+  --qq-green-dark: var(--brand-primary-dark);
+  --qq-yellow: var(--brand-accent);
+  --qq-dark: var(--text-primary);
+  --qq-gray: var(--text-secondary);
+  --qq-border: var(--border-subtle);
+  --qq-light: var(--surface-muted);
+  --qq-white: var(--surface);
 }

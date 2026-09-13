@@ -1,7 +1,7 @@
 const { enviarEmailNotificacaoEnvio } = require("./email.service");
 const enviosRepository = require("../repositories/envios.repository");
 const { pool } = require("../database/conexao");
-const AppError = require("../utils/AppError");
+const AppError = require("../utils/appError");
 
 function mapearEnvioResposta(envio) {
   return {

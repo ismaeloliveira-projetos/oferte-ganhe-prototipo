@@ -1,6 +1,6 @@
 const { pool } = require("../database/conexao");
 const recebimentosRepository = require("../repositories/recebimentos.repository");
-const AppError = require("../utils/AppError");
+const AppError = require("../utils/appError");
 
 function normalizarUsuarioId(usuarioId) {
   if (usuarioId === undefined || usuarioId === null || usuarioId === "") {

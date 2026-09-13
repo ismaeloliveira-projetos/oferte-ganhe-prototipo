@@ -22,7 +22,7 @@
   width: 880px;
   max-width: 100%;
   min-height: 560px;
-  background: var(--qq-green-dark);
+  background: var(--brand-primary-dark);
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
@@ -31,7 +31,7 @@
 /* Painel da marca (esquerda) */
 .login-brand {
   flex: 1.5;
-  background: var(--qq-green-dark); /* Azul escuro elegante */
+  background: var(--brand-primary-dark);
   color: #ffffff;
   display: flex;
   flex-direction: column;
@@ -57,10 +57,12 @@
   );
 }
 
-.login-brand img {
-  width: 250px;
+.login-brand .brand-mark {
+  width: 72px;
+  height: 72px;
   margin-bottom: 20px;
-  opacity: 0.95;
+  border-radius: 20px;
+  font-size: 1.35rem;
   z-index: 1;
 }
 
@@ -70,14 +72,14 @@
   font-size: 1.98rem;
   font-weight: 500;
   letter-spacing: -0.2px;
-  color: var(--qq-yellow);
+  color: var(--brand-accent);
   z-index: 1;
 }
 
 .login-brand p {
   margin: 0;
   font-size: 0.9rem;
-  color: gba(255, 255, 255, 0.65);
+  color: rgba(255, 255, 255, 0.65);
   font-weight: 500;
   z-index: 1;
 }
@@ -141,13 +143,13 @@
 }
 
 .form-input:focus {
-  border-color: var(--qq-green);
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
 /* Botão */
 .btn-primary {
-  background-color: var(--qq-green);
+  background-color: var(--brand-primary);
   color: white;
   border: none;
   padding: 12px 18px;
@@ -159,7 +161,7 @@
 }
 
 .btn-primary:hover {
-  background-color: var(--qq-green-dark);
+  background-color: var(--brand-primary-dark);
 }
 
 .full-width {
@@ -194,8 +196,10 @@
     padding: 40px 24px;
   }
 
-  .login-brand img {
-    width: 140px;
+  .login-brand .brand-mark {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 14px;
   }
 
   .login-form-wrapper {
@@ -206,4 +210,3 @@
     font-size: 1.4rem;
   }
 }
-

@@ -1,6 +1,6 @@
 const { pool } = require("../database/conexao");
 const manutencoesRepository = require("../repositories/manutencoes.repository");
-const AppError = require("../utils/AppError");
+const AppError = require("../utils/appError");
 
 const TIPOS_ENTRADA = ["AJUSTE_ENTRADA"];
 const TIPOS_SAIDA = ["AJUSTE_SAIDA", "AVARIA", "EXTRAVIO"];

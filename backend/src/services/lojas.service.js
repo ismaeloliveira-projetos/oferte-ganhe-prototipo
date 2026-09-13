@@ -1,6 +1,6 @@
 const { pool } = require("../database/conexao");
 const lojasRepository = require("../repositories/lojas.repository");
-const AppError = require("../utils/AppError");
+const AppError = require("../utils/appError");
 
 function normalizarCodigoLoja(codigo) {
   return String(codigo || "")

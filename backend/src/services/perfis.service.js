@@ -1,6 +1,6 @@
 const { pool } = require("../database/conexao");
 const perfisRepository = require("../repositories/perfis.repository");
-const AppError = require("../utils/AppError");
+const AppError = require("../utils/appError");
 
 function mapearPerfilResposta(perfil) {
   return {

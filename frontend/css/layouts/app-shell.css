@@ -8,7 +8,7 @@
 .sidebar {
   width: 260px;
   max-width: 260px;
-  background-color: var(--qq-green-dark);
+  background-color: var(--brand-primary-dark);
   color: white;
   padding: 24px 14px;
   position: fixed;
@@ -21,14 +21,17 @@
   transition: transform 0.3s;
 }
 
-/* Logo pequena no topo da sidebar */
-.sidebar-logo {
-  display: block;
-  width: 100%;
-  max-width: 200px; /* ou nenhum, se quiser que ocupe 100% */
-  height: auto;
-  margin: 0 auto 16px;
-  opacity: 0.95;
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: 0 0 14px;
+  border-radius: 12px;
+  background: var(--brand-accent);
+  color: var(--brand-primary-dark);
+  font-weight: 800;
+  letter-spacing: -0.08em;
 }
 
 .sidebar-brand {
@@ -36,7 +39,7 @@
 }
 
 .sidebar-brand h2 {
-  color: var(--qq-yellow);
+  color: var(--brand-accent);
   font-size: 22px;
   margin-bottom: 8px;
 }
@@ -84,7 +87,7 @@
 }
 
 .sidebar-link.active {
-  background-color: var(--qq-green);
+  background-color: var(--brand-primary);
   color: #ffffff;
   font-weight: 700;
 }
@@ -180,4 +183,3 @@
   font-weight: 700;
   flex-shrink: 0;
 }
-

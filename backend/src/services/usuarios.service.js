@@ -1,5 +1,5 @@
 const usuariosRepository = require("../repositories/usuarios.repository");
-const AppError = require("../utils/AppError");
+const AppError = require("../utils/appError");
 const { gerarHashSenha } = require("../utils/criptografia");
 
 function validarEmail(email) {
