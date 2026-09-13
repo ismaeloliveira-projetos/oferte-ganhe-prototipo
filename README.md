@@ -1,44 +1,42 @@
+<img width="1919" height="866" alt="Captura de tela 2026-09-13 180252" src="https://github.com/user-attachments/assets/d8c73339-eb53-47d7-a9ed-9134602affa8" />
 # TalãoFlow
 
 Sistema web de controle e gestão de talões para operações com múltiplas lojas. O projeto reúne o acompanhamento de estoque, envios, recebimentos, manutenções, usuários, perfis de acesso, relatórios e indicadores operacionais em um único painel.
 
 > Este repositório contém um protótipo em evolução do TalãoFlow.
 
-## Imagens do projeto
 
-Use os espaços abaixo para adicionar as imagens, GIFs ou vídeos de apresentação do sistema. Basta substituir os caminhos pelos arquivos reais do projeto.
-
-### Visão geral
-
-<!-- Insira aqui uma imagem de apresentação ou um banner do projeto. -->
-
-`[INSIRA AQUI A IMAGEM PRINCIPAL DO PROJETO]`
-
-<!-- Exemplo: ![Visão geral do TalãoFlow](docs/images/visao-geral.png) -->
 
 ### Tela de login
+<img width="1919" height="866" alt="Captura de tela 2026-09-13 180252" src="https://github.com/user-attachments/assets/a2ba86d7-985e-4c99-871d-5391442710fd" />
 
-<!-- Insira aqui um screenshot da tela de login. -->
-
-`[INSIRA AQUI A IMAGEM DA TELA DE LOGIN]`
 
 ### Dashboard
 
-<!-- Insira aqui um screenshot do dashboard administrativo. -->
+<img width="1898" height="867" alt="Captura de tela 2026-09-13 180313" src="https://github.com/user-attachments/assets/b0847996-74c0-4adb-8e5c-e52e4842c0e8" />
 
-`[INSIRA AQUI A IMAGEM DO DASHBOARD]`
+
+
+### Assistente IA 
+
+
+<img width="1914" height="858" alt="Captura de tela 2026-09-13 180325" src="https://github.com/user-attachments/assets/006b3151-7763-48f5-b375-93ee79fc60ec" />
+
 
 ### Gestão de talões
 
-<!-- Insira aqui uma ou mais imagens das telas de estoque, envios e recebimentos. -->
+<img width="1913" height="875" alt="Captura de tela 2026-09-13 180339" src="https://github.com/user-attachments/assets/48dd43ff-149d-4256-890a-3a960aa36cc0" />
 
-`[INSIRA AQUI A IMAGEM DA GESTÃO DE TALÕES]`
 
 ### Relatórios e insights
+<img width="1592" height="858" alt="Captura de tela 2026-09-13 180423" src="https://github.com/user-attachments/assets/9a7b6b19-ab7d-462b-8bc5-49987799821a" />
 
-<!-- Insira aqui uma imagem da tela de relatórios ou da análise operacional. -->
 
-`[INSIRA AQUI A IMAGEM DOS RELATÓRIOS]`
+### Mobile 
+
+<img width="354" height="756" alt="Captura de tela 2026-09-13 180514" src="https://github.com/user-attachments/assets/e27987a5-a7f8-43f8-b3f5-09d59e18005b" />
+
+
 
 ## Funcionalidades
 
