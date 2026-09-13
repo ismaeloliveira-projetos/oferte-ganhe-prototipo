@@ -1,4 +1,3 @@
-<img width="1919" height="866" alt="Captura de tela 2026-09-13 180252" src="https://github.com/user-attachments/assets/d8c73339-eb53-47d7-a9ed-9134602affa8" />
 # TalãoFlow
 
 Sistema web de controle e gestão de talões para operações com múltiplas lojas. O projeto reúne o acompanhamento de estoque, envios, recebimentos, manutenções, usuários, perfis de acesso, relatórios e indicadores operacionais em um único painel.
